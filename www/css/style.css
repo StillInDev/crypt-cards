@@ -493,10 +493,6 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .card .ic.sw { width: calc(var(--cs) * .12); }
 .card .shd { position: absolute; left: 7%; top: 5%; z-index: 4; }
 .card .shd .ic { width: calc(var(--cs) * .15); }
-.card .jw { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 4; }
-.card .jw i { width: calc(var(--cs) * .08); height: calc(var(--cs) * .08); background: #25263a; box-shadow: 0 0 0 2px #14121f; display: block; }
-.card .jw i.g { background: #63c74d; }
-.card .jw i.b { background: #41a6f6; }
 .slot.webbed .art { opacity: .5; }
 .card .art { transition: transform .16s steps(4); }
 .slot.hero > .card > .val { display: none; }
@@ -512,7 +508,6 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .card .val, .card .wv { font-size: max(10px, calc(var(--cs) * .15)); right: 8%; bottom: 6%; }
 .card .art { filter: none; }
 .card .shd { left: 8%; top: 6%; }
-.card .jw { bottom: 8%; }
 
 .slot.hero .card .hp b { font-size: max(9px, calc(var(--cs) * .125)); }
 .slot.hero .card .art { margin-top: 10%; }
@@ -560,14 +555,8 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .mapwrap { padding: 8px 0 26px; }
 .map { overflow: visible; }
 .maphead { position: absolute; left: 0; right: 0; top: 4px; text-align: center; z-index: 1; }
-.maphead .pips { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
-.maphead .pips i { width: 10px; height: 10px; background: #3a3a4a; display: block; }
-.maphead .pips i.on { background: #fff; }
 .maphead .ch { font-family: var(--display); font-size: 1.15rem; color: #e9ebf5; }
 .maphead .chs { margin-top: 8px; color: #9b78d6; font-size: .95rem; }
-.dust { position: absolute; inset: 0; pointer-events: none; }
-.dust i { position: absolute; width: 8px; height: 8px; background: #8a7a58; opacity: .6; animation: drift 9s steps(6) infinite alternate; }
-@keyframes drift { to { transform: translate(10px, -14px); } }
 .map .paths line { stroke-width: 6; shape-rendering: crispEdges; }
 .map .paths line.lit { stroke: #9a6fd0; }
 .map .paths line.dark { stroke: #3d3a52; stroke-dasharray: none; }
