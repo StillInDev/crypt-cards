@@ -9,12 +9,11 @@ let n=0; const ok=(name)=>console.log('ok',++n,name);
 let S=blankGame({hero:'knight',powers:['heal']}); S.hero.hp=3; ready(S); let r=DC.usePower(S,0); assert(S.hero.hp===8); assert(S.hero.powers[0].cd===S.hero.powers[0].max); assert(!DC.usePower(S,0)); ok('heal + cooldown');
 // shield
 S=blankGame({powers:['forge']}); ready(S); S.hero.sword={v:2}; DC.usePower(S,0); assert(S.hero.sword.v===10); ok('forge replaces held sword');
-// dart kill + damage
-S=blankGame({powers:['dart']}); S.grid[0]=C('ogre',6); S.grid[1]=C('rat',3); ready(S);
-assert(!DC.usePower(S,0,2)); /* coin not a monster */ r=DC.usePower(S,0,0); assert(S.grid[0].v!==undefined && S.grid[0].type!=='ogre' || S.grid[0].v===2 || true);
-ok('dart rejects non-monster');
-S=blankGame({powers:['dart']}); S.grid[1]=C('rat',3); ready(S); DC.usePower(S,0,1); assert(S.grid[1].type!=='rat' || false); ok('dart kills rat (card replaced)');
-S=blankGame({powers:['dart']}); S.grid[1]=C('ogre',9); ready(S); DC.usePower(S,0,1); assert(S.grid[1].type==='ogre'&&S.grid[1].v===5); ok('dart wounds ogre');
+// dart: random monster, no aiming
+S=blankGame({powers:['dart']}); ready(S); assert(!DC.usePower(S,0)); assert(S.hero.powers[0].cd===0); ok('dart needs a monster and keeps its charge');
+S=blankGame({powers:['dart']}); S.grid[1]=C('rat',3); ready(S); r=DC.usePower(S,0,7); assert(r.target===1); assert(S.grid[1].type!=='rat'); ok('dart ignores tap, kills only rat');
+S=blankGame({powers:['dart']}); S.grid[1]=C('ogre',9); ready(S); DC.usePower(S,0); assert(S.grid[1].type==='ogre'&&S.grid[1].v===5); ok('dart wounds ogre');
+{ const seen=new Set(); for(let k=0;k<40;k++){ S=blankGame({powers:['dart']}); S.rng=(()=>{let s=k;return()=>((s=(s*9301+49297)%233280)/233280);})(); S.grid[0]=C('ogre',9); S.grid[2]=C('ogre',9); ready(S); seen.add(DC.usePower(S,0).target); } assert(seen.has(0)&&seen.has(2)); ok('dart spreads across monsters'); }
 // fire
 S=blankGame({powers:['fire']}); S.grid[1]=C('ogre',9); ready(S); const old=S.grid[1].uid; DC.usePower(S,0,1); assert(S.grid[1].uid!==old); assert(!DC.usePower(S,0,4)); ok('fire (and cooldown block)');
 // scythe: hero at 4, neighbours all 8

@@ -610,7 +610,7 @@
   }
   function firePower(i, target) {
     var r = DC.usePower(S, i, target);
-    if (!r) return;
+    if (!r) { if (S.hero.powers[i] && S.hero.powers[i].id === 'dart') toast('No monsters to hit'); return; }
     targeting = null;
     floaters(r.fx);
     render();

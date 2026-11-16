@@ -70,7 +70,7 @@
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
     forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword of power 10. It replaces the one you hold.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: 'monster', unlock: 20, tip: 'Tap a monster. It takes 4 damage and dies if that is enough.' },
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and dies if that is enough.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
@@ -704,6 +704,13 @@
     if (!pw || pw.cd > 0) return null;
     const def = POWERS[pw.id];
     if (def.target && !validTarget(S, idx, target)) return null;
+    if (pw.id === 'dart') {
+      // The dart picks its own victim: any monster on the board, at random.
+      const foes = [];
+      S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') foes.push(p); });
+      if (!foes.length) return null;
+      target = foes[Math.floor((S.rng ? S.rng() : Math.random()) * foes.length)];
+    }
     const w = S.level.w, h = S.level.h;
     const fx = [], holes = [];
     let extra = null;
