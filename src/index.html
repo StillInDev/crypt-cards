@@ -26,16 +26,18 @@
   </div>
 </section>
 
-<section class="view" id="v-menu" aria-label="Dungeon map">
+<section class="view" id="v-menu" aria-label="Levels">
   <div class="wrap">
     <div class="top">
       <div>
-        <h2>Choose a room</h2>
-        <p class="sub">Reach a room's target score, then step on the locked reward to clear it and open the rooms below. Tap an open room to play it.</p>
+        <h2>Choose a level</h2>
+        <p class="sub">Reach a level's target score, then step on the locked reward to clear it and open the next levels. Pick a level number to see it.</p>
       </div>
       <button class="btn" id="b-home" type="button">Home</button>
     </div>
-    <div class="mapwrap" role="group" aria-label="Dungeon map"><div class="map" id="map"></div></div>
+    <p class="lv-count" id="lv-count"></p>
+    <div class="lv-tabs" id="lv-tabs" role="tablist" aria-label="Levels"></div>
+    <div class="lv-panel" id="lv-panel" role="tabpanel"></div>
     <details>
       <summary>How it plays</summary>
       <ul>
@@ -106,7 +108,10 @@
   <div class="wrap">
     <div class="top">
       <div><h2>Hero &amp; powers</h2><p class="sub" id="hp-sub"></p></div>
-      <button class="btn" id="hp-done" type="button">Done</button>
+      <div class="top-r">
+        <span class="purse" id="hp-purse" title="Gold banked from your runs. Spend it on power upgrades."></span>
+        <button class="btn" id="hp-done" type="button">Done</button>
+      </div>
     </div>
     <div class="loadout" aria-label="Your loadout">
       <div class="equip" id="hp-equip" aria-label="Equipped powers"></div>
@@ -127,7 +132,7 @@
       <div class="page" id="hp-heroes" role="tabpanel" aria-labelledby="hp-tab-0"></div>
       <div class="page" id="hp-powers" role="tabpanel" aria-labelledby="hp-tab-1"></div>
     </div>
-    <p class="pg-hint">Swipe to switch. Tap to pick. Press and hold for details.</p>
+    <p class="pg-hint">Swipe to switch. Tap to pick. Press and hold for details, or to upgrade a hero or power with gold.</p>
   </div>
 </section>
 
