@@ -14,5 +14,5 @@ S=setup(4); DC.move(S,0); assert.strictEqual(S.grid[4].uid,8); assert(S.grid[7].
 // new cards only ever appear on the edge
 const L2={w:5,h:5,heroHP:20,unlock:10,weights:DC.BASE_WEIGHTS};
 let bad=0,tot=0;
-for(let g=0;g<200;g++){ const S=DC.newGame(L2,g+1,{hero:'knight'}); const rng=DC.mulberry32(g); let t=0; while(!S.over&&t<200){ const r=DC.move(S,Math.floor(rng()*4)); if(r&&!r.fx.some(f=>f.text==='BOOM')){ for(const sp of r.spawned){ const x=sp.cell%5,y=(sp.cell/5)|0; tot++; if(!(x===0||x===4||y===0||y===4)) bad++; } } t++; } }
+for(let g=0;g<200;g++){ const S=DC.newGame(L2,g+1,{hero:'knight'}); const rng=DC.mulberry32(g); let t=0; while(!S.over&&t<200){ const r=DC.move(S,Math.floor(rng()*4)); if(r&&!r.fx.some(f=>f.text==='BOOM')&&!(r.attack&&(r.attack.beam||r.attack.sweep))){ /* multi-kill turns can leave two gaps in a line */ for(const sp of r.spawned){ const x=sp.cell%5,y=(sp.cell/5)|0; tot++; if(!(x===0||x===4||y===0||y===4)) bad++; } } t++; } }
 console.log('spawned',tot,'not on edge',bad); assert.strictEqual(bad,0);
