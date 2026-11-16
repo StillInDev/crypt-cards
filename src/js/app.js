@@ -1125,9 +1125,13 @@
   // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
-    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: open && id === heroSel ? 'Chosen' : '',
-      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, desc: 'Carries ' + H.slots + ' powers. Health ' + heroHp(id) + '.' };
+    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
+      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]] };
     if (open) {
+      var on = id === heroSel;
+      // Same check-mark toggle as powers. You always have a hero, so the chosen one cannot be un-ticked.
+      o.equip = { label: on ? 'Chosen' : 'Choose', on: on, aria: on ? 'Chosen hero' : 'Not chosen. Tap to choose this hero',
+        fn: function () { if (!on) pickHero(id); loInfo(heroInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
       else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
@@ -1194,7 +1198,7 @@
       var eb = document.createElement('button');
       eb.type = 'button'; eb.className = 'li-check' + (o.equip.on ? ' on' : '');
       eb.setAttribute('aria-pressed', o.equip.on);
-      eb.setAttribute('aria-label', o.equip.on ? 'Equipped. Tap to unequip' : 'Not equipped. Tap to equip');
+      eb.setAttribute('aria-label', o.equip.aria || (o.equip.on ? 'Equipped. Tap to unequip' : 'Not equipped. Tap to equip'));
       eb.title = o.equip.label;
       eb.innerHTML = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
       eb.addEventListener('click', o.equip.fn);
@@ -1400,14 +1404,14 @@
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
     if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
-    if (kind === 'hero') {
-      if (heroSel === id) return;
-      heroSel = id; fixSelection(); saveSelection(); renderHero();
-      var av = $('#hp-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
-      return;
-    }
+    // Heroes and powers both open their details on tap; the check mark there chooses or equips.
+    if (kind === 'hero') { loInfo(heroInfo(id)); return; }
     // Powers are not equipped on tap: the details open, with an Equip button.
     loInfo(powerInfo(id));
+  }
+  function pickHero(id) {
+    heroSel = id; fixSelection(); saveSelection(); refreshLoadoutScreen();
+    var av = $('#' + (current === 'home' ? 'home' : 'hp') + '-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
   }
   function togglePower(id) {
     var slots = DC.HEROES[heroSel].slots, at = powSel.indexOf(id);

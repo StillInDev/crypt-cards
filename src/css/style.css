@@ -768,3 +768,5 @@ body {
 .top-r > * { flex-shrink: 0; }
 .top-r .purse { margin-right: 14px; }
 .top > div:first-child { min-width: 0; }
+/* Hero & powers subtitle: one line, under the header row. */
+.hp-sub { margin: -10px 0 14px; max-width: none; white-space: nowrap; font-size: clamp(.62rem, 3.4vw, 1rem); }
