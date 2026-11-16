@@ -10,18 +10,18 @@ function setup(el,heads){
 // trap at 0, head N (index0) -> after rotation E -> hits cell 1
 let S=setup('fire',[1,0,0,0]);
 S.grid[1]={uid:++S.uid,type:'imp',kind:'monster',v:9};
-S.grid[3]={uid:++S.uid,type:'golem',kind:'monster',v:9};
+S.grid[3]={uid:++S.uid,type:'icespider',kind:'monster',v:9};
 S.hero.pos=8;
 let r=DC.move(S,0); // hero up
 assert(r); const trap=S.grid.find(c=>c&&c.kind==='dtrap');
 assert.deepStrictEqual(trap.h,[0,1,0,0],'rotated clockwise');
 console.log('rotate ok');
-// find trap pos & check element damage: two heads E and S hit imp(fire,immune) and golem(ice,double)
+// find trap pos & check element damage: two heads E and S hit imp(fire,immune) and icespider(ice,double)
 S=setup('fire',[0,0,1,0]); // S -> rotates to W; use [0,1,0,0]-> S
 S=setup('fire',[0,1,0,0]); // after rotation S: hits cell 3
-S.grid[3]={uid:++S.uid,type:'golem',kind:'monster',v:9};
+S.grid[3]={uid:++S.uid,type:'icespider',kind:'monster',v:9};
 let g3=S.grid[3]; DC.move(S,0);
-assert.strictEqual(g3.v,5,'ice golem takes double from fire (2*2)'); 
+assert.strictEqual(g3.v,5,'ice spider takes double from fire (2*2)'); 
 S=setup('fire',[0,1,0,0]); S.grid[3]={uid:++S.uid,type:'imp',kind:'monster',v:9}; g3=S.grid[3]; DC.move(S,0);
 assert.strictEqual(g3.v,9,'fire imp immune');
 S=setup('ice',[0,1,0,0]); S.grid[3]={uid:++S.uid,type:'imp',kind:'monster',v:9}; g3=S.grid[3]; DC.move(S,0);

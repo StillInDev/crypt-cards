@@ -2,8 +2,8 @@
 
 - **Sprite id:** `mummy` (deliver `mummy.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/mummy@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/mummy.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Mummy** card. It appears in: Catacombs, Vampire Crypt. In play: Deals damage
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`mummy.png` (18×18) and `mummy@8x.png`. Optionally up to three variants as `mummy-1.png`, `mummy-2.png`, `mummy-3.png`.
+`mummy.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `mummy-1.png`, `mummy-2.png`, `mummy-3.png`.

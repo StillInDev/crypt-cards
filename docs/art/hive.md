@@ -2,8 +2,8 @@
 
 - **Sprite id:** `hive` (deliver `hive.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/hive@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/hive.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Hive queen** card. It appears in: Fungus Caves, Throne Room. In play: Every 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`hive.png` (18×18) and `hive@8x.png`. Optionally up to three variants as `hive-1.png`, `hive-2.png`, `hive-3.png`.
+`hive.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `hive-1.png`, `hive-2.png`, `hive-3.png`.

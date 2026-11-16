@@ -2,8 +2,8 @@
 
 - **Sprite id:** `scorpion` (deliver `scorpion.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/scorpion@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/scorpion.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Scorpion** card. It appears in: Mine. In play: Deals damage equal to its num
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`scorpion.png` (18×18) and `scorpion@8x.png`. Optionally up to three variants as `scorpion-1.png`, `scorpion-2.png`, `scorpion-3.png`.
+`scorpion.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `scorpion-1.png`, `scorpion-2.png`, `scorpion-3.png`.

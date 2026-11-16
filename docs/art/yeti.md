@@ -2,8 +2,8 @@
 
 - **Sprite id:** `yeti` (deliver `yeti.png`)
 - **Kind:** hero, full figure
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/yeti@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/yeti.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,9 +17,9 @@ A playable hero, shown in game as **Yeti**. It stands on the board as the hero c
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not draw claws dripping blood or an open roaring mouth.
 
 ## Deliver
 
-`yeti.png` (18×18) and `yeti@8x.png`. Optionally up to three variants as `yeti-1.png`, `yeti-2.png`, `yeti-3.png`.
+`yeti.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `yeti-1.png`, `yeti-2.png`, `yeti-3.png`.

@@ -53,6 +53,16 @@
     { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice' } }
   ];
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
+  // The dungeon is split into areas, picked with the tabs above the map. An area opens once the last room
+  // (the boss room) of the area before it is cleared: the boss drops the special key to the next area.
+  // Areas 2 to 5 are placeholders for now: copies of area 1's rooms.
+  var AREAS = [
+    { name: 'The Crypt' },
+    { name: 'The Depths' },
+    { name: 'Sunken Halls' },
+    { name: 'Ashen Keep' },
+    { name: 'The Abyss' }
+  ];
   var START_HEROES = ['knight', 'cactus'];
   var START_POWERS = ['heal', 'forge', 'dart'];
   var TYPE_ORDER = Object.keys(TYPES).filter(function (k) { return !TYPES[k].hidden; });
@@ -96,6 +106,7 @@
       w: clampInt(L.w, 2, 7, 3), h: clampInt(L.h, 2, 7, 3),
       heroHP: clampInt(L.heroHP, 3, 60, DC.HERO_BASE_HP),
       from: cleanFrom(L.from, i),
+      area: clampInt(L.area, 1, AREAS.length, 1),
       req: clampInt(L.req, 1, 9999, 30 + 5 * i),
       theme: THEMES[L.theme] ? L.theme : (THEME_ORDER[i] || 'cellar'),
       reward: cleanReward(L.reward),
@@ -118,14 +129,32 @@
     return w;
   }
   function defaultLevels() {
-    return ROOMS.map(function (R, i) {
-      var diff = 1 + R.row * 2;
-      var L = DC.nextLevel(null, diff);
-      L.name = R.name; L.theme = R.theme; L.from = R.from.slice(); L.req = R.req; L.reward = { kind: R.reward.kind, id: R.reward.id };
-      L.weights = themedWeights(R.theme, diff);
-      L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
-      return sanitize(L, i);
+    var out = [];
+    AREAS.forEach(function (A, a) {
+      var base = a * ROOMS.length;
+      ROOMS.forEach(function (R) {
+        var diff = 1 + R.row * 2;
+        var L = DC.nextLevel(null, diff);
+        L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
+        L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
+        // Heroes and powers are only found in area 1; the placeholder areas just open the way on.
+        L.reward = a === 0 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
+        L.weights = themedWeights(R.theme, diff);
+        L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
+        out.push(sanitize(L, out.length));
+      });
     });
+    return out;
+  }
+  // Levels saved before areas existed are all area 1: append the other areas after them.
+  function addAreas(list) {
+    var defs = defaultLevels(), shift = list.length - ROOMS.length;
+    defs.forEach(function (d) {
+      if (d.area === 1) return;
+      d.from = d.from.map(function (p) { return p === 0 ? 0 : p + shift; });
+      list.push(sanitize(d, list.length));
+    });
+    return list;
   }
   function parseLevels(text) {
     var d = JSON.parse(text);
@@ -135,12 +164,18 @@
   }
 
   var levels, best = {}, cleared = {}, unlockAll = false, heroSel = 'knight', powSel = ['heal'];
+  // purse: gold banked from finished runs, spent on upgrades. ups: { powerId: level }, hups: { heroId: level }.
+  var purse = 0, ups = {}, hups = {};
   function loadAll(snapshot) {
     levels = null;
-    try { var t = store.get('cc_levels2'); if (t) levels = parseLevels(t); } catch (e) { levels = null; }
+    var hasAreas = false;
+    try { var t = store.get('cc_levels2'); if (t) { levels = parseLevels(t); hasAreas = t.indexOf('"area"') >= 0; } } catch (e) { levels = null; }
     // A snapshot from the old score-gated map has no rewards or themes, so it is ignored.
-    if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) { try { levels = snapshot.levels.map(sanitize); } catch (e) { /* keep */ } }
+    if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) {
+      try { levels = snapshot.levels.map(sanitize); hasAreas = snapshot.levels.some(function (L) { return L.area != null; }); } catch (e) { /* keep */ }
+    }
     if (!levels) levels = defaultLevels();
+    else if (!hasAreas) levels = addAreas(levels);
     // Saved levels from before the newer cards existed get the new cards added, so they still show up.
     var OLD = ['coin', 'gem', 'potion', 'chest', 'poison', 'trap', 'rat', 'bat', 'skeleton', 'ogre', 'goldskull', 'hive', 'sword', 'bomb', 'blank'];
     var newKeys = Object.keys(TYPES).filter(function (k) { return OLD.indexOf(k) < 0; });
@@ -155,7 +190,34 @@
     unlockAll = snapshot && snapshot.unlockAll != null ? !!snapshot.unlockAll : store.get('cc_all') === '1';
     heroSel = (snapshot && snapshot.hero) || store.get('cc_hero') || 'knight';
     try { powSel = (snapshot && snapshot.pows) || JSON.parse(store.get('cc_pows') || '["heal"]'); } catch (e) { powSel = ['heal']; }
+    purse = snapshot && snapshot.purse != null ? snapshot.purse : clampInt(store.get('cc_purse'), 0, 1e9, 0);
+    try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
+    try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
     fixSelection();
+  }
+  function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
+  function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
+  function heroHp(id) { return DC.HERO_BASE_HP + DC.HEROES[id].hp + DC.heroHpBonus(heroUpLv(id)); }
+  function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); }
+  // A run's gold goes into the purse once, when the run ends or you walk away from it.
+  function bankRun() {
+    if (!S || S.banked) return 0;
+    S.banked = true;
+    var g = S.hero.gold | 0;
+    if (g > 0) { purse += g; savePurse(); }
+    return g;
+  }
+  function buyUpgrade(id) {
+    var lv = upLv(id), cost = DC.upgradeCost(lv);
+    if (cost == null || purse < cost || !powerOpen(id)) return false;
+    purse -= cost; ups[id] = lv + 1; savePurse();
+    return true;
+  }
+  function buyHeroUpgrade(id) {
+    var lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
+    if (cost == null || purse < cost || !heroOpen(id)) return false;
+    purse -= cost; hups[id] = lv + 1; savePurse();
+    return true;
   }
   function maxScore() {
     var m = 0;
@@ -163,10 +225,7 @@
     return m;
   }
   function powerLevel() { return unlockAll ? 9 : Math.min(9, Math.floor(maxScore() / 25)); }
-  function powerTip(id) {
-    var T = DC.POWERS[id].tip;
-    return id === 'quake' ? T + ' Right now: ' + DC.quakeDamage(powerLevel()) + ' damage.' : T;
-  }
+  function powerTip(id, lv) { return DC.powerTip(id, lv == null ? upLv(id) : lv, powerLevel()); }
   // Where a hero or power is found: the room whose reward it is (null for the ones you start with).
   function rewardRoom(kind, id) {
     for (var i = 0; i < levels.length; i++) { var r = levels[i].reward; if (r && r.kind === kind && r.id === id) return i; }
@@ -192,9 +251,24 @@
   function saveLevels() { store.set('cc_levels2', JSON.stringify(levels)); }
   function saveCleared() { store.set('cc_clear', JSON.stringify(cleared)); }
   function saveBest() { store.set('cc_best', JSON.stringify(best)); }
+  // Areas are 0-based here (level data stores them 1-based, like room numbers).
+  function areaOf(i) { return levels[i].area - 1; }
+  function areaRooms(a) {
+    var out = [];
+    levels.forEach(function (L, i) { if (L.area - 1 === a) out.push(i); });
+    return out;
+  }
+  function bossOf(a) { var r = areaRooms(a); return r.length ? r[r.length - 1] : -1; }
+  function isBoss(i) { return bossOf(areaOf(i)) === i; }
+  // Beating an area's boss gives the special key that opens the next area.
+  function areaOpen(a) {
+    if (unlockAll || a <= 0) return true;
+    var b = bossOf(a - 1);
+    return b < 0 ? areaOpen(a - 1) : !!cleared[b];
+  }
+  // A room opens once its area is open and any room leading to it is cleared.
   function isUnlocked(i) {
-    var L = levels[i];
-    return unlockAll || L.from.some(function (p) { return p === 0 || !!cleared[p - 1]; });
+    return areaOpen(areaOf(i)) && (unlockAll || levels[i].from.some(function (p) { return p === 0 || !!cleared[p - 1]; }));
   }
   function childrenOf(i) {
     var out = [];
@@ -205,7 +279,7 @@
   function rewardSprite(rw) {
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) return DC.HEROES[rw.id].sprite;
     if (rw && rw.kind === 'power' && DC.POWERS[rw.id]) return DC.POWERS[rw.id].sprite;
-    return 'key';
+    return 'chest';
   }
   function rewardName(rw) {
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) return 'the ' + DC.HEROES[rw.id].name + ' hero';
@@ -218,6 +292,7 @@
   var views = { home: $('#v-home'), menu: $('#v-menu'), play: $('#v-play'), edit: $('#v-edit'), hero: $('#v-hero') };
   var current = 'home';
   function show(name, page) {
+    if (current === 'play' && name !== 'play') bankRun();
     current = name;
     loHide();
     for (var k in views) views[k].classList.toggle('on', k === name);
@@ -239,86 +314,117 @@
   };
 
   // ---- Menu -----------------------------------------------------------------
-  // Levels are numbered tabs (1, 2, 3, ...). The chosen tab shows that level and its Play button.
-  var menuSel = null;
-  function firstOpenLevel() {
-    for (var i = 0; i < levels.length; i++) if (isUnlocked(i) && !cleared[i]) return i;
-    for (var j = 0; j < levels.length; j++) if (isUnlocked(j)) return j;
-    return 0;
-  }
-  function selectTab(i, focus) {
-    menuSel = i;
-    renderMenu();
-    var t = $('#lv-tabs').children[i];
-    if (t) {
-      if (focus) t.focus();
-      t.scrollIntoView({ block: 'nearest', inline: 'center' });
-    }
-  }
-  function renderLevelPanel(i) {
-    var pn = $('#lv-panel'), L = levels[i], th = THEMES[L.theme] || THEMES.cellar;
-    var ok = isUnlocked(i), done = !!cleared[i], bs = best[i] || 0, boss = i === levels.length - 1;
-    pn.setAttribute('aria-labelledby', 'lv-tab-' + i);
-    pn.className = 'lv-panel' + (ok ? '' : ' locked') + (done ? ' done' : '');
-    pn.style.setProperty('--ra', th.acc); pn.style.setProperty('--rb', th.card);
-    pn.innerHTML = '<div class="lv-art"></div>' +
-      '<div class="lv-num"></div><h3 class="lv-name"></h3><p class="lv-sub"></p>' +
-      '<dl class="lv-facts"><div><dt>Board</dt><dd class="f-sz"></dd></div><div><dt>Target</dt><dd class="f-req"></dd></div><div><dt>Best</dt><dd class="f-best"></dd></div></dl>' +
-      '<p class="lv-reward"><span class="rwl"></span></p><p class="lv-status"></p>';
-    pn.querySelector('.lv-art').appendChild(img(ok ? (boss ? 'goldskull' : th.icon) : 'bars'));
-    pn.querySelector('.lv-num').textContent = 'Level ' + (i + 1) + (boss ? ' · Final' : '');
-    pn.querySelector('.lv-name').textContent = ok ? L.name : 'Sealed';
-    pn.querySelector('.lv-sub').textContent = ok ? th.sub : 'This level is still locked.';
-    pn.querySelector('.f-sz').textContent = L.w + '×' + L.h;
-    pn.querySelector('.f-req').textContent = L.req;
-    pn.querySelector('.f-best').textContent = bs || '–';
-    var rw = pn.querySelector('.lv-reward');
-    rw.insertBefore(img(rewardSprite(L.reward), 'rw'), rw.firstChild);
-    rw.querySelector('.rwl').textContent = (done ? 'Unlocked ' : 'Reward: ') + rewardName(L.reward);
-    var st = pn.querySelector('.lv-status');
-    if (done) st.textContent = '✓ Cleared';
-    else if (ok) st.textContent = 'Reach ' + L.req + ' to unlock the reward.';
-    else {
-      var via = L.from.filter(function (p) { return p > 0; });
-      st.textContent = via.length ? 'Clear level ' + via.join(' or ') + ' to open it.' : 'Sealed.';
-    }
-    var go = document.createElement('button');
-    go.type = 'button'; go.className = 'btn go lv-play'; go.id = 'lv-play';
-    go.textContent = ok ? (done ? 'Play again' : 'Play') : 'Locked';
-    go.disabled = !ok;
-    go.addEventListener('click', function () { startLevel(i); });
-    pn.appendChild(go);
+  var menuArea = clampInt(store.get('cc_area'), 0, AREAS.length - 1, 0);
+  function pickArea(a) { menuArea = a; store.set('cc_area', String(a)); renderMenu(); }
+  function renderAreaTabs() {
+    var tabs = $('#areatabs');
+    tabs.innerHTML = '';
+    AREAS.forEach(function (A, a) {
+      var open = areaOpen(a), b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'atab' + (a === menuArea ? ' on' : '') + (open ? '' : ' locked');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', a === menuArea ? 'true' : 'false');
+      b.tabIndex = a === menuArea ? 0 : -1;
+      b.innerHTML = '<span class="an"></span><span class="at"></span>';
+      b.querySelector('.an').textContent = a + 1;
+      b.querySelector('.at').textContent = A.name;
+      if (!open) b.appendChild(img('key', 'alock'));
+      b.setAttribute('aria-label', 'Area ' + (a + 1) + ', ' + A.name + (open ? '' : ', sealed'));
+      b.addEventListener('click', function () { pickArea(a); });
+      b.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        pickArea((a + d + AREAS.length) % AREAS.length);
+        var nb = tabs.children[menuArea]; if (nb) nb.focus();
+      });
+      tabs.appendChild(b);
+    });
   }
   function renderMenu() {
-    if (menuSel == null || menuSel >= levels.length) menuSel = firstOpenLevel();
-    var cl = 0; levels.forEach(function (L, i) { if (cleared[i]) cl++; });
-    $('#lv-count').textContent = cl + ' of ' + levels.length + ' levels cleared';
-    var tabs = $('#lv-tabs');
-    tabs.innerHTML = '';
-    levels.forEach(function (L, i) {
-      var ok = isUnlocked(i), done = !!cleared[i], sel = i === menuSel;
-      var t = document.createElement('button');
-      t.type = 'button'; t.id = 'lv-tab-' + i;
-      t.className = 'lv-tab' + (ok ? '' : ' locked') + (done ? ' done' : '') + (sel ? ' on' : '');
-      t.setAttribute('role', 'tab');
-      t.setAttribute('aria-selected', sel ? 'true' : 'false');
-      t.setAttribute('aria-controls', 'lv-panel');
-      t.tabIndex = sel ? 0 : -1;
-      t.textContent = i + 1;
-      t.setAttribute('aria-label', 'Level ' + (i + 1) + (done ? ', cleared' : ok ? '' : ', sealed'));
-      t.style.setProperty('--ra', (THEMES[L.theme] || THEMES.cellar).acc);
-      t.addEventListener('click', function () { selectTab(i, true); });
-      t.addEventListener('keydown', function (e) {
-        var n = levels.length, k = e.key, to = null;
-        if (k === 'ArrowRight') to = (i + 1) % n;
-        else if (k === 'ArrowLeft') to = (i - 1 + n) % n;
-        else if (k === 'Home') to = 0;
-        else if (k === 'End') to = n - 1;
-        if (to != null) { e.preventDefault(); selectTab(to, true); }
-      });
-      tabs.appendChild(t);
+    renderAreaTabs();
+    var map = $('#map');
+    map.innerHTML = '';
+    var area = menuArea, rooms = areaRooms(area), inArea = {};
+    rooms.forEach(function (i) { inArea[i + 1] = true; });
+    var aOpen = areaOpen(area), boss = bossOf(area), next = area + 1 < AREAS.length ? area + 1 : null;
+    var COLW = 106, ROWH = 142, NS = 70, TOP = 190;
+    // Rooms reached from another area hang off this area's entrance.
+    function src(p) { return inArea[p] ? p : 0; }
+    var depth = [0], rows = [[]];
+    rooms.forEach(function (i) {
+      var L = levels[i], d = 1;
+      L.from.forEach(function (p) { d = Math.max(d, (depth[src(p)] || 0) + 1); });
+      depth[i + 1] = d;
+      (rows[d] = rows[d] || []).push(i + 1);
     });
-    renderLevelPanel(menuSel);
+    var maxD = rows.length - 1, maxN = 1, off = [0];
+    rows.forEach(function (r) { if (!r) return; maxN = Math.max(maxN, r.length); r.forEach(function (k, ix) { off[k] = ix - (r.length - 1) / 2; }); });
+    var W = maxN * COLW + 40, H = TOP + (maxD + 1) * ROWH;
+    map.style.width = W + 'px'; map.style.height = H + 'px';
+    function cx(k) { return Math.round(W / 2 + off[k] * COLW); }
+    function cy(k) { return TOP + depth[k] * ROWH - 30; }
+    // Header
+    var hd = document.createElement('div');
+    hd.className = 'maphead';
+    hd.innerHTML = '<div class="ch"></div><div class="chs"></div><div class="keys"></div>';
+    hd.querySelector('.ch').textContent = AREAS[area].name;
+    var cl = 0; rooms.forEach(function (i) { if (cleared[i]) cl++; });
+    if (aOpen) hd.querySelector('.chs').textContent = cl + ' of ' + rooms.length + ' rooms cleared';
+    else {
+      var pb = bossOf(area - 1);
+      hd.querySelector('.chs').textContent = 'Sealed. Beat ' + (pb >= 0 ? levels[pb].name : 'the last boss') + ' in ' + AREAS[area - 1].name + ' for its key.';
+    }
+    var kr = hd.querySelector('.keys');
+    if (next != null && boss >= 0) {
+      var got = !!cleared[boss] || unlockAll;
+      kr.appendChild(img('key', got ? 'kh' : 'km'));
+      var kt = document.createElement('span');
+      kt.textContent = got ? 'You hold the key to ' + AREAS[next].name : 'Beat ' + levels[boss].name + ' for the key to ' + AREAS[next].name;
+      kr.appendChild(kt);
+    }
+    map.appendChild(hd);
+    var svg = '<svg class="paths" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    rooms.forEach(function (i) {
+      var L = levels[i], k = i + 1;
+      L.from.forEach(function (p0) {
+        var p = src(p0);
+        var lit = aOpen && (p0 === 0 || cleared[p0 - 1] || unlockAll);
+        var x1 = cx(p), y1 = p === 0 ? TOP - 66 : cy(p), x2 = cx(k), y2 = cy(k);
+        svg += '<line class="' + (lit ? 'lit' : 'dark') + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+      });
+    });
+    svg += '</svg>';
+    map.insertAdjacentHTML('beforeend', svg);
+    var ent = document.createElement('div');
+    ent.className = 'entrance';
+    ent.style.left = cx(0) + 'px'; ent.style.top = (TOP - 66) + 'px';
+    ent.textContent = 'Entrance';
+    map.appendChild(ent);
+    rooms.forEach(function (i, n) {
+      var L = levels[i], k = i + 1, ok = isUnlocked(i), bs = best[i] || 0, th = THEMES[L.theme], done = !!cleared[i];
+      var bossRoom = i === boss, givesKey = bossRoom && next != null;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'room node' + (ok ? '' : ' locked') + (done ? ' done' : '') + (bossRoom ? ' boss' : '');
+      b.style.left = cx(k) + 'px'; b.style.top = cy(k) + 'px';
+      b.style.setProperty('--ra', th.acc); b.style.setProperty('--rb', th.card);
+      b.innerHTML = '<span class="box"></span><span class="sz"></span><span class="sc"></span>';
+      b.querySelector('.box').appendChild(img(ok ? (bossRoom ? 'goldskull' : th.icon) : 'bars'));
+      b.querySelector('.sz').textContent = L.w + '×' + L.h;
+      b.querySelector('.sc').textContent = done ? '✓ ' + (bs || L.req) : L.req;
+      var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward);
+      b.appendChild(rw);
+      // The boss always drops the special key to the next area.
+      if (givesKey) { var kb = img('key', 'kb'); kb.title = done ? 'Key to ' + AREAS[next].name + ' found' : 'Holds the key to ' + AREAS[next].name; b.appendChild(kb); }
+      var what = done ? ', cleared' : ', reach ' + L.req + ' to unlock ' + rewardName(L.reward) + (givesKey ? ' and the key to ' + AREAS[next].name : '');
+      b.setAttribute('aria-label', 'Room ' + (n + 1) + ', ' + (ok ? L.name + what : 'sealed'));
+      b.title = ok ? L.name + ' · ' + th.sub : 'Sealed';
+      b.disabled = !ok;
+      b.addEventListener('click', function () { startLevel(i); });
+      map.appendChild(b);
+    });
     var lg = $('#legend');
     if (!lg.children.length) {
       TYPE_ORDER.forEach(function (k) {
@@ -375,10 +481,11 @@
   }
 
   function startLevel(i) {
-    menuSel = i;
+    bankRun();
     cur = i;
+    menuArea = areaOf(i); store.set('cc_area', String(menuArea));
     fixSelection();
-    S = DC.newGame(levels[i], null, { hero: heroSel, powers: powSel, powerLevel: powerLevel(), claimed: !!cleared[i] });
+    S = DC.newGame(levels[i], null, { hero: heroSel, powers: powSel, powerLevel: powerLevel(), upgrades: ups, heroLevel: heroUpLv(heroSel), claimed: !!cleared[i] });
     rewardShown = S.rewardGiven;
     var th = THEMES[levels[i].theme] || THEMES.cellar;
     document.body.style.setProperty('--bodybg', th.bg);
@@ -540,7 +647,7 @@
       });
     }
     renderPowers();
-    $('#p-hint').textContent = targeting != null && H.powers[targeting] ? powerTip(H.powers[targeting].id) + ' Tap the power again to cancel.' : HINT;
+    $('#p-hint').textContent = targeting != null && H.powers[targeting] ? powerTip(H.powers[targeting].id, H.powers[targeting].lv) + ' Tap the power again to cancel.' : HINT;
 
     // HUD
     $('#h-hp').textContent = H.hp + ' / ' + H.max;
@@ -605,7 +712,7 @@
         held = false; clearTimeout(timer);
         timer = setTimeout(function () {
           held = true;
-          showInfo({ sprite: def.sprite, title: def.name, text: def.passive ? powerTip(pw.id) : powerTip(pw.id) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
+          showInfo({ sprite: def.sprite, title: def.name, text: def.passive ? powerTip(pw.id, pw.lv) : powerTip(pw.id, pw.lv) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
         }, 450);
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
@@ -814,13 +921,15 @@
   // Stepping on the locked reward clears the room: its hero or power unlocks and the rooms below it open.
   function claimReward(i, rw) {
     var wasOpen = levels.map(function (L, j) { return isUnlocked(j); });
+    var a = areaOf(i), areaWas = AREAS.map(function (A, x) { return areaOpen(x); });
     cleared[i] = 1; saveCleared();
     var msgs = [];
-    if (i === levels.length - 1) msgs.push('Dungeon conquered!');
+    if (isBoss(i)) msgs.push(a + 1 < AREAS.length ? AREAS[a].name + ' conquered!' : 'Dungeon conquered!');
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) msgs.push('Hero unlocked: ' + DC.HEROES[rw.id].name);
     if (rw && rw.kind === 'power' && DC.POWERS[rw.id]) msgs.push('Power unlocked: ' + DC.POWERS[rw.id].name);
+    AREAS.forEach(function (A, x) { if (!areaWas[x] && areaOpen(x)) msgs.push('You found the key to ' + A.name); });
     var rooms = [];
-    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j)) rooms.push(L.name); });
+    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j) && areaOf(j) === a) rooms.push(L.name); });
     if (rooms.length) msgs.push('New room' + (rooms.length > 1 ? 's' : '') + ': ' + rooms.join(', '));
     if (!msgs.length) msgs.push('Room cleared');
     toast(msgs.join('. '), 4200);
@@ -839,13 +948,19 @@
         if (isUnlocked(j)) open.push(j);
         note += (note ? ' ' : '') + levels[j].name + (isUnlocked(j) ? ' is open.' : ' is still sealed.');
       });
-      if (!kidsOf.length) note = 'The end of the dungeon.';
+      var na = areaOf(cur) + 1;
+      if (isBoss(cur) && na < AREAS.length && areaRooms(na).length) {
+        var first = areaRooms(na).filter(isUnlocked)[0];
+        if (first != null && open.indexOf(first) < 0) open.push(first);
+        note += (note ? ' ' : '') + 'You found the key to ' + AREAS[na].name + '.';
+      } else if (!kidsOf.length) note = 'The end of the dungeon.';
     } else if (S.rewardGiven) {
       note = 'The locked reward appeared, but you fell before reaching it.';
     } else {
       note = 'Reach ' + L.req + ' gold (' + Math.max(0, L.req - g) + ' short) to reveal the reward, then step on it to clear this room.';
     }
     if (g > 0 && g >= prevBest) note = 'Personal best. ' + note;
+    if (bankRun() > 0) note += ' ' + g + ' gold added to your purse (' + purse + ' total) for power upgrades.';
     $('#o-note').textContent = note;
     nextPick = open.length ? open[open.length - 1] : null;
     $('#o-next').style.display = nextPick != null ? '' : 'none';
@@ -1007,15 +1122,30 @@
   var hpPage = 0, hpAnim = false, hpPop = null;
   // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
-    var H = DC.HEROES[id], open = heroOpen(id);
-    return { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: open && id === heroSel ? 'Chosen' : '',
-      ability: H.desc, desc: 'Carries ' + H.slots + ' powers.' };
+    var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
+    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: open && id === heroSel ? 'Chosen' : '',
+      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, desc: 'Carries ' + H.slots + ' powers. Health ' + heroHp(id) + '.' };
+    if (open) {
+      if (cost == null) o.up = { text: 'Fully upgraded.' };
+      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+        short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
+        buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to level ' + heroUpLv(id)); } } };
+    }
+    return o;
   }
   function powerInfo(id) {
-    var P = DC.POWERS[id], open = powerOpen(id);
-    return { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
-      ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + P.cd + ' turns.' };
+    var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
+    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
+      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
+    if (open) {
+      if (cost == null) o.up = { text: 'Fully upgraded.' };
+      else o.up = { text: 'Next level: ' + U.what + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+        short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
+        buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to level ' + upLv(id)); } } };
+    }
+    return o;
   }
+  function refreshLoadoutScreen() { if (current === 'hero') renderHero(); else if (current === 'home') renderHome(); }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
 
   // Details on the home and hero screens appear in a panel over the character and stay put
@@ -1031,8 +1161,23 @@
     line('span', 'li-lock', o.lock);
     line('b', 'li-name', o.title);
     line('span', 'li-tag', o.tag);
+    if (o.level != null) d.appendChild(pips(o.level, 'li-lv', o.max));
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
+    if (o.up) {
+      line('p', 'li-up', o.up.text);
+      if (o.up.buy) {
+        var bb = document.createElement('button');
+        bb.type = 'button'; bb.className = 'btn li-buy'; bb.disabled = !o.up.ok;
+        bb.appendChild(document.createTextNode(o.up.label + ' '));
+        bb.appendChild(img('coin'));
+        bb.appendChild(document.createTextNode(o.up.cost));
+        bb.setAttribute('aria-label', o.up.label + ' for ' + o.up.cost + ' gold');
+        bb.addEventListener('click', o.up.buy);
+        d.appendChild(bb);
+        line('p', 'li-short', o.up.short);
+      }
+    }
     el.appendChild(d);
     el.classList.add('on');
     loGen++;
@@ -1068,6 +1213,26 @@
     s.innerHTML = HEART + '<b></b>';
     s.querySelector('b').textContent = n;
     return s;
+  }
+
+  // Upgrade level as a row of pips (filled = bought).
+  function pips(lv, cls, max) {
+    max = max || DC.POWER_MAX_LV;
+    var s = document.createElement('span');
+    s.className = 'pips ' + (cls || '');
+    s.setAttribute('aria-label', 'Level ' + lv + ' of ' + max);
+    for (var i = 0; i < max; i++) { var p = document.createElement('i'); if (i < lv) p.className = 'on'; s.appendChild(p); }
+    return s;
+  }
+
+  // Level pips on a tile, plus a ▲ badge when the next level is affordable.
+  function upgradeMarks(t, lv, cost, max) {
+    t.appendChild(pips(lv, max > 4 ? 'many' : '', max));
+    t.setAttribute('aria-label', t.getAttribute('aria-label') + ', level ' + lv);
+    if (cost != null && purse >= cost) {
+      var up = document.createElement('span'); up.className = 'upb'; up.textContent = '▲'; up.title = 'Upgrade ready: press and hold';
+      t.appendChild(up); t.classList.add('canup');
+    }
   }
 
   function tile(kind, id, sprite, name, open, on) {
@@ -1110,7 +1275,7 @@
     av.appendChild(img(D.sprite));
     av.setAttribute('aria-label', D.name + ', your hero. Press and hold for details.');
     $('#' + pre + '-name').textContent = D.name;
-    av.appendChild(hpBadge(DC.HERO_BASE_HP + D.hp));
+    av.appendChild(hpBadge(heroHp(heroSel)));
     $('#' + pre + '-stat').textContent = powSel.length + ' of ' + slots + ' powers';
   }
 
@@ -1170,19 +1335,26 @@
     var hg = $('#hp-heroes');
     hg.innerHTML = '';
     Object.keys(DC.HEROES).sort(byOpen(heroOpen)).forEach(function (id) {
-      var H = DC.HEROES[id];
-      var t = tile('hero', id, H.sprite, H.name, heroOpen(id), id === heroSel);
-      t.appendChild(hpBadge(DC.HERO_BASE_HP + H.hp));
-      t.setAttribute('aria-label', t.getAttribute('aria-label') + ', health ' + (DC.HERO_BASE_HP + H.hp));
+      var H = DC.HEROES[id], open = heroOpen(id), hp = heroHp(id);
+      var t = tile('hero', id, H.sprite, H.name, open, id === heroSel);
+      t.appendChild(hpBadge(hp));
+      t.setAttribute('aria-label', t.getAttribute('aria-label') + ', health ' + hp);
+      if (open) upgradeMarks(t, heroUpLv(id), DC.heroUpgradeCost(heroUpLv(id)), DC.HERO_MAX_LV);
       hg.appendChild(t);
     });
     // Page 2: powers.
     var pl = $('#hp-powers');
     pl.innerHTML = '';
     Object.keys(DC.POWERS).sort(byOpen(powerOpen)).forEach(function (id) {
-      var P = DC.POWERS[id];
-      pl.appendChild(tile('power', id, P.sprite, P.name, powerOpen(id), powSel.indexOf(id) >= 0));
+      var P = DC.POWERS[id], open = powerOpen(id);
+      var t = tile('power', id, P.sprite, P.name, open, powSel.indexOf(id) >= 0);
+      if (open) upgradeMarks(t, upLv(id), DC.upgradeCost(upLv(id)), DC.POWER_MAX_LV);
+      pl.appendChild(t);
     });
+    $('#hp-purse').innerHTML = '';
+    $('#hp-purse').appendChild(img('coin'));
+    $('#hp-purse').appendChild(document.createTextNode(purse));
+    $('#hp-purse').setAttribute('aria-label', 'Purse: ' + purse + ' gold');
     hpPlace(0, false);
   }
 
@@ -1310,6 +1482,7 @@
     ['w', 'Columns (2–7)', 'number', 2, 7],
     ['h', 'Rows (2–7)', 'number', 2, 7],
     ['heroHP', 'Hero health', 'number', 3, 60],
+    ['area', 'Area (1–' + AREAS.length + '; its last room is the boss and drops the next area\'s key)', 'number', 1, AREAS.length],
     ['from', 'Reached from rooms (numbers, 0 = entrance)', 'text'],
     ['req', 'Score that reveals the reward', 'number', 1, 9999, true],
     ['ramp', 'Turns per difficulty step', 'number', 1, 99],
@@ -1406,7 +1579,7 @@
     var n = DC.nextLevel(prev, levels.length + 1);
     // Keep the new level at least as big and as long-lived as the last one.
     n.heroHP = Math.max(n.heroHP, prev.heroHP);
-    n.from = [levels.length]; n.req = prev.req + 10; n.theme = 'throne'; n.reward = { kind: 'door' };
+    n.from = [levels.length]; n.req = prev.req + 10; n.theme = 'throne'; n.reward = { kind: 'door' }; n.area = prev.area;
     levels.push(n); ed = levels.length - 1;
     commit(); renderEditor(); setMsg('Added level ' + levels.length + '. Tune it, then press Play this level.');
   });
@@ -1445,8 +1618,11 @@
     if (!done) setMsg('Select the text above and copy it by hand.', true);
   });
   $('#e-reset').addEventListener('click', function () {
-    levels = defaultLevels(); best = {}; saveBest(); cleared = {}; saveCleared(); saveLevels(); ed = 0; renderEditor(); setMsg('Back to the 12 starter rooms. Progress was reset.');
+    levels = defaultLevels(); best = {}; saveBest(); cleared = {}; saveCleared(); saveLevels(); ed = 0; renderEditor(); setMsg('Back to the starter dungeon (' + AREAS.length + ' areas). Progress was reset.');
   });
+
+  // Closing the app mid-run still banks that run's gold.
+  window.addEventListener('pagehide', function () { if (current === 'play') bankRun(); });
 
   // ---- Boot -----------------------------------------------------------------
   function start(data) {
@@ -1454,7 +1630,7 @@
     show('home');
   }
   if (window.claude && window.claude.hot) {
-    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, hero: heroSel, pows: powSel }; });
+    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, hero: heroSel, pows: powSel, purse: purse, ups: ups, hups: hups }; });
     if (window.claude.hot.ready) window.claude.hot.ready(start); else start(window.claude.hot.data || {});
   } else start({});
 })();

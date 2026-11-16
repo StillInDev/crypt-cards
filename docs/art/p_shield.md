@@ -2,8 +2,8 @@
 
 - **Sprite id:** `p_shield` (deliver `p_shield.png`)
 - **Kind:** power icon
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/p_shield@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/p_shield.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ The icon of the **Shield** power. It sits on a small button in the top bar durin
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`p_shield.png` (18×18) and `p_shield@8x.png`. Optionally up to three variants as `p_shield-1.png`, `p_shield-2.png`, `p_shield-3.png`.
+`p_shield.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `p_shield-1.png`, `p_shield-2.png`, `p_shield-3.png`.

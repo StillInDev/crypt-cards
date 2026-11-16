@@ -2,8 +2,8 @@
 
 - **Sprite id:** `sword` (deliver `sword.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/sword@8x.png` (current version, to improve on)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/sword.png` (current version)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Sword** card. It appears in: Barracks, Armory. In play: Pick it up to arm yo
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`sword.png` (18×18) and `sword@8x.png`. Optionally up to three variants as `sword-1.png`, `sword-2.png`, `sword-3.png`.
+`sword.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `sword-1.png`, `sword-2.png`, `sword-3.png`.

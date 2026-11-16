@@ -2,8 +2,8 @@
 
 - **Sprite id:** `ogre` (deliver `ogre.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/ogre@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/ogre.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Ogre** card. In play: Deals damage equal to its number. The number on the ca
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Troll (troll is darker and mossier, see `troll.md`).
 
 ## Deliver
 
-`ogre.png` (18×18) and `ogre@8x.png`. Optionally up to three variants as `ogre-1.png`, `ogre-2.png`, `ogre-3.png`.
+`ogre.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `ogre-1.png`, `ogre-2.png`, `ogre-3.png`.

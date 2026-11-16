@@ -2,8 +2,8 @@
 
 - **Sprite id:** `salamander` (deliver `salamander.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/salamander@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/salamander.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Salamander** card. It appears in: Ember Halls. In play: A fire monster. Fire
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Magma slime.
 
 ## Deliver
 
-`salamander.png` (18×18) and `salamander@8x.png`. Optionally up to three variants as `salamander-1.png`, `salamander-2.png`, `salamander-3.png`.
+`salamander.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `salamander-1.png`, `salamander-2.png`, `salamander-3.png`.

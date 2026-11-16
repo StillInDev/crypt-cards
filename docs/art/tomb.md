@@ -2,8 +2,8 @@
 
 - **Sprite id:** `tomb` (deliver `tomb.png`)
 - **Kind:** object (no character, no floor strip)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/tomb@8x.png` (current placeholder), `art/zombie@8x.png` (the monster that leaves it)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/tomb.png` (current placeholder), `src/img/sprites/zombie.png` (the monster that leaves it)
 
 ## Where it appears
 
@@ -22,8 +22,8 @@ The player must recognise it at a glance as "the zombie's grave, break it to get
 ## Do not
 
 - Do not draw the zombie or a hand coming out of it.
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`tomb.png` (18×18) and `tomb@8x.png`.
+`tomb.png` (at least 256 × 256, transparent; see `README.md`).
