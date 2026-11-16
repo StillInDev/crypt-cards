@@ -115,4 +115,8 @@ One request per sprite in the game (77 in all).
 
 **Interface (3):** [Spider web](web.md), [Lock bars](bars.md), [Key](key.md)
 
+**Board and interface frames:** [Board and UI](board-and-ui.md) covers everything around the sprites (board,
+card frames, HUD, power buttons, pop-ups, title screen, map, buttons). It is one request with many pieces and
+its own size rules; it delivers into `art/ui/`.
+
 `art/ghoul.png` is an older sprite that the game no longer shows, so it has no request.
