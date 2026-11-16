@@ -39,18 +39,18 @@
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
   };
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 14, reward: { kind: 'door' } },
-    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 18, reward: { kind: 'power', id: 'massheal' } },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 18, reward: { kind: 'power', id: 'scythe' } },
-    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 22, reward: { kind: 'power', id: 'burst' } },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 22, reward: { kind: 'hero', id: 'sorcerer' } },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 22, reward: { kind: 'power', id: 'quake' } },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 28, reward: { kind: 'hero', id: 'icemage' } },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 28, reward: { kind: 'power', id: 'teleport' } },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 28, reward: { kind: 'power', id: 'fire' } },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 34, reward: { kind: 'hero', id: 'rogue' } },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 34, reward: { kind: 'power', id: 'thunder' } },
-    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 42, reward: { kind: 'power', id: 'ice' } }
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake' } },
+    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal' } },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe' } },
+    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst' } },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero', id: 'sorcerer' } },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward' } },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero', id: 'icemage' } },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport' } },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire' } },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero', id: 'rogue' } },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder' } },
+    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice' } }
   ];
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
   var START_HEROES = ['knight', 'cactus'];
@@ -94,9 +94,9 @@
       id: i + 1,
       name: String(L.name || ('Level ' + (i + 1))).slice(0, 24),
       w: clampInt(L.w, 2, 7, 3), h: clampInt(L.h, 2, 7, 3),
-      heroHP: clampInt(L.heroHP, 3, 60, 10),
+      heroHP: clampInt(L.heroHP, 3, 60, DC.HERO_BASE_HP),
       from: cleanFrom(L.from, i),
-      req: clampInt(L.req, 1, 9999, 12 + 2 * i),
+      req: clampInt(L.req, 1, 9999, 30 + 5 * i),
       theme: THEMES[L.theme] ? L.theme : (THEME_ORDER[i] || 'cellar'),
       reward: cleanReward(L.reward),
       ramp: clampInt(L.ramp, 1, 99, 12), cap: clampInt(L.cap, 0, 30, 6),
@@ -114,7 +114,7 @@
       w[k] = (T.kind === 'monster' || CLEAR.indexOf(k) >= 0) ? 0 : (base[k] || 0);
     }
     var tw = THEMES[themeKey].w;
-    for (var t in tw) if (TYPES[t]) w[t] = tw[t];
+    for (var t in tw) if (TYPES[t]) w[t] = TYPES[t].kind === 'weapon' ? tw[t] * DC.WEAPON_RATE : tw[t];
     return w;
   }
   function defaultLevels() {
@@ -162,7 +162,7 @@
     for (var k in best) m = Math.max(m, best[k] || 0);
     return m;
   }
-  function powerLevel() { return unlockAll ? 9 : Math.min(9, Math.floor(maxScore() / 10)); }
+  function powerLevel() { return unlockAll ? 9 : Math.min(9, Math.floor(maxScore() / 25)); }
   function powerTip(id) {
     var T = DC.POWERS[id].tip;
     return id === 'quake' ? T + ' Right now: ' + DC.quakeDamage(powerLevel()) + ' damage.' : T;
@@ -214,24 +214,27 @@
   }
 
   // ---- Views ----------------------------------------------------------------
-  var views = { menu: $('#v-menu'), play: $('#v-play'), edit: $('#v-edit'), hero: $('#v-hero') };
-  var current = 'menu';
-  function show(name) {
+  // Screens: home (your loadout + Play) -> menu (the dungeon map) -> play. Hero & powers opens from home.
+  var views = { home: $('#v-home'), menu: $('#v-menu'), play: $('#v-play'), edit: $('#v-edit'), hero: $('#v-hero') };
+  var current = 'home';
+  function show(name, page) {
     current = name;
+    loHide();
     for (var k in views) views[k].classList.toggle('on', k === name);
     if (name !== 'play') { document.body.style.removeProperty('--bodybg'); document.body.style.removeProperty('--tc'); }
+    if (name === 'home') renderHome();
     if (name === 'menu') renderMenu();
     if (name === 'edit') renderEditor();
-    if (name === 'hero') renderHero();
+    if (name === 'hero') { if (page === 0 || page === 1) hpPage = page; renderHero(); }
     if (name === 'play') layoutBoard();
   }
 
-  // Android Back button: close the result card, otherwise go back to the menu. False means "nothing to go back to".
+  // Android Back button: close the result card, otherwise step back one screen. False means "nothing to go back to".
   window.__cryptBack = function () {
     var ov = $('#over');
     if (ov && ov.classList.contains('on')) { ov.classList.remove('on'); return true; }
-    if (current === 'menu') return false;
-    show('menu');
+    if (current === 'home') return false;
+    show(current === 'play' || current === 'edit' ? 'menu' : 'home');
     return true;
   };
 
@@ -562,6 +565,7 @@
     stEl.innerHTML = '';
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
+    if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
   }
 
@@ -883,6 +887,7 @@
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
     if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns.';
     if (H.frost > 0) t += ' Frost for ' + H.frost + ' more moves.';
+    if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
     if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.bow ? ' arrows' : ' charges') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
@@ -954,8 +959,9 @@
   $('#o-next').addEventListener('click', function () { if (nextPick != null) startLevel(nextPick); });
   $('#o-menu').addEventListener('click', function () { $('#over').classList.remove('on'); show('menu'); });
   $('#b-edit').addEventListener('click', function () { show('edit'); });
-  $('#b-hero').addEventListener('click', function () { show('hero'); });
-  $('#hp-done').addEventListener('click', function () { show('menu'); });
+  $('#b-home').addEventListener('click', function () { show('home'); });
+  $('#b-play').addEventListener('click', function () { show('menu'); });
+  $('#hp-done').addEventListener('click', function () { show('home'); });
 
   function lockText(kind, id) {
     var r = rewardRoom(kind, id);
@@ -965,30 +971,69 @@
   // Top: the chosen hero with its equipped powers floating above its head.
   // Bottom: two swipeable pages (heroes, powers) that loop. Tap picks, press and hold explains.
   var hpPage = 0, hpAnim = false, hpPop = null;
+  // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id);
-    var t = H.desc + ' Health ' + (10 + H.hp) + '. Carries ' + H.slots + ' powers.';
-    return { sprite: H.sprite, title: H.name + (open ? (id === heroSel ? ' (chosen)' : '') : ' (locked)'), text: open ? t : lockText('hero', id) + ' to unlock. ' + t };
+    return { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: open && id === heroSel ? 'Chosen' : '',
+      ability: H.desc, desc: 'Carries ' + H.slots + ' powers.' };
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id);
-    var t = powerTip(id) + ' Recharges in ' + P.cd + ' turns.';
-    return { sprite: P.sprite, title: P.name + (open ? (powSel.indexOf(id) >= 0 ? ' (equipped)' : '') : ' (locked)'), text: open ? t : lockText('power', id) + ' to unlock. ' + t };
+    return { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
+      ability: powerTip(id), desc: 'Recharges in ' + P.cd + ' turns.' };
   }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
+
+  // Details on the home and hero screens appear in a panel over the character and stay put
+  // until the next tap anywhere on the screen (or the next item you hold replaces them).
+  var loGen = 0, loGenAtDown = -1;
+  function loPanel() { return $(current === 'home' ? '#home-info' : '#hp-info'); }
+  function loInfo(o) {
+    var el = loPanel();
+    el.innerHTML = '';
+    el.appendChild(img(o.sprite));
+    var d = document.createElement('div');
+    function line(tag, cls, text) { if (!text) return; var e = document.createElement(tag); e.className = cls; e.textContent = text; d.appendChild(e); }
+    line('span', 'li-lock', o.lock);
+    line('b', 'li-name', o.title);
+    line('span', 'li-tag', o.tag);
+    line('p', 'li-ability', o.ability);
+    line('p', 'li-desc', o.desc);
+    el.appendChild(d);
+    el.classList.add('on');
+    loGen++;
+  }
+  function loHide() { $('#hp-info').classList.remove('on'); $('#home-info').classList.remove('on'); }
+  ['#v-hero', '#v-home'].forEach(function (sel) {
+    var v = $(sel);
+    v.addEventListener('pointerdown', function () { loGenAtDown = loGen; }, true);
+    // A tap closes what was already showing. Info that appeared during this very press stays.
+    v.addEventListener('click', function () { if (loGen === loGenAtDown) loHide(); }, true);
+  });
 
   // Press-and-hold for a single element outside the pager (the avatar and the slots above its head).
   function holdable(el, info, tap) {
     var held = false, timer = null;
     el.addEventListener('pointerdown', function () {
       held = false; clearTimeout(timer);
-      timer = setTimeout(function () { held = true; el.classList.add('holding'); showInfo(info()); }, 450);
+      timer = setTimeout(function () { held = true; el.classList.add('holding'); loInfo(info()); }, 450);
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
-      el.addEventListener(ev, function () { clearTimeout(timer); el.classList.remove('holding'); if (held) hideInfoSoon(); });
+      el.addEventListener(ev, function () { clearTimeout(timer); el.classList.remove('holding'); });
     });
     el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     el.addEventListener('click', function () { if (held) { held = false; return; } if (tap) tap(); });
+  }
+
+  // Health badge for heroes: the same pixel heart and number the hero card uses in a game.
+  var HEART = '<svg class="hrt" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg>';
+  function hpBadge(n) {
+    var s = document.createElement('span');
+    s.className = 'hpb';
+    s.setAttribute('aria-label', 'Health ' + n);
+    s.innerHTML = HEART + '<b></b>';
+    s.querySelector('b').textContent = n;
+    return s;
   }
 
   function tile(kind, id, sprite, name, open, on) {
@@ -1007,13 +1052,10 @@
     return b;
   }
 
-  function renderHero() {
-    fixSelection();
-    var ms = maxScore(), D = DC.HEROES[heroSel], slots = D.slots;
-    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers. Your best single run is ' + ms + ' gold.';
-
-    // Loadout: powers above the head, then the hero.
-    var eq = $('#hp-equip');
+  // Draws the hero with its equipped powers above its head into the elements #<pre>-equip/-avatar/-name/-stat.
+  // onPower(id) runs when an equipped power is tapped, onEmpty when an empty slot is tapped.
+  function fillLoadout(pre, onPower, onEmpty, powerLabel) {
+    var D = DC.HEROES[heroSel], slots = D.slots, eq = $('#' + pre + '-equip');
     eq.innerHTML = '';
     for (var s = 0; s < slots; s++) {
       var pid = powSel[s], sl = document.createElement('button');
@@ -1021,25 +1063,73 @@
       sl.className = 'eslot' + (pid ? '' : ' empty') + (pid && pid === hpPop ? ' pop' : '');
       if (pid) {
         sl.appendChild(img(DC.POWERS[pid].sprite));
-        sl.setAttribute('aria-label', DC.POWERS[pid].name + ', equipped. Tap to remove.');
-        (function (pid) {
-          holdable(sl, function () { return powerInfo(pid); }, function () {
-            powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero();
-          });
-        })(pid);
+        sl.setAttribute('aria-label', DC.POWERS[pid].name + ', equipped. ' + powerLabel);
+        (function (pid) { holdable(sl, function () { return powerInfo(pid); }, function () { onPower(pid); }); })(pid);
       } else {
         sl.setAttribute('aria-label', 'Empty power slot. Tap to choose a power.');
-        sl.addEventListener('click', function () { if (hpPage !== 1) hpGo(1, 1); });
+        sl.addEventListener('click', onEmpty);
       }
       eq.appendChild(sl);
     }
-    hpPop = null;
-    var av = $('#hp-avatar');
+    var av = $('#' + pre + '-avatar');
     av.innerHTML = '';
     av.appendChild(img(D.sprite));
     av.setAttribute('aria-label', D.name + ', your hero. Press and hold for details.');
-    $('#hp-name').textContent = D.name;
-    $('#hp-stat').textContent = 'Health ' + (10 + D.hp) + ' · ' + powSel.length + ' of ' + slots + ' powers';
+    $('#' + pre + '-name').textContent = D.name;
+    av.appendChild(hpBadge(DC.HERO_BASE_HP + D.hp));
+    $('#' + pre + '-stat').textContent = powSel.length + ' of ' + slots + ' powers';
+  }
+
+  function renderHome() {
+    fixSelection();
+    fillLoadout('home', function () { show('hero', 1); }, function () { show('hero', 1); }, 'Tap to change powers.');
+    startSayings();
+  }
+
+  // A funny line under the Play button that cycles every few seconds while the home screen is open.
+  var SAYINGS = [
+    'The rats have unionised. Tread carefully.',
+    'Skeletons hate this one weird trick: a sword.',
+    'Health potions are mostly red food colouring.',
+    'Every chest is a mimic until proven otherwise.',
+    'The Phoenix refuses to die out of sheer spite.',
+    'Ghosts are just skeletons that skipped leg day.',
+    'Bring a sword. Bring two. Actually, you can only hold one.',
+    'The Lich has been "almost done" with his spell for 300 years.',
+    'Slimes are 98% water and 2% attitude.',
+    'Mind the traps. They do not mind you.',
+    'The Throne Room has excellent reviews. From survivors. Both of them.',
+    'Gold cannot buy happiness, but it can buy a nicer coffin.',
+    'Vampires keep asking for your blood type. Do not answer.',
+    'The Cactus would like you to stop hugging it.',
+    'Bats: like birds, but they made worse choices.'
+  ];
+  var sayIdx = Math.floor(Math.random() * SAYINGS.length), sayTimer = null;
+  function startSayings() {
+    var el = $('#home-progress');
+    clearInterval(sayTimer);
+    el.textContent = SAYINGS[sayIdx];
+    el.classList.remove('out');
+    sayTimer = setInterval(function () {
+      if (current !== 'home') { clearInterval(sayTimer); return; }
+      el.classList.add('out');
+      setTimeout(function () {
+        sayIdx = (sayIdx + 1) % SAYINGS.length;
+        el.textContent = SAYINGS[sayIdx];
+        el.classList.remove('out');
+      }, 300);
+    }, 4500);
+  }
+
+  function renderHero() {
+    fixSelection();
+    var ms = maxScore(), slots = DC.HEROES[heroSel].slots;
+    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers. Your best single run is ' + ms + ' gold.';
+
+    // Loadout: powers above the head, then the hero.
+    fillLoadout('hp', function (pid) { powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero(); },
+      function () { if (hpPage !== 1) hpGo(1); }, 'Tap to remove.');
+    hpPop = null;
     $('#hp-slots').textContent = powSel.length + '/' + slots;
 
     // Page 1: heroes.
@@ -1047,7 +1137,10 @@
     hg.innerHTML = '';
     Object.keys(DC.HEROES).sort(byOpen(heroOpen)).forEach(function (id) {
       var H = DC.HEROES[id];
-      hg.appendChild(tile('hero', id, H.sprite, H.name, heroOpen(id), id === heroSel));
+      var t = tile('hero', id, H.sprite, H.name, heroOpen(id), id === heroSel);
+      t.appendChild(hpBadge(DC.HERO_BASE_HP + H.hp));
+      t.setAttribute('aria-label', t.getAttribute('aria-label') + ', health ' + (DC.HERO_BASE_HP + H.hp));
+      hg.appendChild(t);
     });
     // Page 2: powers.
     var pl = $('#hp-powers');
@@ -1062,7 +1155,7 @@
   function hpTap(t) {
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
-    if (!open) { showInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); hideInfoSoon(); return; }
+    if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
     if (kind === 'hero') {
       if (heroSel === id) return;
       heroSel = id; fixSelection(); saveSelection(); renderHero();
@@ -1118,7 +1211,7 @@
     pd.timer = setTimeout(function () {
       if (!pd || !t) return;
       pd.held = true; t.classList.add('holding');
-      showInfo(t.dataset.kind === 'hero' ? heroInfo(t.dataset.id) : powerInfo(t.dataset.id));
+      loInfo(t.dataset.kind === 'hero' ? heroInfo(t.dataset.id) : powerInfo(t.dataset.id));
     }, 450);
   });
   pager.addEventListener('pointermove', function (e) {
@@ -1139,7 +1232,7 @@
     var p = pd; pd = null;
     clearTimeout(p.timer);
     if (p.t) p.t.classList.remove('holding');
-    if (p.held) { hpSuppress = Date.now(); hideInfoSoon(); return; }
+    if (p.held) { hpSuppress = Date.now(); return; }
     if (p.drag) {
       hpSuppress = Date.now();
       var W = pager.clientWidth || 1, fast = Math.abs(p.dx) / Math.max(1, Date.now() - p.at) > 0.5;
@@ -1168,6 +1261,7 @@
     $('#hp-tab-' + i).addEventListener('click', function () { if (i !== hpPage) hpGo(i > hpPage ? 1 : -1); });
   });
   holdable($('#hp-avatar'), function () { return heroInfo(heroSel); }, function () { if (hpPage !== 0) hpGo(-1); });
+  holdable($('#home-avatar'), function () { return heroInfo(heroSel); }, function () { show('hero', 0); });
   document.addEventListener('keydown', function (e) {
     if (current !== 'hero' || e.metaKey || e.ctrlKey) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); hpGo(-1); }
@@ -1278,7 +1372,7 @@
     var n = DC.nextLevel(prev, levels.length + 1);
     // Keep the new level at least as big and as long-lived as the last one.
     n.heroHP = Math.max(n.heroHP, prev.heroHP);
-    n.from = [levels.length]; n.req = prev.req + 4; n.theme = 'throne'; n.reward = { kind: 'door' };
+    n.from = [levels.length]; n.req = prev.req + 10; n.theme = 'throne'; n.reward = { kind: 'door' };
     levels.push(n); ed = levels.length - 1;
     commit(); renderEditor(); setMsg('Added level ' + levels.length + '. Tune it, then press Play this level.');
   });
@@ -1323,7 +1417,7 @@
   // ---- Boot -----------------------------------------------------------------
   function start(data) {
     loadAll(data || {});
-    show('menu');
+    show('home');
   }
   if (window.claude && window.claude.hot) {
     window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, hero: heroSel, pows: powSel }; });
