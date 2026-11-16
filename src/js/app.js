@@ -14,7 +14,7 @@
   // A room is cleared by reaching its target score and then stepping on the locked reward that appears.
   var THEMES = {
     cellar:   { bg: '#201a16', card: '#3f3530', acc: '#d1a45f', icon: 'rat',       sub: 'Rats and rot',
-                w: { rat: 8, bat: 5, slime: 5, skeleton: 3, poison: 6, trap: 4, bomb: 2 } },
+                w: { rat: 16, bat: 5, slime: 5, skeleton: 3, poison: 6, trap: 4, bomb: 2 } },
     sewers:   { bg: '#13241f', card: '#2b4a42', acc: '#63c74d', icon: 'slime',     sub: 'Slime and poison',
                 w: { slime: 8, rat: 6, snake: 6, zombie: 2, poison: 12, potion: 14, trap: 3 } },
     barracks: { bg: '#1b1f31', card: '#3a4262', acc: '#f0883a', icon: 'goblin',    sub: 'Goblins and steel',
@@ -492,9 +492,6 @@
       flash(board, 'ouch', 420);
     }
     heroEl.classList.toggle('dead', H.hp <= 0);
-    els.forEach(function (el) { el.classList.remove('marked'); });
-    heroEl.classList.toggle('armed', !!(H.mark && H.mark.cell === H.pos));
-    if (H.mark && H.mark.cell !== H.pos && S.grid[H.mark.cell]) { var me = els.get(S.grid[H.mark.cell].uid); if (me) me.classList.add('marked'); }
     lastHp = H.hp;
 
     // Show what each neighbouring card would do.
@@ -574,20 +571,20 @@
       var b = document.createElement('button');
       b.type = 'button';
       var ready = pw.cd === 0;
-      b.className = 'pw' + (ready ? ' ready' : '') + (targeting === i ? ' aim' : '');
+      b.className = 'pw' + (ready ? ' ready' : '') + (def.passive ? ' passive' : '') + (targeting === i ? ' aim' : '');
       b.disabled = S.over;
-      b.setAttribute('aria-label', def.name + (ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
+      b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = ready ? 'READY' : pw.cd + ' turns';
-      var bar2 = document.createElement('i'); bar2.style.width = (100 * (1 - pw.cd / pw.max)) + '%';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : ready ? 'READY' : pw.cd + ' turns';
+      var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
       b.addEventListener('pointerdown', function () {
         held = false; clearTimeout(timer);
         timer = setTimeout(function () {
           held = true;
-          showInfo({ sprite: def.sprite, title: def.name, text: powerTip(pw.id) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
+          showInfo({ sprite: def.sprite, title: def.name, text: def.passive ? powerTip(pw.id) : powerTip(pw.id) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
         }, 450);
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
@@ -602,6 +599,7 @@
     if (!S || S.over || current !== 'play') return;
     var pw = S.hero.powers[i];
     if (!pw) return;
+    if (DC.POWERS[pw.id].passive) { toast(DC.POWERS[pw.id].name + ' is always on'); return; }
     if (pw.cd > 0) { toast(DC.POWERS[pw.id].name + ' needs ' + pw.cd + ' more turns'); return; }
     if (DC.POWERS[pw.id].target) { targeting = targeting === i ? null : i; render(); return; }
     firePower(i);
@@ -777,6 +775,7 @@
     else if (r.attack && tEl) playAttack(dir, tEl, tCell, r.attack.type || weapon, r.attack.immune);
     playFx(r.fx);
     if (r.thorns && r.thorns.length) setTimeout(function () { if (S) playThorns(r.thorns); }, 60);
+    if (r.tremor != null) castLook('quake'); // passive Tremor went off as the hero stepped away
     if (S.hero.gold > (best[cur] || 0)) { best[cur] = S.hero.gold; saveBest(); }
     if (r.eaten && r.eaten.kind === 'reward') claimReward(cur, r.eaten.rw);
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
@@ -860,18 +859,24 @@
         t = c.type === 'poison'
           ? 'Poisons you for ' + n + ' turns. You lose 1 health each turn, but never drop below 1. '
           : 'Deals ' + n + ' damage when you step on it. ';
+        if (c.type !== 'poison' && S.hero.pass.trapproof) t = 'A trap, but harmless to you: the Ninja steps right over it. ';
         break;
       case 'monster':
-        t = (c.frozen ? 'FROZEN: it cannot be hit, even with a weapon. Step on it to swap places. ' : '') + (T.el ? (T.el === 'fire' ? 'A fire monster. Immune to fire traps and weapons, takes double from ice. ' : 'An ice monster. Immune to ice traps and weapons, takes double from fire. ') : '') + (T.immortal ? 'It cannot be killed by damage, only worn down to 1. Step on it with no weapon, or hit it with an ice weapon, to finish it. ' : '') + 'Has ' + n + ' health. Stepping on it costs you ' + n + ' health. With a sword you attack it instead, and take its place if it dies.';
+        t = (c.frozen ? 'FROZEN: it cannot be hit, even with a weapon. Step on it to swap places. ' : '') + (T.el ? (T.el === 'fire' ? 'A fire monster. Immune to fire traps and weapons, takes double from ice. ' : 'An ice monster. Immune to ice traps and weapons, takes double from fire. ') : '') + (T.immortal ? 'It cannot be killed by damage, only worn down to 1. Step on it with no weapon, or hit it with an ice weapon, to finish it. ' : '') + 'Has ' + n + ' health. Deals ' + n + ' damage. With a sword you attack it instead, and take its place if it dies.';
         if (c.sh) t += ' SHIELDED: the first hit is absorbed completely.';
         if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: 0 health, harmless. Walk through it.';
         if (T.pays) t += ' Pays ' + n + ' gold when you beat it.';
         if (T.ability === 'queen') t += ' In ' + (4 - (c.t || 0)) + ' turns it turns a neighbouring card into a bat.';
+        if (T.tomb) t = T.tip;
+        if (c.type === 'zombie') t += ' Killed by a weapon, it leaves a tomb.';
+        if (T.venom) t +=' Its bite also poisons you for ' + n + ' turns.';
+        if (T.ability === 'breed') t += ' If it stays put ' + (3 - (c.t || 0)) + ' more turns, it turns a neighbouring card into another rat of ' + n + '.';
         break;
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
         t = (el === 'fire' ? 'Fire' : 'Ice') + ' trap with ' + n4 + (n4 === 1 ? ' head' : ' heads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its heads point at: you, and monsters. ' +
           (el === 'fire' ? 'Fire' : 'Ice') + ' monsters are immune; ' + opp + ' monsters take ' + (n * 2) + '. Other monsters take ' + n + '. Stepping on it costs ' + n + '.';
+        if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }
       case 'chest': t = 'Step toward it to open it. You stay put and the turn is spent, then an item (a sword, potion or gem) appears in its place to pick up.'; break;
@@ -889,7 +894,7 @@
       case 'reward': t = 'A locked reward. Step on it to unlock ' + rewardName(c.rw) + ' and clear this room.'; break;
       default: t = T.tip;
     }
-    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' ? '' : ' ' + n), text: t };
+    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
   }
   function describeHero() {
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
@@ -988,7 +993,7 @@
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id);
     return { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
-      ability: powerTip(id), desc: 'Recharges in ' + P.cd + ' turns.' };
+      ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + P.cd + ' turns.' };
   }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
 

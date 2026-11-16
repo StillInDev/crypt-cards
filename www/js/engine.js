@@ -11,12 +11,12 @@
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1.' },
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
-    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
-    bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
-    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
-    ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
+    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Deals damage equal to its number. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
+    bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Deals damage equal to its number.' },
+    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Deals damage equal to its number.' },
+    ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Deals damage equal to its number.' },
     goldskull: { kind: 'monster', name: 'Golden skeleton', lo: 2, hi: 5, bf: 0.7, pays: true, tip: 'Hurts like a monster, but pays out its number in gold.' },
-    hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Every 4 turns it turns a neighbouring card into a bat. Hurts when stepped on.' },
+    hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Every 4 turns it turns a neighbouring card into a bat. Deals damage equal to its number.' },
     imp:       { kind: 'monster', name: 'Fire imp',       lo: 2, hi: 5, bf: 1,   el: 'fire', tip: 'A fire monster. Fire traps cannot hurt it, and ice traps hurt it double.' },
     golem:     { kind: 'monster', name: 'Ice golem',       lo: 3, hi: 6, bf: 1,   el: 'ice',  tip: 'An ice monster. Ice traps cannot hurt it, and fire traps hurt it double.' },
     firetrap:  { kind: 'dtrap',   name: 'Fire trap',       lo: 1, hi: 3, bf: 0.5, el: 'fire', tip: 'Burns every card its heads point at, then turns clockwise each turn. Fire monsters are immune, ice monsters take double.' },
@@ -53,16 +53,25 @@
   ];
   MORE.forEach(function (m) {
     TYPES[m[0]] = { kind: 'monster', name: m[1], lo: m[2], hi: m[3], bf: 1, el: m[4],
-      tip: m[4] ? (m[4] === 'fire' ? 'A fire monster. Fire cannot hurt it and ice hurts it double.' : 'An ice monster. Ice cannot hurt it and fire hurts it double.') : 'Costs you health equal to its number when you step on it.' };
+      tip: m[4] ? (m[4] === 'fire' ? 'A fire monster. Fire cannot hurt it and ice hurts it double.' : 'An ice monster. Ice cannot hurt it and fire hurts it double.') : 'Deals damage equal to its number.' };
   });
+  // Monster gimmicks for the looped-in monsters.
+  TYPES.zombie.tip = 'Deals damage equal to its number. Killed by a weapon, it leaves a tomb in its square.';
+  // A dead zombie's tomb: any damage at all shatters it. Bare-handed, you just bump into it.
+  TYPES.tomb = { kind: 'monster', name: 'Tomb', lo: 1, hi: 1, bf: 0, hidden: true, tomb: true,
+    tip: 'A zombie\'s tomb. It blocks the way: bump into it bare-handed and your turn is spent. Any damage at all shatters it, from a weapon, a power, a trap or a bomb.' };
+  TYPES.snake.venom = true;
+  TYPES.snake.tip = 'Deals damage equal to its number, and its bite poisons you for that many turns too: 1 damage a turn, never below 1 health.';
 
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
   const HEROES = {
     knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 2, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Sturdy. Swords you pick up are 1 stronger.' },
     sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Frail, but powers start ready and recharge 30% faster. Carries three powers.' },
-    icemage:  { name: 'Ice Mage', sprite: 'icemage',  hp: 0,  slots: 2, unlock: 60, pass: { cut: 1 }, desc: 'Frost armour: monsters hit you for 1 less.' },
-    rogue:    { name: 'Rogue',    sprite: 'rogue',    hp: -1, slots: 2, unlock: 90, pass: { gold: 1 }, desc: 'Light fingers: +1 gold from every coin and gem.' },
+    // Shown as the Yeti; the id stays 'icemage' so saved picks and the Frozen Cavern reward keep working.
+    icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 2, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
+    // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
+    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 2, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
     cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 2, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
   };
 
@@ -78,7 +87,7 @@
     thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Every monster on the board takes 3 damage.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
     teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
-    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 9,  target: null,      unlock: 45, tip: 'Marks your square. After you step away, the card that takes its place is hit if it is a monster. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
+    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
     burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
     ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
   };
@@ -191,8 +200,9 @@
         id: hid,
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
-        sword: null, poison: 0, frost: 0, ward: 0, mark: null, pass: pass,
+        sword: null, poison: 0, frost: 0, ward: 0, pass: pass,
         powers: ids.map(function (id) {
+          if (POWERS[id].passive) return { id: id, max: 0, cd: 0 };
           const rc = Math.max(1, Math.ceil(POWERS[id].cd * (pass.rech || 1)));
           return { id: id, max: rc, cd: HD.startReady ? 0 : Math.ceil(rc / 2) };
         })
@@ -211,7 +221,7 @@
       grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, mark: S.hero.mark && { cell: S.hero.mark.cell, dmg: S.hero.mark.dmg },
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd }; })
       }
@@ -233,7 +243,8 @@
     return me === srcEl ? 0 : 2;
   }
   // Applies damage to a monster. Immortal monsters (the Phoenix) stop at 1 health unless lethal.
-  function hurtMonster(m, base, srcEl, lethal) {
+  // byWeapon: the blow came from a weapon the hero holds (sword, scythe, wand, bow, star).
+  function hurtMonster(m, base, srcEl, lethal, byWeapon) {
     const mult = relation(srcEl, m);
     if (m.sh && mult !== 0 && base > 0) { m.sh = 0; return { dealt: 0, killed: false, mult: 0, immune: false, absorbed: true }; }
     if (mult === 0 || base <= 0) return { dealt: 0, killed: false, mult: mult, immune: mult === 0 };
@@ -242,6 +253,12 @@
     const killed = nv <= 0;
     const dealt = m.v - Math.max(nv, 0);
     m.v = Math.max(nv, 0);
+    if (killed && byWeapon && m.type === 'zombie') {
+      // Cut down by a weapon, a zombie does not leave: it becomes a tomb in the same square
+      // (the same card, so it does not slide away). Any other death is final.
+      m.type = 'tomb'; m.v = 1; m.sh = 0; m.frozen = false;
+      return { dealt: dealt, killed: false, entombed: true, mult: mult, immune: false };
+    }
     return { dealt: dealt, killed: killed, mult: mult, immune: false };
   }
 
@@ -325,7 +342,7 @@
       } else if (!res.absorbed) {
         fx.push({ cell: p, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         if (TYPES[m.type].immortal) fx.push({ cell: p, text: 'Reborn', cls: 'info', anim: 'flare' });
-        if (el === 'ice') { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+        if (el === 'ice' && !res.entombed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
       }
     });
     // Slide everything one square along the arrow. The hero is a token in the line.
@@ -395,7 +412,7 @@
         }
       }
       order.forEach(function (p) {
-        const m = S.grid[p], v0 = m.v, res = hurtMonster(m, seen[p], null, false);
+        const m = S.grid[p], v0 = m.v, res = hurtMonster(m, seen[p], null, false, true);
         hits.push({ cell: p, dmg: seen[p] });
         fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' });
         if (res.killed) {
@@ -436,7 +453,7 @@
         const p = cy * w + cx, m = S.grid[p];
         beam.push(p);
         if (m && m.kind === 'monster' && !m.frozen && m.type !== 'webspider') {
-          const v0 = m.v, res = hurtMonster(m, H.sword.v, wel, wel === 'ice');
+          const v0 = m.v, res = hurtMonster(m, H.sword.v, wel, wel === 'ice', true);
           attack.hits++;
           if (res.immune) fx.push({ cell: p, text: 'Immune', cls: 'info', anim: 'immune' });
           else if (res.killed) {
@@ -446,7 +463,7 @@
           } else {
             fx.push({ cell: p, text: '−' + res.dealt, cls: 'info', anim: wel, hit: m.uid });
             if (TYPES[m.type].immortal) fx.push({ cell: p, text: 'Reborn', cls: 'info', anim: 'flare' });
-            if (wel === 'ice' && !res.absorbed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+            if (wel === 'ice' && !res.absorbed && !res.entombed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
           }
           if (first) attack.immune = res.immune;
         }
@@ -470,7 +487,7 @@
       cells.forEach(function (p, idx) {
         const m = S.grid[p];
         if (!m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') return;
-        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false);
+        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false, true);
         cost = Math.max(cost, res.dealt);
         if (idx === 0) { attack.dmg = res.dealt; attack.killed = res.killed; }
         if (res.killed) {
@@ -488,7 +505,7 @@
     } else if (card.kind === 'monster' && H.sword && !H.sword.bow) {
       // Armed: hit the monster instead of walking into it. If it dies, take its place.
       const wel = H.sword.el || null, v0 = card.v;
-      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice');
+      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice', true);
       const cost = res.mult ? Math.ceil(res.dealt / res.mult) : 0; // the blade wears down by the power it spends
       H.sword.v -= cost;
       attack = { dmg: res.dealt, killed: res.killed, el: wel, type: H.sword.type || 'sword', immune: res.immune };
@@ -496,9 +513,12 @@
       if (res.immune) fx.push({ cell: tpos, text: 'Immune', cls: 'info', anim: 'immune' });
       else fx.push({ cell: tpos, text: res.killed ? 'Slain' : '−' + res.dealt, cls: 'info', anim: res.killed ? 'puff' : null });
       if (res.killed && T.pays) { H.gold += v0; fx.push({ cell: tpos, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
-      if (!res.killed && !res.immune && !res.absorbed && wel === 'ice') { card.frozen = true; attack.froze = true; fx.push({ cell: tpos, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+      if (!res.killed && !res.immune && !res.absorbed && !res.entombed && wel === 'ice') { card.frozen = true; attack.froze = true; fx.push({ cell: tpos, text: 'Frozen', cls: 'info', anim: 'frost' }); }
       if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Sword broke', cls: 'info', anim: 'break' }); }
       attacked = !res.killed;
+    } else if (card.type === 'tomb') {
+      // Bare-handed (or holding a bow): you bump into the tomb. Nothing breaks, the turn is spent.
+      attacked = true; fx.push({ cell: tpos, text: 'Bump', cls: 'info' });
     } else if (card.kind === 'gold') {
       const g = card.v + (H.pass.gold || 0);
       H.gold += g; fx.push({ cell: tpos, text: '+' + g, cls: 'gold', anim: 'gold' });
@@ -509,6 +529,8 @@
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
         H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' });
+      } else if (H.pass.trapproof) {
+        fx.push({ cell: tpos, text: 'Dodged', cls: 'info', anim: 'immune' }); // the Ninja steps over traps
       } else if (T.el && H.ward > 0) {
         fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       } else {
@@ -522,6 +544,8 @@
       else {
         lost = hurtHero(S, Math.max(0, card.v - (H.pass.cut || 0)), true);
         fx.push({ cell: tpos, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
+        // Venom: a bite that hurts also poisons you for the monster's number of turns.
+        if (T.venom && lost > 0) { H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' }); }
       }
       if (T.pays) { H.gold += card.v; fx.push({ cell: tpos, text: '+' + card.v + 'G', cls: 'gold' }); }
     } else if (card.kind === 'reward') {
@@ -540,6 +564,8 @@
       H.pos = tpos;
     }
     H.turn++;
+
+    let tremor = null; // the square Tremor hit this turn, if any (set after the slide below)
 
     // Poison: 1 damage a turn while it lasts, but it never takes the hero below 1 health.
     if (H.poison > 0) {
@@ -609,6 +635,20 @@
         S.grid[far] = null;
         spawned.push({ card: spawn(S, far), cell: far });
       }
+      // Stepping into the middle square (odd-by-odd boards only): the square you left is filled
+      // clockwise. The card just before it going clockwise around the middle slides in, and its
+      // own square is then refilled by the normal slide below, so new cards still enter at the edge.
+      // E.g. on 1 2 3 / 4 5 6 / 7 8 9, moving 2 -> 5 slides 1 into 2 and a new card appears at 1.
+      const mid = (w % 2 && h % 2) ? ((h - 1) / 2) * w + (w - 1) / 2 : -1;
+      const gx = fx0 - (w - 1) / 2, gy = fy0 - (h - 1) / 2; // where the gap sits relative to the middle
+      // Skipped when this turn left other gaps too (a scythe swing killing several monsters): two gaps
+      // in one line would push a new card off the edge, so those turns refill the usual way.
+      const onlyGap = S.grid.every(function (c, p) { return c || p === from || p === H.pos; });
+      if (!sell && !attacked && !swap && !S.over && onlyGap && H.pos === mid && Math.abs(gx) + Math.abs(gy) === 1) {
+        const prev = (fy0 - gx) * w + (fx0 + gy); // one step back, clockwise: above -> left, right -> above, below -> right, left -> below
+        S.grid[from] = S.grid[prev];
+        S.grid[prev] = null;
+      }
       spawned = spawned.concat(settle(S, DIRS[dir]));
     }
 
@@ -626,16 +666,38 @@
       }
     }
 
-    // Tremor: once the hero has left the marked square, a monster that took its place is hit.
-    if (S.rng && H.mark && H.pos !== H.mark.cell && H.hp > 0) {
-      const mp = H.mark.cell, m = S.grid[mp];
+    // Tremor (passive): every step, a monster that slid into the square the hero left is hit.
+    if (S.rng && H.pos !== from && H.hp > 0 && H.powers.some(function (p) { return p.id === 'quake'; })) {
+      const mp = from, m = S.grid[mp];
       if (m && m.kind === 'monster') {
-        const res = hurtMonster(m, H.mark.dmg, null, false);
+        tremor = mp;
+        const res = hurtMonster(m, quakeDamage(S.powerLevel), null, false);
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         fx.push({ cell: mp, text: '', cls: 'info', anim: 'quake' });
       }
-      H.mark = null;
+    }
+
+    // Rats (passive): checked after the cards have slid. A rat that stays in the same square
+    // for 3 turns turns a random neighbouring card (never the hero or the room's reward,
+    // and not another rat) into a new rat just as strong. Moving resets the count.
+    if (S.rng && H.hp > 0) {
+      const born = [];
+      for (let p = 0; p < S.grid.length; p++) {
+        const r = S.grid[p];
+        if (!r || TYPES[r.type].ability !== 'breed' || born.indexOf(p) >= 0) continue;
+        if (r.rp !== p) { r.rp = p; r.t = 0; continue; }
+        r.t = (r.t || 0) + 1;
+        if (r.t < 3) continue;
+        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && c.kind !== 'reward' && c.type !== 'rat'; });
+        if (!options.length) continue; // boxed in: it stays ready and breeds as soon as there is room
+        r.t = 0;
+        const ap = options[Math.floor(S.rng() * options.length)];
+        const kid = makeCard(S, 'rat');
+        kid.v = r.v; kid.rp = ap; kid.t = 0;
+        S.grid[ap] = kid; born.push(ap);
+        fx.push({ cell: ap, text: 'Rat!', cls: 'hurt', anim: 'puff' });
+      }
     }
 
     // Directional traps turn clockwise, then hit whatever their heads point at.
@@ -652,6 +714,7 @@
           const ap = ay * w + ax;
           fx.push({ cell: ap, text: '', cls: 'info', anim: TYPES[tr.type].el });
           if (ap === H.pos) {
+            if (H.pass.trapproof) { fx.push({ cell: ap, text: 'Dodged', cls: 'info', anim: 'immune' }); continue; }
             if (H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; }
             const lost = hurtHero(S, tr.v, true);
             fx.push({ cell: ap, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
@@ -674,7 +737,7 @@
     // Growing blades still lying on the board.
     bladeGrowth(S, blades0, (S.hurts | 0) - hurt0, fx);
 
-    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits };
+    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
   }
 
   // What stepping in a direction would do, without changing the game.
@@ -731,6 +794,8 @@
     else fx.push({ cell: pos, text: '−' + res.dealt, cls: 'info', hit: m.uid });
   }
 
+  function quakeDamage(lv) { return Math.min(12, 3 + (lv | 0)); }
+
   // Activates the power in slot idx. Free action: it does not take a turn.
   // Returns null when it cannot be used, else { fx, spawned }.
   function usePower(S, idx, target) {
@@ -738,6 +803,7 @@
     const H = S.hero, pw = H.powers[idx];
     if (!pw || pw.cd > 0) return null;
     const def = POWERS[pw.id];
+    if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
     if (pw.id === 'dart') {
       // The dart picks its own victim: any monster on the board, at random.
@@ -778,11 +844,6 @@
         break;
       }
       case 'thunder': S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') { fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, 3, holes, fx); } }); break;
-      case 'quake': {
-        const dmg = Math.min(12, 3 + (S.powerLevel || 0));
-        H.mark = { cell: H.pos, dmg: dmg };
-        fx.push({ cell: H.pos, text: 'Tremor ' + dmg, cls: 'info', anim: 'quake' }); break;
-      }
       case 'ice': H.frost = 3; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
       case 'ward': H.ward = 4; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
@@ -807,8 +868,8 @@
   const WEAPON_RATE = 0.5;
   // Turns per +1 to new card values. Room targets run up to 100 gold, so runs are long and the climb is gentle.
   const RAMP = 30;
-  // Starting health before the hero's own bonus. Raised with the longer runs.
-  const HERO_BASE_HP = 15;
+  // Starting health before the hero's own bonus (halved from 15 to make runs tighter).
+  const HERO_BASE_HP = 8;
   const SIZES = [[3, 3], [3, 4], [4, 4], [4, 5], [5, 5], [5, 6], [6, 6], [6, 7], [7, 7]];
 
   const BASE_WEIGHTS = { coin: 28, gem: 5, potion: 12, chest: 3, poison: 6, trap: 6, rat: 14, bat: 10, skeleton: 8, ogre: 2, goldskull: 3, hive: 0, sword: 10, scythe: 0, firesword: 0, icesword: 0, firewand: 0, icewand: 0, elecbow: 0, ninjastar: 0, windblade: 0, painblade: 0, firearrow: 0, icearrow: 0, webspider: 0, phoenix: 0, bomb: 5, imp: 0, golem: 0, firetrap: 0, icetrap: 0 };
@@ -880,7 +941,7 @@
 
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
-    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: function (lv) { return Math.min(12, 3 + (lv | 0)); }, preview: preview, usePower: usePower, validTarget: validTarget,
+    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

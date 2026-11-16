@@ -12,7 +12,9 @@ S=setup(1); DC.move(S,1); assert.strictEqual(S.grid[0]&&S.grid[0].uid!==1,true,'
 // vertical: column 2,5,8 hero at 5 moves up to 2: 8 slides to 5, new at 8
 S=setup(4); DC.move(S,0); assert.strictEqual(S.grid[4].uid,8); assert(S.grid[7].uid!==8); console.log('column ok');
 // new cards only ever appear on the edge
-const L2={w:5,h:5,heroHP:20,unlock:10,weights:DC.BASE_WEIGHTS};
+// (No rats here: breeding rats can pack a whole line, and a wand or arrow that clears all of it
+// legitimately refills squares inside the board. Rat breeding has its own tests in test_rat.js.)
+const L2={w:5,h:5,heroHP:20,unlock:10,weights:Object.assign({},DC.BASE_WEIGHTS,{rat:0})};
 let bad=0,tot=0;
-for(let g=0;g<200;g++){ const S=DC.newGame(L2,g+1,{hero:'knight'}); const rng=DC.mulberry32(g); let t=0; while(!S.over&&t<200){ const r=DC.move(S,Math.floor(rng()*4)); if(r&&!r.fx.some(f=>f.text==='BOOM')){ for(const sp of r.spawned){ const x=sp.cell%5,y=(sp.cell/5)|0; tot++; if(!(x===0||x===4||y===0||y===4)) bad++; } } t++; } }
+for(let g=0;g<200;g++){ const S=DC.newGame(L2,g+1,{hero:'knight'}); const rng=DC.mulberry32(g); let t=0; while(!S.over&&t<200){ const r=DC.move(S,Math.floor(rng()*4)); if(r&&!r.fx.some(f=>f.text==='BOOM')&&!(r.attack&&(r.attack.beam||r.attack.sweep))){ /* multi-kill turns can leave two gaps in a line */ for(const sp of r.spawned){ const x=sp.cell%5,y=(sp.cell/5)|0; tot++; if(!(x===0||x===4||y===0||y===4)) bad++; } } t++; } }
 console.log('spawned',tot,'not on edge',bad); assert.strictEqual(bad,0);
