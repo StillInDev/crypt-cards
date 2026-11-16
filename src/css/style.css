@@ -760,3 +760,6 @@ body {
 .lo-info .li-stats dt { color: var(--muted); }
 .lo-info .li-stats dd { margin: 0; color: var(--saffron); }
 .test-gold { padding: 6px 8px; font-size: .6rem; }
+.tile .tlv { display: block; font-size: .72rem; color: var(--muted); text-align: center; }
+.tile.sel .tlv { color: var(--saffron); }
+.slot.poisoned .card { box-shadow: 0 -4px 0 0 #63c74d, 0 4px 0 0 #63c74d, -4px 0 0 0 #63c74d, 4px 0 0 0 #63c74d, inset 0 0 16px 3px rgba(99,199,77,.55); }

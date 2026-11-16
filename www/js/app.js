@@ -593,6 +593,7 @@
         el._h = hk;
       }
       el.classList.toggle('frozen', !!c.frozen);
+      el.classList.toggle('poisoned', c.kind === 'monster' && c.psn > 0);
       if (c.kind === 'bomb') { el.querySelector('.fz').textContent = c.t; el.classList.toggle('fuse', c.t <= 1); }
       var chip = el.querySelector('.chip');
       chip.className = 'chip';
@@ -999,7 +1000,7 @@
         if (c.type !== 'poison' && S.hero.pass.trapproof) t = 'A trap, but harmless to you: the Ninja steps right over it. ';
         break;
       case 'monster':
-        t = (c.frozen ? 'FROZEN: it cannot be hit, even with a weapon. Step on it to swap places. ' : '') + (T.el ? (T.el === 'fire' ? 'A fire monster. Immune to fire traps and weapons, takes double from ice. ' : 'An ice monster. Immune to ice traps and weapons, takes double from fire. ') : '') + (T.immortal ? 'It cannot be killed by damage, only worn down to 1. Step on it with no weapon, or hit it with an ice weapon, to finish it. ' : '') + 'Has ' + n + ' health. Deals ' + n + ' damage. With a sword you attack it instead, and take its place if it dies.';
+        t = (c.psn > 0 ? 'POISONED: it loses 1 health a turn for ' + c.psn + ' more turn' + (c.psn === 1 ? '' : 's') + '. ' : '') + (c.frozen ? 'FROZEN: it cannot be hit, even with a weapon. Step on it to swap places. ' : '') + (T.el ? (T.el === 'fire' ? 'A fire monster. Immune to fire traps and weapons, takes double from ice. ' : 'An ice monster. Immune to ice traps and weapons, takes double from fire. ') : '') + (T.immortal ? 'It cannot be killed by damage, only worn down to 1. Step on it with no weapon, or hit it with an ice weapon, to finish it. ' : '') + 'Has ' + n + ' health. Deals ' + n + ' damage. With a sword you attack it instead, and take its place if it dies.';
         if (c.sh) t += ' SHIELDED: the first hit is absorbed completely.';
         if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: 0 health, harmless. Walk through it.';
         if (T.pays) t += ' Pays ' + n + ' gold when you beat it.';
@@ -1264,7 +1265,7 @@
 
   // Level pips on a tile, plus a ▲ badge when the next level is affordable.
   function upgradeMarks(t, lv, cost, max) {
-    t.appendChild(pips(lv, max > 4 ? 'many' : '', max));
+    var lt = document.createElement('span'); lt.className = 'tlv'; lt.textContent = 'Lvl. ' + (lv + 1); t.appendChild(lt);
     t.setAttribute('aria-label', t.getAttribute('aria-label') + ', level ' + lv);
     if (cost != null && purse >= cost) {
       var up = document.createElement('span'); up.className = 'upb'; up.textContent = '▲'; up.title = 'Upgrade ready: press and hold';

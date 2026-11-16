@@ -81,7 +81,7 @@
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
     forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and dies if that is enough.' },
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and is poisoned: it loses 1 health a turn for 3 turns.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
@@ -96,12 +96,13 @@
   // ---- Power upgrades (bought with banked gold between runs) ----------------
   // Each power has levels 0..POWER_MAX_LV. amt: [base, gain per level] for its main number;
   // cdCut: turns of recharge removed per level. {n} in the text is the current amount.
-  const POWER_MAX_LV = 3;
-  const UPGRADE_COST = [150, 450, 1200]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
+  const POWER_MAX_LV = 4;
+  const DART_POISON = 3; // turns of poison a dart leaves in the monster it hits (1 damage a turn)
+  const UPGRADE_COST = [150, 450, 1200, 3000]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
-    forge:    { bonus: [0, 1, 3, 7], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power'] },
-    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and dies if that is enough.', what: '+2 damage' },
+    forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
+    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and is poisoned: it loses 1 health a turn for 3 turns.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
     massheal: { amt: [2, 1],  text: 'Heal {n}, and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
@@ -122,7 +123,7 @@
   function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
 
   // Hero upgrades: each level adds HERO_UP_HP max health.
-  const HERO_UPGRADE_COST = [100, 250, 500, 1000, 2000, 4000, 8000];
+  const HERO_UPGRADE_COST = [100, 250, 500, 1000];
   const HERO_MAX_LV = HERO_UPGRADE_COST.length;
   const HERO_UP_HP = 2;
   function heroLv(lv) { return Math.max(0, Math.min(HERO_MAX_LV, lv | 0)); }
@@ -263,7 +264,7 @@
     // Copy without the rng so a preview never advances the real game.
     return {
       level: S.level, rng: null, uid: S.uid, over: S.over, powerLevel: S.powerLevel,
-      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw }; }),
+      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, psn: c.psn }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
@@ -748,6 +749,18 @@
       }
     }
 
+    // Poisoned monsters (from the poison dart) lose 1 health a turn until the poison wears off.
+    if (S.rng && H.hp > 0) {
+      for (let p = 0; p < S.grid.length; p++) {
+        const m = S.grid[p];
+        if (!m || m.kind !== 'monster' || !(m.psn > 0)) continue;
+        m.psn--;
+        const res = hurtMonster(m, 1, null, false);
+        if (res.killed) { S.grid[p] = blankCard(S); fx.push({ cell: p, text: 'Slain', cls: 'info', anim: 'puff' }); }
+        else if (res.dealt) fx.push({ cell: p, text: '−1', cls: 'hurt', anim: 'poison', hit: m.uid });
+      }
+    }
+
     // Rats (passive): checked after the cards have slid. A rat that stays in the same square
     // for 3 turns bites a random neighbouring card (anything but the hero and the room's reward,
     // other rats included). An empty square is simply taken over by a new rat. Otherwise the card
@@ -926,7 +939,12 @@
         else { H.sword = { v: v, type: 'sword', el: null }; fx.push({ cell: H.pos, text: 'Sword ' + v, cls: 'info', anim: 'gold' }); }
         break;
       }
-      case 'dart': hitMonster(S, target, amt, holes, fx); extra = { dart: target }; break;
+      case 'dart': {
+        hitMonster(S, target, amt, holes, fx); extra = { dart: target };
+        const m = S.grid[target];
+        if (m && m.kind === 'monster') { m.psn = (m.psn | 0) + DART_POISON; fx.push({ cell: target, text: 'Poison', cls: 'hurt', anim: 'poison' }); }
+        break;
+      }
       case 'fire': S.grid[target] = null; holes.push(target); fx.push({ cell: target, text: 'Burn', cls: 'hurt', anim: 'fire' }); break;
       case 'scythe': {
         const x = H.pos % w, y = (H.pos / w) | 0;
