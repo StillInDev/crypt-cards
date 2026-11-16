@@ -26,16 +26,18 @@
   </div>
 </section>
 
-<section class="view" id="v-menu" aria-label="Dungeon map">
+<section class="view" id="v-menu" aria-label="Levels">
   <div class="wrap">
     <div class="top">
       <div>
-        <h2>Choose a room</h2>
-        <p class="sub">Reach a room's target score, then step on the locked reward to clear it and open the rooms below. Tap an open room to play it.</p>
+        <h2>Choose a level</h2>
+        <p class="sub">Reach a level's target score, then step on the locked reward to clear it and open the next levels. Pick a level number to see it.</p>
       </div>
       <button class="btn" id="b-home" type="button">Home</button>
     </div>
-    <div class="mapwrap" role="group" aria-label="Dungeon map"><div class="map" id="map"></div></div>
+    <p class="lv-count" id="lv-count"></p>
+    <div class="lv-tabs" id="lv-tabs" role="tablist" aria-label="Levels"></div>
+    <div class="lv-panel" id="lv-panel" role="tabpanel"></div>
     <details>
       <summary>How it plays</summary>
       <ul>

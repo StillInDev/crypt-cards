@@ -373,7 +373,7 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .lv-art { width: 96px; height: 96px; display: grid; place-items: center; background: #14121f; border: 5px solid var(--ra, #9a6fd0); }
 .lv-panel.locked .lv-art { border-color: #4a4660; }
 .lv-panel.done .lv-art { border-color: var(--moss); }
-.lv-art img { width: 64px; height: 64px; image-rendering: pixelated; }
+.lv-art img { width: 64px; height: 64px; }
 .lv-panel.locked .lv-art img { opacity: .55; }
 .lv-num { margin-top: 8px; font-family: var(--display); font-size: .6rem; color: var(--ra, var(--saffron)); }
 .lv-panel.locked .lv-num { color: #8b86a0; }
@@ -386,7 +386,7 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .lv-panel.done .f-best { color: #b9f1ad; }
 .lv-reward { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; text-align: left; max-width: 320px; }
 .lv-reward .rw { flex: 0 0 auto; }
-.lv-reward .rw { width: 32px; height: 32px; padding: 2px; background: #14121f; image-rendering: pixelated; }
+.lv-reward .rw { width: 32px; height: 32px; padding: 2px; background: #14121f; }
 .lv-panel.locked .lv-reward .rw { filter: brightness(.6); }
 .lv-status { margin: 2px 0 8px; color: #d6d2e4; font-size: .95rem; }
 .lv-panel.done .lv-status { color: #b9f1ad; }
