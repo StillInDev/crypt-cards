@@ -2,26 +2,29 @@
 
 - **Sprite id:** many pieces, each with its own file name (listed under **Deliver**). All go in `art/interface/ui/`.
 - **Kind:** interface frames, panels, buttons and badges
-- **Read first:** `art/README.md` (palette and style rules). This request **changes the size rule**: see below.
-- **References:** `src/img/sprites/players/knight.png` (outline and shading quality), `src/img/sprites/interface/bars.png` and `src/img/sprites/interface/web.png`
-  (the interface sprites that already exist), and a screenshot of the game if you have one
+- **Read first:** `art/README.md` (style rules). This request **changes the size rule**: see below.
+- **References:** `src/img/sprites/players/knight.png` (outline and shading quality), `src/img/sprites/interface/bars.png`,
+  `src/img/sprites/interface/key.png` and `src/img/sprites/interface/web.png` (the interface sprites that already exist),
+  the sheets in `art/sheets/` (the style to match), and a screenshot of the game if you have one
 
 ## Why this request is different
 
-Every other request is one 18×18 sprite. This one covers everything **around** the sprites: the board, the
+Every other request is one sprite. This one covers everything **around** the sprites: the board, the
 card frames, the panels at the top of the screen, the power buttons, the weapon box, pop-ups, the home screen,
-the upgrade marks, the level select screen and the buttons. Today all of these are drawn in code with flat colours and square 4-pixel
-"notched" borders. The look works, but it is plain. We want hand-drawn pixel frames that match the sprites.
+the upgrade marks, the dungeon map and the buttons. Today all of these are drawn in code with flat colours and square
+"notched" borders. The look works, but it is plain, and it no longer matches the sprites since the new art
+sheets arrived. We want drawn frames in the same style as the sprites.
 
 ## Rules for this request
 
-Everything in the README still holds (palette only, hard alpha, `#181425` outline, lit from the left),
-**except the 18×18 size**. Instead:
+Everything in the README still holds (the chunky chibi style of the sheets, a thick dark outline, transparent
+background), **except the sprite size**. Instead:
 
 | Rule | Value |
 |---|---|
-| Pixel scale | Draw at the same chunkiness as the sprites. On a phone one art pixel shows as about **3 screen pixels**. All sizes below are in **art pixels** unless they say "screen px" |
-| Frames that stretch | Deliver as a **9-slice**: a small square image whose corners stay fixed and whose edges and middle repeat. Say the border width in your notes. Edges must tile cleanly (a 1–2 pixel repeating pattern, or plain) |
+| Units | The sizes in the tables below are in **units**. One unit shows as about **3 screen pixels** on a phone. Sizes that say "screen px" are what the player sees |
+| Delivery size | Draw and deliver every piece at **8 pixels per unit** (a 16×16 unit frame is a 128×128 PNG, and its 3-unit border is 24 px). The game scales them down, the same way it scales the sprites |
+| Frames that stretch | Deliver as a **9-slice**: a square image whose corners stay fixed and whose edges and middle repeat. Say the border width in your notes. Edges must tile cleanly (a short repeating pattern, or plain) |
 | Centres | A frame's centre is **transparent** unless the piece says otherwise. The game fills it with a colour (often the room's colour) |
 | Text | Do **not** draw words or numbers. The game writes all text in its own pixel fonts (Press Start 2P for titles and numbers, Pixelify Sans for body text). The one exception is the title logo |
 | States | Where a piece has states (ready, pressed, locked...), deliver one file per state at the same size, so the game can swap them without anything moving |
@@ -56,20 +59,20 @@ Every room tints the screen. The game will keep doing this, so frames must read 
 | Vampire Crypt | `#270f1d` | `#5b2641` | `#ff5560` |
 | Throne Room | `#1e1236` | `#56366f` | `#fee761` |
 
-These room colours are not in the palette and that is fine: the game paints them. Your pixels stay in the
-palette. Neutral frames (greys, slates, `#181425`) are safest; anything that must glow uses yellow `#fee761`.
+The game paints these room colours itself. Neutral frames (greys, slates, the dark outline `#181425`) are
+safest; anything that must glow uses yellow `#fee761`.
 
 ---
 
 ## 1. Board
 
 The board is a grid of square cells, from **3×3 up to 7×7**. A cell is between **40 and 118 screen px**
-(about 13 to 39 art pixels); it shrinks as the grid grows. Each card sits inside its cell with a small gap.
+(about 13 to 39 units); it shrinks as the grid grows. Each card sits inside its cell with a small gap.
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Board frame | `ui_board.png` | 9-slice, about 16×16 with a 5-pixel border | Optional stone or wooden table edge drawn **around** the whole grid. Must work from 3×3 to 7×7 and must not eat into the cells. Centre transparent |
-| Empty cell | `ui_cell_empty.png` | 9-slice, about 12×12 with a 2-pixel border | Shown where a card was used up and nothing slid in. Today a faint dashed outline. Should read as "nothing here", mostly transparent |
+| Board frame | `ui_board.png` | 9-slice, about 16×16 with a 5-unit border | Optional stone or wooden table edge drawn **around** the whole grid. Must work from 3×3 to 7×7 and must not eat into the cells. Centre transparent |
+| Empty cell | `ui_cell_empty.png` | 9-slice, about 12×12 with a 2-unit border | Shown where a card was used up and nothing slid in. Today a faint dashed outline. Should read as "nothing here", mostly transparent |
 
 ## 2. Card frames
 
@@ -77,7 +80,7 @@ Every card is a square frame with the sprite in the middle and small numbers in 
 (health top right, damage bottom left, an item's value bottom right). The **face colour** is the room's card
 colour from the table above, so the frame's centre stays transparent.
 
-All card frames: **9-slice, about 16×16 with a 3-pixel border**, rounded or chipped corners welcome.
+All card frames: **9-slice, about 16×16 with a 3-unit border**, rounded or chipped corners welcome.
 
 | State | File | When | Today |
 |---|---|---|---|
@@ -106,8 +109,8 @@ label on top and a number underneath.
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Panel frame | `ui_panel.png` | 9-slice, about 12×12 with a 3-pixel border | Shared by all three panels. Dark slate `#262b44` centre is fine here (not transparent) |
-| Health bar, back | `ui_hpbar_back.png` | 9-slice, about 6×4 | A thin trough under the health number, full panel width, about 3 art pixels tall |
+| Panel frame | `ui_panel.png` | 9-slice, about 12×12 with a 3-unit border | Shared by all three panels. Dark slate `#262b44` centre is fine here (not transparent) |
+| Health bar, back | `ui_hpbar_back.png` | 9-slice, about 6×4 | A thin trough under the health number, full panel width, about 3 units tall |
 | Health bar, fill | `ui_hpbar_fill.png`, `ui_hpbar_low.png` | 9-slice, same height | Green `#63c74d` normally, red `#e43b44` at 35% health or less. The game crops it to the current health |
 | Gold icon (optional) | `ui_icon_gold.png` | 9×9 | A small coin to sit beside the Gold label. May reuse the look of `coin` |
 | Best icon (optional) | `ui_icon_best.png` | 9×9 | A small trophy, crown or star beside the Best label |
@@ -123,7 +126,7 @@ carries 4**, so design for **four buttons in a row on a 390 screen px phone**: e
 and 52 tall** (up to about 130 wide on a bigger screen). Each button holds the power's icon (34 screen px) on
 the left, the power's name, and a one-word state underneath. A thin progress bar runs along the bottom edge.
 
-All power buttons: **9-slice, about 14×14 with a 3-pixel border**. Centre may be filled (dark slate).
+All power buttons: **9-slice, about 14×14 with a 3-unit border**. Centre may be filled (dark slate).
 
 | State | File | When | What it should say at a glance |
 |---|---|---|---|
@@ -147,8 +150,8 @@ arrow, a `coin` sprite, and the gold it sells for. About **48 screen px tall**, 
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Weapon box | `ui_sell.png` | 9-slice, about 12×12 with a 3-pixel border | Same family as the card frame, so it reads as "your hand". Dark centre is fine |
-| Weapon box, pressed | `ui_sell_down.png` | Same | Pushed in by 1 pixel |
+| Weapon box | `ui_sell.png` | 9-slice, about 12×12 with a 3-unit border | Same family as the card frame, so it reads as "your hand". Dark centre is fine |
+| Weapon box, pressed | `ui_sell_down.png` | Same | Pushed in by 1 unit |
 | Arrow | `ui_arrow.png` | 7×5, pointing right | The "→" between the weapon and the coin. Grey `#c0cbdc` |
 
 ## 6. Toast
@@ -159,7 +162,7 @@ yellow `#fee761` slab with dark text and a dark notched edge.
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Toast | `ui_toast.png` | 9-slice, about 12×12 with a 3-pixel border | Filled centre. Keep it yellow so it pops, or make it a parchment or banner. Dark text must stay readable on it |
+| Toast | `ui_toast.png` | 9-slice, about 12×12 with a 3-unit border | Filled centre. Keep it yellow so it pops, or make it a parchment or banner. Dark text must stay readable on it |
 
 ## 7. Info popup
 
@@ -169,7 +172,7 @@ three lines of text on the right. The hero screen uses the same panel over the h
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Info panel | `ui_info.png` | 9-slice, about 16×16 with a 4-pixel border | Dark `#262b44` or `#181425` centre. Yellow `#fee761` frame today; a scroll or stone tablet would suit. Keep the centre plain so the text reads |
+| Info panel | `ui_info.png` | 9-slice, about 16×16 with a 4-unit border | Dark `#262b44` or `#181425` centre. Yellow `#fee761` frame today; a scroll or stone tablet would suit. Keep the centre plain so the text reads |
 | Locked tag | `ui_tag_locked.png` | 9-slice, about 8×8 | A small dark-red tag the panel shows above a locked hero or power ("Unlocks at..."). Dark red `#a22633` / `#3e2731` |
 
 ## 8. Game over sheet
@@ -179,7 +182,7 @@ up to three buttons. About 380 screen px wide.
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Sheet | `ui_sheet.png` | 9-slice, about 20×20 with a 5-pixel border | The grandest frame in the game: a yellow `#fee761` frame today. Dark centre |
+| Sheet | `ui_sheet.png` | 9-slice, about 20×20 with a 5-unit border | The grandest frame in the game: a yellow `#fee761` frame today. Dark centre |
 
 ## 9. Title and loadout screen
 
@@ -190,7 +193,7 @@ count below), then a big **Play** button and a line of grey text.
 | Piece | File | Size | Notes |
 |---|---|---|---|
 | Title logo | `ui_logo.png` | about 120×40 | "CRYPT CARDS" as a pixel logo, on two lines or one. Yellow `#fee761` / gold `#feae34` letters with a dark outline. A card, skull or tomb worked into it is welcome. The only piece with text in it |
-| Loadout panel | `ui_loadout.png` | 9-slice, about 24×24 with a 4-pixel border | A large panel, about 520×320 screen px. Today slate with a faint yellow glow on the floor where the hero stands. A crypt alcove or stone niche would suit. Filled centre |
+| Loadout panel | `ui_loadout.png` | 9-slice, about 24×24 with a 4-unit border | A large panel, about 520×320 screen px. Today slate with a faint yellow glow on the floor where the hero stands. A crypt alcove or stone niche would suit. Filled centre |
 | Hero floor | `ui_floor.png` | about 30×6 | The shadow or stone slab under the hero's feet. The hero sprite is shown 108–144 screen px tall above it |
 | Power slot, filled | `ui_eslot.png` | 18×18 | A frame around each equipped power's icon (54 screen px). Today slate with a yellow edge. The slots bob gently |
 | Power slot, empty | `ui_eslot_empty.png` | 18×18 | An open slot with a "+". Dashed or broken outline, mostly transparent. The hero has 3 slots (Sorcerer 4), so up to four sit in a row |
@@ -201,7 +204,7 @@ about 84×100 screen px each, one per hero or power, with two tabs above it ("He
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Tile | `ui_tile.png` | 9-slice, about 12×12 with a 3-pixel border | Holds an icon (54 screen px) and a name. Filled centre |
+| Tile | `ui_tile.png` | 9-slice, about 12×12 with a 3-unit border | Holds an icon (54 screen px) and a name. Filled centre |
 | Tile, selected | `ui_tile_sel.png` | Same | Equipped or chosen. Yellow edge today |
 | Tile, locked | `ui_tile_locked.png` | Same | Not unlocked yet. The game also greys the icon and lays `bars` over it |
 | Tab underline | `ui_tab.png` | 9-slice, about 6×3 | Under the active tab. Yellow |
@@ -217,35 +220,46 @@ recharge). Press and hold a tile to open its details panel, which then shows the
 |---|---|---|---|
 | Purse | `ui_purse.png` | 12×12 | Beside the banked gold total in the screen's header, next to the Done button. Today the `coin` sprite. A small coin pouch or chest would make "banked gold" read differently from gold picked up in a run |
 | Level pip, empty | `ui_pip.png` | 3×3 | A row of pips under each tile's name and in the details panel, one per upgrade level. Empty = not bought. Today a dark square with a grey ring |
-| Level pip, filled | `ui_pip_on.png` | 3×3 | A bought level. Yellow `#fee761` today. Heroes show 7 pips in a row, so they must stay readable at this size with a 1-pixel gap |
+| Level pip, filled | `ui_pip_on.png` | 3×3 | A bought level. Yellow `#fee761` today. Heroes show 7 pips in a row, so they must stay readable at this size with a 1-unit gap |
 | Upgrade ready badge | `ui_upgrade.png` | 7×7 | Top right corner of a tile when the player can afford its next level. Today a green `#63c74d` tag with a "▲" that bobs. An up-arrow, a spark or a hammer |
 | Upgrade button | uses `ui_btn_go.png` | | The Upgrade button in the details panel is a normal button holding "Upgrade" plus a `coin` and the cost. It is greyed out (`ui_btn_off.png`) when the purse is short |
 
-## 10. Level select
+## 10. Dungeon map and area tabs
 
-The "Choose a level" screen. A row of **numbered tabs** (1 to 12) scrolls sideways across the top; the chosen
-tab shows a **level panel** underneath with the level's picture, name, facts, reward and a Play button.
+Pressing Play opens the **dungeon map** ("Choose a room"). The dungeon is split into **5 areas** (The Crypt,
+The Depths, Sunken Halls, Ashen Keep, The Abyss). A row of **area tabs** across the top switches between them;
+under it, the chosen area's map shows its 12 rooms as squares joined by paths, from an **Entrance** label at the
+top down to the **boss room** at the bottom.
+
+- An area is **sealed** until the boss of the area before it is beaten. Each boss drops a **special key** to the
+  next area. A sealed area's tab shows a key, and its map shows every room sealed.
+- A room opens once any room above it that leads to it is cleared. Its square shows the room's monster icon,
+  the board size (bottom right, "3×3"), its target score underneath, and its reward sprite (top right corner).
+- The map header shows the area's name, "4 of 12 rooms cleared", and a line with the key: "Beat Throne Room for
+  the key to The Depths".
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Level tab | `ui_lvtab.png` | 9-slice, about 12×12 with a 3-pixel border | A square tab, 48 screen px, holding the level number. Its bottom edge is a stripe in the level's accent colour, so draw that stripe **white `#ffffff` / light grey `#c0cbdc`** and the game will tint it; or deliver it neutral and say so |
-| Level tab, chosen | `ui_lvtab_on.png` | Same | The selected tab. Today filled with the accent colour and ringed in white. Must stand out from the rest of the row |
-| Level tab, sealed | `ui_lvtab_locked.png` | Same | A level not open yet. Dark and dim |
-| Cleared tick | `ui_tick.png` | 5×5 | Top right corner of a cleared level's tab. Green `#63c74d` |
-| Level panel | `ui_lvpanel.png` | 9-slice, about 20×20 with a 4-pixel border | About 520×380 screen px. The centre is filled by the game with the level's card colour (darkened), so keep the centre transparent. A thick accent stripe runs along its bottom edge today (tint it like the tab). A carved doorway or crypt arch would suit |
-| Level panel, sealed | `ui_lvpanel_locked.png` | Same | Grey and shut |
-| Level picture frame | `ui_lvart.png` | 9-slice, about 14×14 with a 3-pixel border | A frame around the level's monster icon (64 screen px), 96 screen px in all. Its border is the accent colour today (green when cleared, grey when sealed); tintable as above. Sealed levels show the `bars` sprite inside |
-| Level picture frame, final | `ui_lvart_boss.png` | Same | The last level (Throne Room), which shows the `goldskull`. Should look grander: a crown, gold trim, skulls |
-| Fact box | `ui_fact.png` | 9-slice, about 8×8 with a 2-pixel border | Three small boxes in a row (Board, Target, Best), about 74 screen px wide, each with a label and a number. Semi-dark centre today; make it a filled dark slate |
-| Reward frame | `ui_reward.png` | 12×12 | A small dark frame holding the level's reward sprite (32 screen px), next to "Reward: ..." |
+| Area tab | `ui_areatab.png` | 9-slice, about 12×12 with a 3-unit border | About 150×44 screen px, holding the area's number and name (the game writes both). Dark slate today |
+| Area tab, chosen | `ui_areatab_on.png` | Same | The area being shown. Purple `#4a3a72` with a lilac `#9a6fd0` ring today. Must stand out from the rest of the row |
+| Area tab, sealed | `ui_areatab_locked.png` | Same | An area not open yet. Dark and dim; the game puts a small `key` sprite on it |
+| Room square | `ui_room.png` | 9-slice, about 14×14 with a 3-unit border | 70 screen px. The border is the room's accent colour today, so draw it **white `#ffffff` / light grey `#c0cbdc`** and the game will tint it, or deliver it neutral and say so. Dark centre (`#2a2840`) holding the room's icon |
+| Room square, cleared | `ui_room_done.png` | Same | Green `#63c74d` border today. A small tick or laurel in a corner is welcome |
+| Room square, sealed | `ui_room_locked.png` | Same | Grey border, dim; the game shows the `bars` sprite inside |
+| Boss room square | `ui_room_boss.png` | Same | The last room of each area, which shows the `goldskull`. Should look grander: a crown, gold trim, skulls. The game puts the `key` sprite on its top left corner |
+| Reward corner | `ui_room_reward.png` | 12×12 | The small dark box at a room's top right corner holding its reward sprite (36 screen px). Faded once the room is cleared |
+| Entrance sign | `ui_entrance.png` | 9-slice, about 12×8 with a 2-unit border | The "Entrance" label at the top of each map (the game writes the word). Yellow `#fee761` edge today. A wooden sign or stone lintel would suit |
+| Path, open | `ui_path.png` | 4×4, tiles in both directions | The lines joining rooms, about 6 screen px thick. Lilac `#9a6fd0` today. The game draws them at any angle, so keep it a plain or evenly speckled strip |
+| Path, sealed | `ui_path_dark.png` | Same | A path into a room that is not open yet. Dark `#3d3a52` |
 
-The Play button under the panel is a primary button (`ui_btn_go.png`); for a sealed level it reads "Locked".
+The map's backdrop (today a dark brick pattern) is a separate request: `art/backgrounds/map.md`. The area tab
+icons and the special key are in `art/interface/areas.md`.
 
 ## 11. Buttons
 
 Every button in the game is one of these. Buttons hold text the game writes (Press Start 2P, small capitals).
-All: **9-slice, about 12×12 with a 3-pixel border**, filled centre. Deliver each in two states: up, and
-`_down` (pressed, the face drops 1 pixel and the bottom shade shrinks).
+All: **9-slice, about 12×12 with a 3-unit border**, filled centre. Deliver each in two states: up, and
+`_down` (pressed, the face drops 1 unit and the bottom shade shrinks).
 
 | Kind | File | Used for | Today |
 |---|---|---|---|
@@ -259,9 +273,9 @@ All: **9-slice, about 12×12 with a 3-pixel border**, filled centre. Deliver eac
 ## What can stay as it is
 
 - The level editor screen (a developer tool): it can use the normal buttons and panels, nothing special.
-- The particle effects (slashes, sparks, beams, heal plus signs): they are animated in code and are out of scope.
-- The page background grid pattern: the room colour plus a faint grid is fine, unless you want to offer a
-  repeating floor tile (`ui_page_bg.png`, 16×16, very dark and low contrast) as an option.
+- The effects (slashes, sparks, beams, heal plus signs, power casts): they have their own requests in
+  `art/animations/`.
+- Backgrounds (the map backdrop and the room floors): they have their own requests in `art/backgrounds/`.
 
 ## Priority
 
@@ -273,26 +287,25 @@ If you cannot do everything at once, do it in this order, because it is what the
 4. Buttons (section 11)
 5. Info popup, toast and game over sheet (sections 6–8)
 6. Title logo and loadout screen (section 9)
-7. Level select (section 10) and the upgrade pieces (end of section 9)
+7. Dungeon map and area tabs (section 10) and the upgrade pieces (end of section 9)
 8. Board frame (section 1) and the small badges
 
 ## Do not
 
-- Do not use colours outside the palette.
 - Do not draw text or numbers into any piece except the title logo.
 - Do not fill frame centres that the request says are transparent: the room colours must show through.
 - Do not make the Ready, Always on and Auto power buttons look alike. A player must tell at a glance which
   power to press (Ready), which works by itself every turn (Always on) and which will fire by itself when
   needed (Auto).
 - Do not let card frames get heavier than the sprites inside them. On a 7×7 board a card is only about
-  13 art pixels across, so the frame must stay thin (3 pixels at most) and the sprite must stay the star.
+  13 units across, so the frame must stay thin (3 units at most) and the sprite must stay the star.
 
 ## Deliver
 
-Every file named above, in `art/interface/ui/`, each as the real-size PNG plus an 8× copy named `<file>@8x.png`.
-For each 9-slice, write its border width in your notes (for example "`ui_card.png`: 3 px on every side").
+Every file named above, in `art/interface/ui/`, as a PNG at 8 pixels per unit (see the rules at the top).
+For each 9-slice, write its border width in your notes (for example "`ui_card.png`: 24 px on every side").
 
-Also send **one mock-up** (`ui_mockup.png`, at real art-pixel scale, any size) showing the play screen put
+Also send **one mock-up** (`ui_mockup.png`, about 1170 px wide, the size of a phone screen at 3×) showing the play screen put
 together: top bar, HUD, a power bar with four buttons in different states (Ready, Recharging, Always on,
 Auto), a 4×4 board with a few existing sprites on it, and the weapon box. Use the Catacombs or Ember Halls
 colours from the table above. This is the main thing we will review.

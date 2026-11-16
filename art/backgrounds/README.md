@@ -1,14 +1,14 @@
 # Backgrounds
 
-Requests for full backgrounds go here: the dungeon map backdrop, the board's floor behind the cards,
-one floor per room theme (Cellar, Sewers, Barracks and so on), and the home screen.
+Full backgrounds that sit behind everything else. They are seamless tiles, dark and quiet, so the cards,
+rooms and text on top always stand out.
 
-Nothing is requested yet. Today every background is a flat colour or a CSS pattern:
+| Request | What it covers | In the game today |
+|---|---|---|
+| [room-floors.md](room-floors.md) | One floor per room theme (12), behind the play screen | A flat colour per room (`THEMES` in `src/js/app.js`, the `bg` value) |
+| [map.md](map.md) | One backdrop per area (5), behind the dungeon map | A dark brick pattern (`.mapwrap` in `src/css/style.css`) |
 
-- **Map backdrop:** a dark brick pattern (`.mapwrap` in `src/css/style.css`).
-- **Play screen:** each room's theme colour (`THEMES` in `src/js/app.js`, the `bg` value).
-
-To request one, copy `art/TEMPLATE.md` here and say:
+To request another background, copy `art/TEMPLATE.md` here and say:
 
 - which screen or room it is for, and the size it must fill (backgrounds must tile, or stretch to a phone
   screen in portrait without the important part being cut off),
