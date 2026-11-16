@@ -891,7 +891,7 @@
         if (T.tomb) t = T.tip;
         if (c.type === 'zombie') t += ' Killed by a weapon, it leaves a tomb.';
         if (T.venom) t +=' Its bite also poisons you for ' + n + ' turns.';
-        if (T.ability === 'breed') t += ' If it stays put ' + (5 - (c.t || 0)) + ' more turns, it bites a neighbouring card for ' + n + '; an empty square or a card it destroys becomes another rat of ' + n + '.';
+        if (T.ability === 'breed') t += ' If it stays put ' + (3 - (c.t || 0)) + ' more turns, it bites a neighbouring card for ' + n + '; an empty square or a card it destroys becomes another rat of ' + n + '.';
         break;
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
