@@ -376,6 +376,9 @@
     hc.className = 'card';
     hc.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="jw"><i></i><i></i><i></i></span>';
     hc.insertBefore(img(DC.HEROES[heroSel].sprite, 'art'), hc.firstChild);
+    // Power cast layers: one paints behind the hero sprite, one in front (see .cast-* in the CSS).
+    var auB = document.createElement('span'); auB.className = 'au bk'; hc.insertBefore(auB, hc.firstChild);
+    var auF = document.createElement('span'); auF.className = 'au fr'; hc.appendChild(auF);
     hc.appendChild(img('sword', 'held'));
     var wv = document.createElement('span'); wv.className = 'wv'; hc.appendChild(wv);
     heroEl = slotFor(hc);
@@ -619,10 +622,20 @@
     floaters(r.fx);
     render();
     playFx(r.fx);
+    castLook(r.id);
     if (r.id === 'dart' && r.target != null) shoot('dart', S.hero.pos, r.target);
     if (r.id === 'scythe') flash(heroEl, 'spin', 420);
     if (r.id === 'ice') flash(board, 'frostfx', 700);
     if (r.id === 'forge') flash(heroEl.querySelector('.held'), 'swing', 320);
+  }
+  // Every power dresses the hero in its own look for a moment: glow colour, body motion, particles.
+  var castTimer = null;
+  function castLook(id) {
+    heroEl.className = heroEl.className.replace(/\bcast-\S+/g, '').trim();
+    void heroEl.offsetWidth;
+    heroEl.classList.add('cast-' + id);
+    clearTimeout(castTimer);
+    castTimer = setTimeout(function () { heroEl.classList.remove('cast-' + id); }, 800);
   }
   // A small projectile from one square to another (dart).
   function shoot(kind, fromCell, toCell, color) {

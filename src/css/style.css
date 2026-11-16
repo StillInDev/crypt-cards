@@ -591,6 +591,123 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .node:focus-visible { outline: 4px solid #fff; outline-offset: 6px; }
 .entrance { z-index: 2; }
 
+/* ---- Power casts: each power gives the hero its own look while it fires ----
+   .au.bk paints behind the sprite, .au.fr in front. 1em = 1% of a card (font-size below),
+   so pixel particles drawn with box-shadow scale with the board. */
+.card .au { position: absolute; inset: 0; pointer-events: none; display: none; font-size: calc(var(--cs) / 100); }
+.card .au.bk { z-index: 0; }
+.card .au.fr { z-index: 5; }
+.slot.hero[class*="cast-"] .au { display: block; }
+.au::before, .au::after { content: ''; position: absolute; opacity: 0; }
+.slot.hero[class*="cast-"] .card .art { position: relative; z-index: 1;
+  filter: drop-shadow(2px 0 0 var(--g)) drop-shadow(-2px 0 0 var(--g)) drop-shadow(0 2px 0 var(--g)) drop-shadow(0 -2px 0 var(--g)); }
+.slot.hero[class*="cast-"] .card { --edge: var(--g); }
+/* shared pixel square used by the particle layers */
+.cast-forge .au.fr::before, .cast-dart .au.fr::after, .cast-fire .au.fr::before, .cast-scythe .au.fr::before,
+.cast-ice .au.fr::before, .cast-teleport .au.fr::before, .cast-quake .au.fr::before, .cast-massheal .au.fr::after {
+  left: 50%; top: 50%; width: 5em; height: 5em; margin: -2.5em 0 0 -2.5em; }
+@keyframes au-glow { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes au-out { 0% { transform: scale(.25); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+@keyframes au-up { 0% { transform: translateY(18em); opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-26em); opacity: 0; } }
+
+/* Healing: lifted on a soft green glow, plus signs float up */
+.slot.hero.cast-heal { --g: #7be26b; }
+.cast-heal .card .art { animation: c-lift .76s steps(8); }
+@keyframes c-lift { 40%, 60% { transform: translateY(-9%); } }
+.cast-heal .au.bk::before { inset: 0; background: radial-gradient(circle, rgba(123,226,107,.7) 0 30%, rgba(123,226,107,.25) 31% 55%, rgba(0,0,0,0) 56%); animation: au-glow .76s steps(6) forwards; }
+.cast-heal .au.fr::before, .cast-heal .au.fr::after { content: '+'; font-family: var(--display); font-size: 26em; color: #a6f19a; text-shadow: 0 .12em 0 #1f5a2a; left: 6%; top: 30%; line-height: 1; animation: c-plus .76s steps(7) forwards; }
+@keyframes c-plus { 0% { transform: translateY(60%); opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-150%); opacity: 0; } }
+.cast-heal .au.fr::after { content: '+'; font-size: 18em; left: auto; right: 4%; top: 45%; animation-delay: .14s; }
+
+/* Mass healing: a golden ring rolls outward, the hero pulses, a crown of plus signs */
+.slot.hero.cast-massheal { --g: #fee761; }
+.cast-massheal .card .art { animation: c-pulse .76s steps(8); }
+@keyframes c-pulse { 25% { transform: scale(1.22); } 50% { transform: scale(.94); } 75% { transform: scale(1.14); } }
+.cast-massheal .au.bk::before { inset: -14%; border: 4em solid #fee761; box-shadow: 0 0 0 2em #7be26b; border-radius: 50%; animation: au-out .76s steps(7) forwards; }
+.cast-massheal .au.fr::after { width: 6em; height: 6em; background: #a6f19a; animation: au-up .76s steps(7) forwards;
+  box-shadow: -30em 6em 0 #fee761, 30em 6em 0 #fee761, -18em -8em 0 #a6f19a, 18em -8em 0 #a6f19a, 0 -16em 0 #fff, -38em -10em 0 #7be26b, 38em -10em 0 #7be26b; }
+
+/* Forge: hammer-bob, glowing hot, sparks spray off the anvil */
+.slot.hero.cast-forge { --g: #ff8a1f; }
+.cast-forge .card .art { animation: c-hammer .76s steps(8); }
+@keyframes c-hammer { 15% { transform: translateY(-8%) rotate(-8deg); } 30% { transform: translateY(3%) rotate(4deg); } 50% { transform: translateY(-8%) rotate(-8deg); } 65% { transform: translateY(3%) rotate(4deg); } }
+.cast-forge .au.bk::before { left: 5%; right: 5%; bottom: 0; height: 45%; background: radial-gradient(ellipse at 50% 100%, rgba(255,215,106,.9) 0 25%, rgba(255,106,31,.6) 26% 55%, rgba(0,0,0,0) 56%); animation: au-glow .76s steps(4) forwards; }
+.cast-forge .au.fr::before { top: 40%; left: 70%; background: #fff; animation: au-out .32s steps(4) .1s 2 forwards;
+  box-shadow: 0 -22em 0 #ffd76a, 16em -16em 0 #ff8a1f, 22em 0 0 #ffd76a, -16em -16em 0 #ff8a1f, -22em 0 0 #ffd76a, 10em 12em 0 #ff5a1f, -10em 12em 0 #ff5a1f, 0 -36em 0 #fff; }
+
+/* Poison dart: wind-up and throw, a puff of green at the hand, venom drips */
+.slot.hero.cast-dart { --g: #63c74d; }
+.cast-dart .card .art { animation: c-throw .6s steps(6); }
+@keyframes c-throw { 30% { transform: translateX(-14%) rotate(-10deg); } 55% { transform: translateX(14%) rotate(8deg); } }
+.cast-dart .au.fr::before { right: -12%; top: 22%; width: 42%; height: 42%; border-radius: 50%; background: radial-gradient(circle, rgba(191,242,154,.9) 0 25%, rgba(99,199,77,.75) 26% 60%, rgba(0,0,0,0) 61%); animation: au-out .5s steps(5) .2s forwards; }
+.cast-dart .au.fr::after { left: 72%; top: 58%; background: #63c74d; animation: c-drip .7s steps(6) .2s forwards; box-shadow: -10em -6em 0 #3e8948, 8em -14em 0 #bff29a; }
+@keyframes c-drip { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(22em); opacity: 0; } }
+
+/* Fire touch: wreathed in flickering flames, embers rise */
+.slot.hero.cast-fire { --g: #ff5a1f; }
+.cast-fire .card .art { animation: c-flicker .76s steps(8); }
+@keyframes c-flicker { 12%, 37%, 62%, 87% { transform: skewX(-4deg) scaleY(1.05); } 25%, 50%, 75% { transform: skewX(4deg) scaleY(.98); } }
+.cast-fire .au.bk::before { left: 10%; right: 10%; bottom: 4%; height: 86%; transform-origin: 50% 100%;
+  background: linear-gradient(to top, #ff5a1f 0 30%, #ffb13d 55%, #ffd76a 75%, rgba(255,215,106,0));
+  clip-path: polygon(0 100%, 0 55%, 10% 70%, 18% 30%, 30% 55%, 40% 10%, 50% 45%, 62% 0, 70% 48%, 82% 22%, 90% 62%, 100% 40%, 100% 100%);
+  animation: c-flames .76s steps(8) forwards; }
+@keyframes c-flames { 0% { transform: scaleY(0); opacity: 1; } 20% { transform: scaleY(1) skewX(-8deg); opacity: 1; } 40% { transform: scaleY(.85) skewX(8deg); } 60% { transform: scaleY(1.05) skewX(-6deg); opacity: 1; } 80% { transform: scaleY(.9) skewX(6deg); opacity: .9; } 100% { transform: scaleY(.2); opacity: 0; } }
+.cast-fire .au.fr::before { width: 4em; height: 4em; background: #ffd76a; animation: au-up .76s steps(7) .1s forwards; box-shadow: -22em 8em 0 #ff8a1f, 20em 4em 0 #ffd76a, -10em -10em 0 #ff5a1f, 12em -16em 0 #ff8a1f; }
+
+/* Scythe: a blood-red crescent whirls round the hero (the card already spins) */
+.slot.hero.cast-scythe { --g: #e43b44; }
+.cast-scythe .au.bk::before { inset: -12%; border-radius: 50%; border: 6em solid transparent; border-top-color: #e43b44; border-right-color: #a22633; animation: c-reap .5s steps(8) forwards; }
+@keyframes c-reap { 0% { transform: rotate(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: rotate(540deg); opacity: 0; } }
+.cast-scythe .au.fr::before { background: #ff8a8f; animation: au-out .5s steps(5) .15s forwards; box-shadow: 0 -40em 0 #e43b44, 28em -28em 0 #a22633, 40em 0 0 #e43b44, 28em 28em 0 #a22633, 0 40em 0 #e43b44, -28em 28em 0 #a22633, -40em 0 0 #e43b44, -28em -28em 0 #a22633; }
+
+/* Thunder: a bolt strikes the hero, who strobes white */
+.slot.hero.cast-thunder { --g: #fee761; }
+.cast-thunder .card .art { animation: c-zap .6s steps(6); }
+@keyframes c-zap { 0%, 34%, 68% { filter: brightness(3.2) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff); transform: translateX(-3%); } 17%, 51%, 85% { transform: translateX(3%); } }
+.cast-thunder .au.bk::before { inset: -6%; background: radial-gradient(circle, rgba(255,255,255,.9) 0 20%, rgba(254,231,97,.6) 21% 50%, rgba(0,0,0,0) 51%); animation: c-strobe .6s steps(6) forwards; }
+@keyframes c-strobe { 0%, 34%, 68% { opacity: 1; } 17%, 51%, 100% { opacity: 0; } }
+.cast-thunder .au.fr::before { left: 30%; width: 40%; top: -110%; height: 150%; background: linear-gradient(90deg, #fee761, #fff 40% 60%, #fee761);
+  clip-path: polygon(55% 0, 75% 30%, 48% 38%, 72% 66%, 50% 70%, 58% 100%, 25% 64%, 48% 60%, 22% 34%, 50% 28%); animation: c-strobe .6s steps(6) forwards; }
+
+/* Frost: frozen pale, shivering, ice crystals form at the corners */
+.slot.hero.cast-ice { --g: #2ce8f5; }
+.slot.hero.cast-ice .card .art { animation: c-shiver .76s steps(12);
+  filter: saturate(.35) brightness(1.35) drop-shadow(2px 0 0 #2ce8f5) drop-shadow(-2px 0 0 #2ce8f5) drop-shadow(0 2px 0 #2ce8f5) drop-shadow(0 -2px 0 #2ce8f5); }
+@keyframes c-shiver { 0%, 33%, 66% { transform: translateX(-2.5%); } 16%, 50%, 83% { transform: translateX(2.5%); } }
+.cast-ice .au.bk::before { inset: 0; box-shadow: inset 0 0 0 4em rgba(44,232,245,.55), inset 0 0 26em 6em rgba(255,255,255,.45); animation: au-glow .76s steps(5) forwards; }
+.cast-ice .au.fr::before { background: #fff; animation: c-crystal .76s steps(6) forwards;
+  box-shadow: -40em -40em 0 #fff, -34em -40em 0 #2ce8f5, -40em -34em 0 #2ce8f5, 40em -40em 0 #fff, 34em -40em 0 #2ce8f5, 40em -34em 0 #2ce8f5,
+    -40em 40em 0 #fff, -34em 40em 0 #2ce8f5, -40em 34em 0 #2ce8f5, 40em 40em 0 #fff, 34em 40em 0 #2ce8f5, 40em 34em 0 #2ce8f5, 0 -30em 0 #2ce8f5; }
+@keyframes c-crystal { 0% { opacity: 0; transform: scale(.6); } 30%, 75% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+
+/* Teleport orb: the hero spins in out of nothing inside a violet vortex */
+.slot.hero.cast-teleport { --g: #d874c0; }
+.cast-teleport .card .art { animation: c-warp .6s steps(8); }
+@keyframes c-warp { 0% { transform: scale(0) rotate(-270deg); } 65% { transform: scale(1.2) rotate(15deg); } }
+.cast-teleport .au.bk::before { inset: -8%; border-radius: 50%; border: 4em dashed #d874c0; box-shadow: inset 0 0 0 3em #5a2a6a; animation: c-vortex .6s steps(8) forwards; }
+@keyframes c-vortex { 0% { transform: scale(1.5) rotate(0); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(.4) rotate(-360deg); opacity: 0; } }
+.cast-teleport .au.fr::before { background: #fff; animation: spin2 .6s steps(8) forwards; box-shadow: 0 -34em 0 #d874c0, 34em 0 0 #fff, 0 34em 0 #d874c0, -34em 0 0 #fff, 24em -24em 0 #b55088, 24em 24em 0 #b55088, -24em 24em 0 #b55088, -24em -24em 0 #b55088; }
+
+/* Tremor: jump, stomp, squash; dust kicks out and the ground cracks */
+.slot.hero.cast-quake { --g: #c28a54; }
+.cast-quake .card .art { animation: c-stomp .7s steps(7); transform-origin: 50% 100%; }
+@keyframes c-stomp { 25% { transform: translateY(-18%); } 42% { transform: translateY(2%) scale(1.25, .7); } 60% { transform: scale(.92, 1.1); } 75% { transform: none; } }
+.slot.hero.cast-quake .card { animation: c-jolt .7s steps(7); }
+@keyframes c-jolt { 42% { transform: translateY(5%); } 52% { transform: translateY(-3%); } 62% { transform: translateY(2%); } }
+.cast-quake .au.bk::before { left: 4%; right: 4%; bottom: 10%; height: 9%; background: repeating-linear-gradient(90deg, #181425 0 4em, #733e39 4em 7em, transparent 7em 11em); animation: au-glow .7s steps(4) .28s forwards; }
+.cast-quake .au.fr::before { top: 76%; width: 7em; height: 7em; margin: -3.5em 0 0 -3.5em; background: #ead4aa; animation: c-dust .42s steps(5) .28s forwards;
+  box-shadow: -30em -2em 0 #ead4aa, 30em -2em 0 #ead4aa, -20em -10em 0 #c28a54, 20em -10em 0 #c28a54, -40em -8em 0 #c28a54, 40em -8em 0 #c28a54, -12em -18em 0 #ead4aa, 12em -18em 0 #ead4aa; }
+@keyframes c-dust { 0% { transform: scale(.5); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(1.2) translateY(-6em); opacity: 0; } }
+
+/* Potion burst: jelly wobble, pink bubbles boil up and pop */
+.slot.hero.cast-burst { --g: #ff8a8f; }
+.cast-burst .card .art { animation: c-jelly .7s steps(8); }
+@keyframes c-jelly { 20% { transform: scale(1.2, .82); } 40% { transform: scale(.86, 1.16); } 60% { transform: scale(1.1, .92); } 80% { transform: scale(.96, 1.04); } }
+.cast-burst .au.bk::before { inset: 4%; border-radius: 50%; background: radial-gradient(circle, rgba(255,138,143,.75) 0 35%, rgba(181,80,136,.45) 36% 60%, rgba(0,0,0,0) 61%); animation: au-out .6s steps(6) forwards; }
+.cast-burst .au.fr::before, .cast-burst .au.fr::after { left: 50%; top: 50%; width: 7em; height: 7em; margin: -3.5em 0 0 -3.5em; border-radius: 50%; background: #ff8a8f; animation: au-up .7s steps(7) forwards;
+  box-shadow: -24em 6em 0 #d77bba, 22em 10em 0 #ff8a8f, -12em -10em 0 #fff, 14em -6em 0 #d77bba; }
+.cast-burst .au.fr::after { animation-delay: .18s; transform: scale(.7); box-shadow: -30em -4em 0 #ff8a8f, 30em -2em 0 #fff, 4em 12em 0 #d77bba; }
+
 /* ---- Android: edge-to-edge needs room for the status bar, gesture bar and camera cutout ---- */
 body {
   padding-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
