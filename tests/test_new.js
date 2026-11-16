@@ -36,11 +36,7 @@ console.log('shield ok');
 // shield chance only deep
 assert.strictEqual(DC.nextLevel(null,3).shieldP,0); assert(DC.nextLevel(null,9).shieldP>0);
 let cnt=0,tot=0; for(let sd=1;sd<40;sd++){const G=DC.newGame(Object.assign(DC.nextLevel(null,12),{}),sd,{}); G.grid.forEach(c=>{if(c&&c.kind==='monster'){tot++; if(c.sh)cnt++;}});} assert(cnt>0&&cnt<tot,'some shielded deep: '+cnt+'/'+tot);
-// --- jewel blade
-S=mk(); S.hero.sword={v:3,type:'gemblade',el:null,g:['g','b',null]}; S.grid[1]=M(S,'rat',1); S.grid[5]=M(S,'rat',1); DC.move(S,3); assert.strictEqual(S.hero.sword.v,4,'moved: blue +1');
-S=mk(); S.hero.sword={v:3,type:'gemblade',el:null,g:['g','g','b']}; S.grid[3]={uid:++S.uid,type:'trap',kind:'harm',v:2}; DC.move(S,3); assert.strictEqual(S.hero.sword.v,3+2+1,'hurt: two greens, moved: one blue');
-S=mk(); S.grid[1]={uid:++S.uid,type:'gemblade',kind:'weapon',v:3,g:['g',null,'b']}; DC.move(S,0); assert.deepStrictEqual(S.hero.sword.g,['g',null,'b']);
-console.log('gem ok');
+// (growing blades are covered in test_blades.js)
 // fuzz with all new types in the mix
 const W={}; for(const k in DC.TYPES) W[k]=1;
 let n=0; for(let sd=1;sd<400;sd++){const G=DC.newGame({id:1,w:4,h:4,heroHP:40,ramp:8,cap:8,shieldP:.4,weights:W},sd,{hero:'cactus'}); for(let i=0;i<120&&!G.over;i++){const R=Math.random(); const r0=Math.random();
