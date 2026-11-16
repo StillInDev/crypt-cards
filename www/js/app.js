@@ -962,56 +962,218 @@
     return r < 0 ? 'Not in any room' : 'Clear room ' + (r + 1) + ': ' + levels[r].name;
   }
   // ---- Hero and power select ------------------------------------------------
+  // Top: the chosen hero with its equipped powers floating above its head.
+  // Bottom: two swipeable pages (heroes, powers) that loop. Tap picks, press and hold explains.
+  var hpPage = 0, hpAnim = false, hpPop = null;
+  function heroInfo(id) {
+    var H = DC.HEROES[id], open = heroOpen(id);
+    var t = H.desc + ' Health ' + (10 + H.hp) + '. Carries ' + H.slots + ' powers.';
+    return { sprite: H.sprite, title: H.name + (open ? (id === heroSel ? ' (chosen)' : '') : ' (locked)'), text: open ? t : lockText('hero', id) + ' to unlock. ' + t };
+  }
+  function powerInfo(id) {
+    var P = DC.POWERS[id], open = powerOpen(id);
+    var t = powerTip(id) + ' Recharges in ' + P.cd + ' turns.';
+    return { sprite: P.sprite, title: P.name + (open ? (powSel.indexOf(id) >= 0 ? ' (equipped)' : '') : ' (locked)'), text: open ? t : lockText('power', id) + ' to unlock. ' + t };
+  }
+  function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
+
+  // Press-and-hold for a single element outside the pager (the avatar and the slots above its head).
+  function holdable(el, info, tap) {
+    var held = false, timer = null;
+    el.addEventListener('pointerdown', function () {
+      held = false; clearTimeout(timer);
+      timer = setTimeout(function () { held = true; el.classList.add('holding'); showInfo(info()); }, 450);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+      el.addEventListener(ev, function () { clearTimeout(timer); el.classList.remove('holding'); if (held) hideInfoSoon(); });
+    });
+    el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    el.addEventListener('click', function () { if (held) { held = false; return; } if (tap) tap(); });
+  }
+
+  function tile(kind, id, sprite, name, open, on) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile' + (on ? ' sel' : '') + (open ? '' : ' locked');
+    b.dataset.kind = kind; b.dataset.id = id;
+    b.setAttribute('aria-label', name + (open ? (on ? ', chosen' : '') : ', locked'));
+    if (kind === 'power') b.setAttribute('aria-pressed', on);
+    var f = document.createElement('span'); f.className = 'ic';
+    f.appendChild(img(sprite));
+    if (!open) f.appendChild(img('bars', 'lockbars'));
+    b.appendChild(f);
+    var n = document.createElement('span'); n.className = 'tn'; n.textContent = name;
+    b.appendChild(n);
+    return b;
+  }
+
   function renderHero() {
     fixSelection();
-    var ms = maxScore();
+    var ms = maxScore(), D = DC.HEROES[heroSel], slots = D.slots;
     $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers. Your best single run is ' + ms + ' gold.';
+
+    // Loadout: powers above the head, then the hero.
+    var eq = $('#hp-equip');
+    eq.innerHTML = '';
+    for (var s = 0; s < slots; s++) {
+      var pid = powSel[s], sl = document.createElement('button');
+      sl.type = 'button';
+      sl.className = 'eslot' + (pid ? '' : ' empty') + (pid && pid === hpPop ? ' pop' : '');
+      if (pid) {
+        sl.appendChild(img(DC.POWERS[pid].sprite));
+        sl.setAttribute('aria-label', DC.POWERS[pid].name + ', equipped. Tap to remove.');
+        (function (pid) {
+          holdable(sl, function () { return powerInfo(pid); }, function () {
+            powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero();
+          });
+        })(pid);
+      } else {
+        sl.setAttribute('aria-label', 'Empty power slot. Tap to choose a power.');
+        sl.addEventListener('click', function () { if (hpPage !== 1) hpGo(1, 1); });
+      }
+      eq.appendChild(sl);
+    }
+    hpPop = null;
+    var av = $('#hp-avatar');
+    av.innerHTML = '';
+    av.appendChild(img(D.sprite));
+    av.setAttribute('aria-label', D.name + ', your hero. Press and hold for details.');
+    $('#hp-name').textContent = D.name;
+    $('#hp-stat').textContent = 'Health ' + (10 + D.hp) + ' · ' + powSel.length + ' of ' + slots + ' powers';
+    $('#hp-slots').textContent = powSel.length + '/' + slots;
+
+    // Page 1: heroes.
     var hg = $('#hp-heroes');
     hg.innerHTML = '';
-    Object.keys(DC.HEROES).sort(function (p, q) { return (heroOpen(q) ? 1 : 0) - (heroOpen(p) ? 1 : 0); }).forEach(function (id) {
-      var H = DC.HEROES[id], open = heroOpen(id);
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'hc' + (id === heroSel ? ' sel' : '') + (open ? '' : ' locked');
-      b.disabled = !open;
-      b.appendChild(img(H.sprite));
-      var d = document.createElement('div');
-      var nm = document.createElement('b'); nm.textContent = H.name;
-      var st = document.createElement('span'); st.className = 'st';
-      st.textContent = open ? ('Health ' + (10 + H.hp) + ' · ' + H.slots + ' powers') : lockText('hero', id);
-      var ds = document.createElement('p'); ds.textContent = H.desc;
-      d.appendChild(nm); d.appendChild(st); d.appendChild(ds);
-      b.appendChild(d);
-      b.addEventListener('click', function () { heroSel = id; fixSelection(); saveSelection(); renderHero(); });
-      hg.appendChild(b);
+    Object.keys(DC.HEROES).sort(byOpen(heroOpen)).forEach(function (id) {
+      var H = DC.HEROES[id];
+      hg.appendChild(tile('hero', id, H.sprite, H.name, heroOpen(id), id === heroSel));
     });
-    var slots = DC.HEROES[heroSel].slots;
-    $('#hp-slots').textContent = powSel.length + ' of ' + slots + ' slots';
+    // Page 2: powers.
     var pl = $('#hp-powers');
     pl.innerHTML = '';
-    Object.keys(DC.POWERS).forEach(function (id) {
-      var P = DC.POWERS[id], open = powerOpen(id), on = powSel.indexOf(id) >= 0;
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'pc' + (on ? ' sel' : '') + (open ? '' : ' locked');
-      b.disabled = !open;
-      b.setAttribute('aria-pressed', on);
-      b.appendChild(img(P.sprite));
-      var d = document.createElement('div');
-      var nm = document.createElement('b'); nm.textContent = P.name;
-      var st = document.createElement('span'); st.className = 'st';
-      st.textContent = open ? ('Recharges in ' + P.cd + ' turns') : lockText('power', id);
-      var ds = document.createElement('p'); ds.textContent = powerTip(id);
-      d.appendChild(nm); d.appendChild(st); d.appendChild(ds);
-      b.appendChild(d);
-      b.addEventListener('click', function () {
-        if (on) powSel.splice(powSel.indexOf(id), 1);
-        else { powSel.push(id); if (powSel.length > slots) powSel.shift(); }
-        saveSelection(); renderHero();
-      });
-      pl.appendChild(b);
+    Object.keys(DC.POWERS).sort(byOpen(powerOpen)).forEach(function (id) {
+      var P = DC.POWERS[id];
+      pl.appendChild(tile('power', id, P.sprite, P.name, powerOpen(id), powSel.indexOf(id) >= 0));
     });
+    hpPlace(0, false);
   }
+
+  function hpTap(t) {
+    var kind = t.dataset.kind, id = t.dataset.id;
+    var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
+    if (!open) { showInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); hideInfoSoon(); return; }
+    if (kind === 'hero') {
+      if (heroSel === id) return;
+      heroSel = id; fixSelection(); saveSelection(); renderHero();
+      var av = $('#hp-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
+      return;
+    }
+    var slots = DC.HEROES[heroSel].slots, at = powSel.indexOf(id);
+    if (at >= 0) powSel.splice(at, 1);
+    else { powSel.push(id); if (powSel.length > slots) powSel.shift(); hpPop = id; }
+    saveSelection(); renderHero();
+  }
+
+  // Pager. Only two pages, so "the other page" always sits on whichever side you drag toward: a seamless loop.
+  var pager = $('#hp-pager'), pages = [$('#hp-heroes'), $('#hp-powers')];
+  function hpPlace(dx, anim, side) {
+    var W = pager.clientWidth || 1, a = pages[hpPage], b = pages[1 - hpPage];
+    if (!side) side = dx <= 0 ? 1 : -1;
+    a.style.transition = b.style.transition = anim ? 'transform .26s cubic-bezier(.2,.8,.2,1)' : 'none';
+    a.style.transform = 'translateX(' + dx + 'px)';
+    b.style.transform = 'translateX(' + (dx + side * W) + 'px)';
+    b.style.visibility = dx === 0 && !anim ? 'hidden' : '';
+    a.style.visibility = '';
+    a.setAttribute('aria-hidden', 'false'); b.setAttribute('aria-hidden', dx === 0 ? 'true' : 'false');
+    a.inert = false; b.inert = true;
+    for (var i = 0; i < 2; i++) {
+      var tb = $('#hp-tab-' + i);
+      tb.classList.toggle('on', i === hpPage);
+      tb.setAttribute('aria-selected', i === hpPage);
+    }
+  }
+  // d = +1: the next page slides in from the right; d = -1: from the left.
+  function hpGo(d, fromDx) {
+    if (hpAnim) return;
+    var W = pager.clientWidth || 1, a = pages[hpPage], b = pages[1 - hpPage];
+    hpAnim = true;
+    if (typeof fromDx !== 'number' || !fromDx) {
+      // Start the incoming page on the correct side before animating.
+      a.style.transition = b.style.transition = 'none';
+      b.style.visibility = '';
+      b.style.transform = 'translateX(' + (d * W) + 'px)';
+      void b.offsetWidth;
+    }
+    a.style.transition = b.style.transition = 'transform .26s cubic-bezier(.2,.8,.2,1)';
+    a.style.transform = 'translateX(' + (-d * W) + 'px)';
+    b.style.transform = 'translateX(0px)';
+    setTimeout(function () { hpPage = 1 - hpPage; hpAnim = false; hpPlace(0, false); }, 270);
+  }
+  var pd = null;
+  pager.addEventListener('pointerdown', function (e) {
+    if (hpAnim) return;
+    var t = e.target.closest('.tile');
+    pd = { x: e.clientX, y: e.clientY, id: e.pointerId, t: t, drag: false, held: false, dx: 0, at: Date.now() };
+    pd.timer = setTimeout(function () {
+      if (!pd || !t) return;
+      pd.held = true; t.classList.add('holding');
+      showInfo(t.dataset.kind === 'hero' ? heroInfo(t.dataset.id) : powerInfo(t.dataset.id));
+    }, 450);
+  });
+  pager.addEventListener('pointermove', function (e) {
+    if (!pd || pd.id !== e.pointerId || pd.held) return;
+    var dx = e.clientX - pd.x, dy = e.clientY - pd.y;
+    if (!pd.drag) {
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+        pd.drag = true; clearTimeout(pd.timer);
+        try { pager.setPointerCapture(e.pointerId); } catch (err) {}
+      } else if (Math.abs(dy) > 10) { clearTimeout(pd.timer); pd.t = null; return; }
+      else return;
+    }
+    pd.dx = dx;
+    hpPlace(dx, false);
+  });
+  function hpEnd(e, cancel) {
+    if (!pd || (e && pd.id !== e.pointerId)) return;
+    var p = pd; pd = null;
+    clearTimeout(p.timer);
+    if (p.t) p.t.classList.remove('holding');
+    if (p.held) { hpSuppress = Date.now(); hideInfoSoon(); return; }
+    if (p.drag) {
+      hpSuppress = Date.now();
+      var W = pager.clientWidth || 1, fast = Math.abs(p.dx) / Math.max(1, Date.now() - p.at) > 0.5;
+      if (!cancel && (Math.abs(p.dx) > W * 0.22 || (fast && Math.abs(p.dx) > 30))) hpGo(p.dx < 0 ? 1 : -1, p.dx);
+      else {
+        hpAnim = true;
+        hpPlace(0, true, p.dx <= 0 ? 1 : -1);
+        setTimeout(function () { hpAnim = false; hpPlace(0, false); }, 270);
+      }
+      return;
+    }
+    if (!p.t) hpSuppress = Date.now();
+  }
+  var hpSuppress = 0;
+  pager.addEventListener('pointerup', function (e) { hpEnd(e, false); });
+  pager.addEventListener('pointercancel', function (e) { hpEnd(e, true); });
+  pager.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  pager.addEventListener('click', function (e) {
+    var t = e.target.closest('.tile');
+    if (Date.now() - hpSuppress < 400) return;
+    if (t) hpTap(t);
+  });
+  $('#hp-prev').addEventListener('click', function () { hpGo(-1); });
+  $('#hp-next').addEventListener('click', function () { hpGo(1); });
+  [0, 1].forEach(function (i) {
+    $('#hp-tab-' + i).addEventListener('click', function () { if (i !== hpPage) hpGo(i > hpPage ? 1 : -1); });
+  });
+  holdable($('#hp-avatar'), function () { return heroInfo(heroSel); }, function () { if (hpPage !== 0) hpGo(-1); });
+  document.addEventListener('keydown', function (e) {
+    if (current !== 'hero' || e.metaKey || e.ctrlKey) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); hpGo(-1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); hpGo(1); }
+  });
+  window.addEventListener('resize', function () { if (current === 'hero' && !hpAnim) hpPlace(0, false); });
 
   // ---- Editor ---------------------------------------------------------------
   var ed = 0;

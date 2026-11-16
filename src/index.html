@@ -95,11 +95,25 @@
       <div><h2>Hero &amp; powers</h2><p class="sub" id="hp-sub"></p></div>
       <button class="btn" id="hp-done" type="button">Done</button>
     </div>
-    <h2 class="sech">Hero</h2>
-    <div class="heroes" id="hp-heroes"></div>
-    <h2 class="sech">Powers <span class="slots" id="hp-slots"></span></h2>
-    <p class="sub" style="margin:0 4px 14px">Powers are free actions. Each one recharges as you move. Tap to pick or drop.</p>
-    <div class="plist" id="hp-powers"></div>
+    <div class="loadout" aria-label="Your loadout">
+      <div class="equip" id="hp-equip" aria-label="Equipped powers"></div>
+      <button class="avatar" id="hp-avatar" type="button" aria-label="Your hero"></button>
+      <div class="hname" id="hp-name"></div>
+      <div class="hstat" id="hp-stat"></div>
+    </div>
+    <div class="pager-head">
+      <button class="btn quiet pg-arrow" id="hp-prev" type="button" aria-label="Previous page">&lsaquo;</button>
+      <div class="pg-tabs" role="tablist">
+        <button class="pg-tab" id="hp-tab-0" type="button" role="tab">Heroes</button>
+        <button class="pg-tab" id="hp-tab-1" type="button" role="tab">Powers <span class="slots" id="hp-slots"></span></button>
+      </div>
+      <button class="btn quiet pg-arrow" id="hp-next" type="button" aria-label="Next page">&rsaquo;</button>
+    </div>
+    <div class="pager" id="hp-pager">
+      <div class="page" id="hp-heroes" role="tabpanel" aria-labelledby="hp-tab-0"></div>
+      <div class="page" id="hp-powers" role="tabpanel" aria-labelledby="hp-tab-1"></div>
+    </div>
+    <p class="pg-hint">Swipe to switch. Tap to pick. Press and hold for details.</p>
   </div>
 </section>
 
