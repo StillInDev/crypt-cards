@@ -275,6 +275,24 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .lo-info .li-name { display: inline; }
 .lo-info .li-desc { color: var(--muted); font-size: .92rem; }
 @keyframes infoin { from { opacity: 0; transform: scale(.94); } }
+.lo-info .li-up { color: var(--saffron); font-size: .92rem; }
+.lo-info .li-short { color: var(--muted); font-size: .82rem; }
+.lo-info .li-buy { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; }
+.lo-info .li-buy img { width: 18px; height: 18px; align-self: center; }
+.lo-info .li-buy:disabled { opacity: .5; }
+.lo-info .li-lv { margin: 6px 0 0; }
+
+/* Upgrades: purse in the header, level pips on power tiles. */
+.top-r { display: flex; align-items: center; gap: 12px; }
+.purse { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-size: .7rem; color: var(--saffron); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.purse img { width: 20px; height: 20px; }
+.pips { display: flex; gap: 4px; justify-content: center; }
+.pips i { width: 8px; height: 8px; background: #0c0a14; box-shadow: 0 0 0 2px var(--line); }
+.pips i.on { background: var(--saffron); box-shadow: 0 0 0 2px var(--saffron); }
+.pips.many { gap: 3px; }
+.pips.many i { width: 5px; height: 6px; }
+.tile .upb { position: absolute; right: 6px; top: 6px; font-size: .7rem; color: #0c0a14; background: var(--moss); padding: 2px 4px; line-height: 1; animation: bob 1.6s steps(3) infinite; }
+@media (prefers-reduced-motion: reduce) { .tile .upb { animation: none; } }
 
 /* Pager: two pages, swipe loops between them. */
 .pager-head { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 10px; }
