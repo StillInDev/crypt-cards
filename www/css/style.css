@@ -562,14 +562,8 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .mapwrap { padding: 8px 0 26px; }
 .map { overflow: visible; }
 .maphead { position: absolute; left: 0; right: 0; top: 4px; text-align: center; z-index: 1; }
-.maphead .pips { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
-.maphead .pips i { width: 10px; height: 10px; background: #3a3a4a; display: block; }
-.maphead .pips i.on { background: #fff; }
 .maphead .ch { font-family: var(--display); font-size: 1.15rem; color: #e9ebf5; }
 .maphead .chs { margin-top: 8px; color: #9b78d6; font-size: .95rem; }
-.dust { position: absolute; inset: 0; pointer-events: none; }
-.dust i { position: absolute; width: 8px; height: 8px; background: #8a7a58; opacity: .6; animation: drift 9s steps(6) infinite alternate; }
-@keyframes drift { to { transform: translate(10px, -14px); } }
 .map .paths line { stroke-width: 6; shape-rendering: crispEdges; }
 .map .paths line.lit { stroke: #9a6fd0; }
 .map .paths line.dark { stroke: #3d3a52; stroke-dasharray: none; }

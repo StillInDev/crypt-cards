@@ -259,14 +259,10 @@
     // Header
     var hd = document.createElement('div');
     hd.className = 'maphead';
-    hd.innerHTML = '<div class="pips"><i class="on"></i></div><div class="ch">The Crypt</div><div class="chs"></div>';
+    hd.innerHTML = '<div class="ch">The Crypt</div><div class="chs"></div>';
     var cl = 0; levels.forEach(function (L, i) { if (cleared[i]) cl++; });
     hd.querySelector('.chs').textContent = cl + ' of ' + levels.length + ' rooms cleared';
     map.appendChild(hd);
-    // Drifting dust, like the reference
-    var dust = '';
-    for (var q = 0; q < 14; q++) { var sx = (q * 97 + 31) % W, sy = (q * 211 + 57) % H; dust += '<i style="left:' + sx + 'px;top:' + sy + 'px;animation-delay:' + (-q * 0.7) + 's' + (q % 3 === 0 ? ';background:#4a4a5a' : '') + '"></i>'; }
-    map.insertAdjacentHTML('beforeend', '<div class="dust">' + dust + '</div>');
     var svg = '<svg class="paths" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
     levels.forEach(function (L, i) {
       var k = i + 1;
