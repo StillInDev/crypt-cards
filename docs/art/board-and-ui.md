@@ -10,7 +10,7 @@
 
 Every other request is one 18×18 sprite. This one covers everything **around** the sprites: the board, the
 card frames, the panels at the top of the screen, the power buttons, the weapon box, pop-ups, the home screen,
-the dungeon map and the buttons. Today all of these are drawn in code with flat colours and square 4-pixel
+the upgrade marks, the level select screen and the buttons. Today all of these are drawn in code with flat colours and square 4-pixel
 "notched" borders. The look works, but it is plain. We want hand-drawn pixel frames that match the sprites.
 
 ## Rules for this request
@@ -41,7 +41,7 @@ Pop-ups sit on top: the **toast** (top), the **info popup** (bottom), the **game
 
 Every room tints the screen. The game will keep doing this, so frames must read on **all** of these:
 
-| Room | Page background | Card face | Accent |
+| Level (room theme) | Page background | Card face | Accent |
 |---|---|---|---|
 | Cellar | `#201a16` | `#3f3530` | `#d1a45f` |
 | Sewers | `#13241f` | `#2b4a42` | `#63c74d` |
@@ -206,26 +206,40 @@ about 84×100 screen px each, one per hero or power, with two tabs above it ("He
 | Tile, locked | `ui_tile_locked.png` | Same | Not unlocked yet. The game also greys the icon and lays `bars` over it |
 | Tab underline | `ui_tab.png` | 9-slice, about 6×3 | Under the active tab. Yellow |
 
-## 10. Dungeon map
+### Upgrades
 
-"The Crypt": a vertical map of 12 rooms joined by lines, from the **Entrance** at the top down to the
-**Throne Room** at the bottom (rows of 1, 2, 3, 3, 2, 1 rooms). It scrolls inside a dark framed box.
+Gold from finished runs is banked in a **purse**. On the hero and powers screen the player spends it to
+upgrade a hero (up to **7 levels**, +2 max health each) or a power (up to **3 levels**, stronger or faster
+recharge). Press and hold a tile to open its details panel, which then shows the next level and an
+**Upgrade** button with its gold cost.
 
 | Piece | File | Size | Notes |
 |---|---|---|---|
-| Map backdrop | `ui_map_bg.png` | tile, about 16×8 | A repeating brick or flagstone floor behind the map. Very dark (`#181425`, `#262b44`) so the rooms stand out. Today dark bricks |
-| Map frame | `ui_map_frame.png` | 9-slice, about 16×16 with a 4-pixel border | Around the whole map box. Centre transparent (the backdrop shows through) |
-| Room node | `ui_room.png` | 24×24 | Each room is a square box, 70 screen px. It holds the room's monster icon (40 screen px). Its border is painted in the room's accent colour, so draw the border **white `#ffffff` / light grey `#c0cbdc`** and the game will tint it; or deliver it neutral and say so |
-| Room node, cleared | `ui_room_done.png` | 24×24 | Cleared rooms have a green `#63c74d` border today. A small tick mark or banner would help |
-| Room node, sealed | `ui_room_locked.png` | 24×24 | Not open yet. Dark, with the `bars` sprite inside instead of the icon |
-| Room node, throne | `ui_room_boss.png` | 24×24 or a little larger | The last room. Should look grander: a crown, gold trim, skulls |
-| Reward badge | `ui_room_reward.png` | 12×12 | A small dark frame at the top right corner of each room holding the reward's sprite (36 screen px) |
-| Path, open | `ui_path_lit.png` | tile, 2×2 | The line between two rooms once the way is open. Purple `#b55088` today. The game draws lines at any angle, so a plain colour or a 2-pixel repeat is enough |
-| Path, sealed | `ui_path_dark.png` | tile, 2×2 | A line to a room that is not open yet. Dark slate `#3a4466` |
-| Entrance | `ui_entrance.png` | about 24×12 | A doorway or stair at the top of the map where the paths start. Today a yellow-ringed label reading "Entrance" |
+| Purse | `ui_purse.png` | 12×12 | Beside the banked gold total in the screen's header, next to the Done button. Today the `coin` sprite. A small coin pouch or chest would make "banked gold" read differently from gold picked up in a run |
+| Level pip, empty | `ui_pip.png` | 3×3 | A row of pips under each tile's name and in the details panel, one per upgrade level. Empty = not bought. Today a dark square with a grey ring |
+| Level pip, filled | `ui_pip_on.png` | 3×3 | A bought level. Yellow `#fee761` today. Heroes show 7 pips in a row, so they must stay readable at this size with a 1-pixel gap |
+| Upgrade ready badge | `ui_upgrade.png` | 7×7 | Top right corner of a tile when the player can afford its next level. Today a green `#63c74d` tag with a "▲" that bobs. An up-arrow, a spark or a hammer |
+| Upgrade button | uses `ui_btn_go.png` | | The Upgrade button in the details panel is a normal button holding "Upgrade" plus a `coin` and the cost. It is greyed out (`ui_btn_off.png`) when the purse is short |
 
-The room number, the grid size (for example "4×4") and the target score are text the game writes around the
-node; leave room for them below and in the corners.
+## 10. Level select
+
+The "Choose a level" screen. A row of **numbered tabs** (1 to 12) scrolls sideways across the top; the chosen
+tab shows a **level panel** underneath with the level's picture, name, facts, reward and a Play button.
+
+| Piece | File | Size | Notes |
+|---|---|---|---|
+| Level tab | `ui_lvtab.png` | 9-slice, about 12×12 with a 3-pixel border | A square tab, 48 screen px, holding the level number. Its bottom edge is a stripe in the level's accent colour, so draw that stripe **white `#ffffff` / light grey `#c0cbdc`** and the game will tint it; or deliver it neutral and say so |
+| Level tab, chosen | `ui_lvtab_on.png` | Same | The selected tab. Today filled with the accent colour and ringed in white. Must stand out from the rest of the row |
+| Level tab, sealed | `ui_lvtab_locked.png` | Same | A level not open yet. Dark and dim |
+| Cleared tick | `ui_tick.png` | 5×5 | Top right corner of a cleared level's tab. Green `#63c74d` |
+| Level panel | `ui_lvpanel.png` | 9-slice, about 20×20 with a 4-pixel border | About 520×380 screen px. The centre is filled by the game with the level's card colour (darkened), so keep the centre transparent. A thick accent stripe runs along its bottom edge today (tint it like the tab). A carved doorway or crypt arch would suit |
+| Level panel, sealed | `ui_lvpanel_locked.png` | Same | Grey and shut |
+| Level picture frame | `ui_lvart.png` | 9-slice, about 14×14 with a 3-pixel border | A frame around the level's monster icon (64 screen px), 96 screen px in all. Its border is the accent colour today (green when cleared, grey when sealed); tintable as above. Sealed levels show the `bars` sprite inside |
+| Level picture frame, final | `ui_lvart_boss.png` | Same | The last level (Throne Room), which shows the `goldskull`. Should look grander: a crown, gold trim, skulls |
+| Fact box | `ui_fact.png` | 9-slice, about 8×8 with a 2-pixel border | Three small boxes in a row (Board, Target, Best), about 74 screen px wide, each with a label and a number. Semi-dark centre today; make it a filled dark slate |
+| Reward frame | `ui_reward.png` | 12×12 | A small dark frame holding the level's reward sprite (32 screen px), next to "Reward: ..." |
+
+The Play button under the panel is a primary button (`ui_btn_go.png`); for a sealed level it reads "Locked".
 
 ## 11. Buttons
 
@@ -259,7 +273,7 @@ If you cannot do everything at once, do it in this order, because it is what the
 4. Buttons (section 11)
 5. Info popup, toast and game over sheet (sections 6–8)
 6. Title logo and loadout screen (section 9)
-7. Dungeon map (section 10)
+7. Level select (section 10) and the upgrade pieces (end of section 9)
 8. Board frame (section 1) and the small badges
 
 ## Do not
