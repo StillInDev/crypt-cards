@@ -501,9 +501,6 @@
       flash(board, 'ouch', 420);
     }
     heroEl.classList.toggle('dead', H.hp <= 0);
-    els.forEach(function (el) { el.classList.remove('marked'); });
-    heroEl.classList.toggle('armed', !!(H.mark && H.mark.cell === H.pos));
-    if (H.mark && H.mark.cell !== H.pos && S.grid[H.mark.cell]) { var me = els.get(S.grid[H.mark.cell].uid); if (me) me.classList.add('marked'); }
     lastHp = H.hp;
 
     // Show what each neighbouring card would do.
@@ -585,18 +582,18 @@
       var ready = pw.cd === 0;
       b.className = 'pw' + (ready ? ' ready' : '') + (targeting === i ? ' aim' : '');
       b.disabled = S.over;
-      b.setAttribute('aria-label', def.name + (ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
+      b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = ready ? 'READY' : pw.cd + ' turns';
-      var bar2 = document.createElement('i'); bar2.style.width = (100 * (1 - pw.cd / pw.max)) + '%';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : ready ? 'READY' : pw.cd + ' turns';
+      var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
       b.addEventListener('pointerdown', function () {
         held = false; clearTimeout(timer);
         timer = setTimeout(function () {
           held = true;
-          showInfo({ sprite: def.sprite, title: def.name, text: powerTip(pw.id) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
+          showInfo({ sprite: def.sprite, title: def.name, text: def.passive ? powerTip(pw.id) : powerTip(pw.id) + ' Recharges in ' + pw.max + ' turns. ' + (pw.cd > 0 ? 'Ready in ' + pw.cd + '.' : 'Ready now.') });
         }, 450);
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
@@ -611,6 +608,7 @@
     if (!S || S.over || current !== 'play') return;
     var pw = S.hero.powers[i];
     if (!pw) return;
+    if (DC.POWERS[pw.id].passive) { toast(DC.POWERS[pw.id].name + ' is always on'); return; }
     if (pw.cd > 0) { toast(DC.POWERS[pw.id].name + ' needs ' + pw.cd + ' more turns'); return; }
     if (DC.POWERS[pw.id].target) { targeting = targeting === i ? null : i; render(); return; }
     firePower(i);
@@ -993,7 +991,7 @@
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id);
     return { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
-      ability: powerTip(id), desc: 'Recharges in ' + P.cd + ' turns.' };
+      ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + P.cd + ' turns.' };
   }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
 

@@ -77,7 +77,7 @@
     thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Every monster on the board takes 3 damage.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
     teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
-    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 9,  target: null,      unlock: 45, tip: 'Marks your square. After you step away, the card that takes its place is hit if it is a monster. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
+    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
     burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
     ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
   };
@@ -174,8 +174,9 @@
         id: hid,
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
-        sword: null, poison: 0, frost: 0, ward: 0, mark: null, pass: pass,
+        sword: null, poison: 0, frost: 0, ward: 0, pass: pass,
         powers: ids.map(function (id) {
+          if (POWERS[id].passive) return { id: id, max: 0, cd: 0 };
           const rc = Math.max(1, Math.ceil(POWERS[id].cd * (pass.rech || 1)));
           return { id: id, max: rc, cd: HD.startReady ? 0 : Math.ceil(rc / 2) };
         })
@@ -194,7 +195,7 @@
       grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, g: c.g && c.g.slice() }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, mark: S.hero.mark && { cell: S.hero.mark.cell, dmg: S.hero.mark.dmg },
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star, g: S.hero.sword.g },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd }; })
       }
@@ -602,16 +603,15 @@
       }
     }
 
-    // Tremor: once the hero has left the marked square, a monster that took its place is hit.
-    if (S.rng && H.mark && H.pos !== H.mark.cell && H.hp > 0) {
-      const mp = H.mark.cell, m = S.grid[mp];
+    // Tremor (passive): every step, a monster that slid into the square the hero left is hit.
+    if (S.rng && H.pos !== from && H.hp > 0 && H.powers.some(function (p) { return p.id === 'quake'; })) {
+      const mp = from, m = S.grid[mp];
       if (m && m.kind === 'monster') {
-        const res = hurtMonster(m, H.mark.dmg, null, false);
+        const res = hurtMonster(m, quakeDamage(S.powerLevel), null, false);
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         fx.push({ cell: mp, text: '', cls: 'info', anim: 'quake' });
       }
-      H.mark = null;
     }
 
     // Directional traps turn clockwise, then hit whatever their heads point at.
@@ -704,6 +704,8 @@
     else fx.push({ cell: pos, text: '−' + res.dealt, cls: 'info', hit: m.uid });
   }
 
+  function quakeDamage(lv) { return Math.min(12, 3 + (lv | 0)); }
+
   // Activates the power in slot idx. Free action: it does not take a turn.
   // Returns null when it cannot be used, else { fx, spawned }.
   function usePower(S, idx, target) {
@@ -711,6 +713,7 @@
     const H = S.hero, pw = H.powers[idx];
     if (!pw || pw.cd > 0) return null;
     const def = POWERS[pw.id];
+    if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
     if (pw.id === 'dart') {
       // The dart picks its own victim: any monster on the board, at random.
@@ -751,11 +754,6 @@
         break;
       }
       case 'thunder': S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') { fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, 3, holes, fx); } }); break;
-      case 'quake': {
-        const dmg = Math.min(12, 3 + (S.powerLevel || 0));
-        H.mark = { cell: H.pos, dmg: dmg };
-        fx.push({ cell: H.pos, text: 'Tremor ' + dmg, cls: 'info', anim: 'quake' }); break;
-      }
       case 'ice': H.frost = 3; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
       case 'ward': H.ward = 4; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
@@ -851,7 +849,7 @@
 
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
-    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: function (lv) { return Math.min(12, 3 + (lv | 0)); }, preview: preview, usePower: usePower, validTarget: validTarget,
+    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

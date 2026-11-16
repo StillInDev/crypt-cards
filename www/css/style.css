@@ -464,8 +464,6 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .fx-quake { --c: #c28a54; }
 .fx-quake::before { box-shadow: -30px 14px 0 #733e39, 30px 14px 0 #733e39, -18px 22px 0 var(--c), 18px 22px 0 var(--c), 0 24px 0 #733e39, -34px 0 0 var(--c), 34px 0 0 var(--c), 0 -14px 0 #ead4aa; width: 9px; height: 9px; animation: rise2 .5s steps(6) forwards; }
 .fx-quake::after { content: ''; position: absolute; left: 6%; right: 6%; top: 40%; height: 20%; background: repeating-linear-gradient(90deg, #181425 0 6px, transparent 6px 12px); animation: flare2 .5s steps(5) forwards; }
-.slot.armed .card, .slot.marked .card { outline: 4px dashed #ffb13d; outline-offset: 3px; animation: aim .8s steps(2) infinite; }
-.slot.marked .card { outline-color: #ff6a1f; }
 
 .fx-spike::before { display: none; }
 .fx-spark { --c: #63c74d; }
