@@ -80,7 +80,7 @@
   // cd: turns to recharge. target: what a tap must hit (null = acts at once).
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
-    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword of power 10. It replaces the one you hold.' },
+    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
     dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and dies if that is enough.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
@@ -100,7 +100,7 @@
   const UPGRADE_COST = [150, 450, 1200]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
-    forge:    { amt: [10, 3], text: 'Conjure a sword of power {n}. It replaces the one you hold.', what: '+3 sword power' },
+    forge:    { bonus: [0, 1, 3, 7], text: 'Conjure a sword as strong as your max health{+n}. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.', what: ['+1 sword power', '+2 sword power', '+4 sword power'] },
     dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and dies if that is enough.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
@@ -113,7 +113,11 @@
     ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.', what: '+1 shielded turn' }
   };
   function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
-  function powerAmount(id, lv) { const u = UPGRADES[id]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
+  function powerAmount(id, lv) { const u = UPGRADES[id]; if (u && u.bonus) return u.bonus[clampLv(lv)]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
+  // What the next upgrade of a power adds, for the upgrade button.
+  function upgradeWhat(id, lv) { const w = UPGRADES[id] && UPGRADES[id].what; return Array.isArray(w) ? w[clampLv(lv)] : w; }
+  // Forge: a sword as strong as the hero's max health, plus the upgrade bonus.
+  function forgePower(S, lv) { return S.hero.max + powerAmount('forge', lv); }
   function powerCd(id, lv) { const u = UPGRADES[id]; return Math.max(1, POWERS[id].cd - (u && u.cdCut ? u.cdCut * clampLv(lv) : 0)); }
   function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
 
@@ -128,6 +132,7 @@
   function powerTip(id, lv, plv) {
     const u = UPGRADES[id];
     if (id === 'quake') return POWERS.quake.tip + ' Right now: ' + quakeDamage(plv, lv) + ' damage.';
+    if (id === 'forge') { const b = powerAmount(id, lv); return u.text.replace('{+n}', b ? ' + ' + b : ''); }
     return u && u.text ? u.text.replace(/\{n\}/g, powerAmount(id, lv)) : POWERS[id].tip;
   }
 
@@ -240,7 +245,7 @@
         id: hid,
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
-        sword: null, poison: 0, frost: 0, ward: 0, pass: pass,
+        sword: null, forge: 0, poison: 0, frost: 0, ward: 0, pass: pass,
         powers: ids.map(function (id) {
           const lv = clampLv((opts.upgrades || {})[id]);
           if (POWERS[id].passive) return { id: id, max: 0, cd: 0, lv: lv };
@@ -262,7 +267,7 @@
       grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass,
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
@@ -822,6 +827,12 @@
     // Growing blades still lying on the board.
     bladeGrowth(S, blades0, (S.hurts | 0) - hurt0, fx);
 
+    // A forged sword that was waiting arrives once the hero's hands are empty.
+    if (H.forge && !H.sword && H.hp > 0) {
+      H.sword = { v: H.forge, type: 'sword', el: null }; H.forge = 0;
+      fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' });
+    }
+
     return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
   }
 
@@ -891,6 +902,7 @@
     const def = POWERS[pw.id];
     if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
+    if (pw.id === 'forge' && H.forge) return null; // a forged sword is already waiting
     if (pw.id === 'dart') {
       // The dart picks its own victim: any monster on the board, at random.
       const foes = [];
@@ -908,9 +920,13 @@
         const g = Math.min(amt, H.max - H.hp); H.hp += g;
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); break;
       }
-      case 'forge':
-        H.sword = { v: amt, type: 'sword', el: null };
-        fx.push({ cell: H.pos, text: 'Sword ' + amt, cls: 'info', anim: 'gold' }); break;
+      case 'forge': {
+        // Never replaces a held weapon: the sword waits until the hero's hands are empty.
+        const v = forgePower(S, pw.lv);
+        if (H.sword) { H.forge = v; fx.push({ cell: H.pos, text: 'Forging…', cls: 'info', anim: 'gold' }); }
+        else { H.sword = { v: v, type: 'sword', el: null }; fx.push({ cell: H.pos, text: 'Sword ' + v, cls: 'info', anim: 'gold' }); }
+        break;
+      }
       case 'dart': hitMonster(S, target, amt, holes, fx); extra = { dart: target }; break;
       case 'fire': S.grid[target] = null; holes.push(target); fx.push({ cell: target, text: 'Burn', cls: 'hurt', anim: 'fire' }); break;
       case 'scythe': {
@@ -1029,7 +1045,7 @@
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage,
-    POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost,
+    POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
     HERO_MAX_LV: HERO_MAX_LV, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };

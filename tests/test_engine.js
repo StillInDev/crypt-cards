@@ -8,7 +8,10 @@ let n=0; const ok=(name)=>console.log('ok',++n,name);
 // heal
 let S=blankGame({hero:'knight',powers:['heal']}); S.hero.hp=3; ready(S); let r=DC.usePower(S,0); assert(S.hero.hp===8); assert(S.hero.powers[0].cd===S.hero.powers[0].max); assert(!DC.usePower(S,0)); ok('heal + cooldown');
 // shield
-S=blankGame({powers:['forge']}); ready(S); S.hero.sword={v:2}; DC.usePower(S,0); assert(S.hero.sword.v===10); ok('forge replaces held sword');
+S=blankGame({powers:['forge']}); ready(S); DC.usePower(S,0); assert(S.hero.sword.v===S.hero.max); ok('forge makes a sword as strong as max health');
+S=blankGame({powers:['forge']}); ready(S); S.hero.sword={v:2,type:'sword',el:null}; DC.usePower(S,0); assert(S.hero.sword.v===2&&S.hero.forge===S.hero.max); ok('forge never replaces a held weapon');
+ready(S); assert(!DC.usePower(S,0)); ok('forge cannot stack while a sword waits');
+DC.sellItem(S,'sword'); assert(S.hero.sword&&S.hero.sword.v===S.hero.max&&!S.hero.forge); ok('waiting sword arrives once the hands are empty');
 // dart: random monster, no aiming
 S=blankGame({powers:['dart']}); ready(S); assert(!DC.usePower(S,0)); assert(S.hero.powers[0].cd===0); ok('dart needs a monster and keeps its charge');
 S=blankGame({powers:['dart']}); S.grid[1]=C('rat',3); ready(S); r=DC.usePower(S,0,7); assert(r.target===1); assert(S.grid[1].type!=='rat'); ok('dart ignores tap, kills only rat');

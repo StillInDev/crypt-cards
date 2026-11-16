@@ -704,7 +704,7 @@
       b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : ready ? 'READY' : pw.cd + ' turns';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
       var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
@@ -729,6 +729,7 @@
     if (!pw) return;
     if (DC.POWERS[pw.id].passive) { toast(DC.POWERS[pw.id].name + ' is always on'); return; }
     if (pw.cd > 0) { toast(DC.POWERS[pw.id].name + ' needs ' + pw.cd + ' more turns'); return; }
+    if (pw.id === 'forge' && S.hero.forge) { toast('Your forged sword arrives when your hands are empty'); return; }
     if (DC.POWERS[pw.id].target) { targeting = targeting === i ? null : i; render(); return; }
     firePower(i);
   }
@@ -1139,7 +1140,7 @@
       level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
     if (open) {
       if (cost == null) o.up = { text: 'Fully upgraded.' };
-      else o.up = { text: 'Next level: ' + U.what + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+      else o.up = { text: 'Next level: ' + DC.upgradeWhat(id, lv) + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
         buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to level ' + upLv(id)); } } };
     }

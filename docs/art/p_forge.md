@@ -7,11 +7,11 @@
 
 ## Where it appears
 
-The icon of the **Forge** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Available from the start. In play: Conjure a sword of power 10. It replaces the one you hold. It is shown small, so one bold shape beats detail.
+The icon of the **Forge** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Available from the start. In play: Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty. It is shown small, so one bold shape beats detail.
 
 ## What it must look like
 
-- The **Forge** power conjures a sword of power 10. Today it is identical to the `sword` item. Make it clearly a power: the sword over an anvil, or a sword wreathed in forge sparks (`#feae34` / `#f77622`).
+- The **Forge** power conjures a sword as strong as the hero's max health. Today it is identical to the `sword` item. Make it clearly a power: the sword over an anvil, or a sword wreathed in forge sparks (`#feae34` / `#f77622`).
 
 ## Do not
 
