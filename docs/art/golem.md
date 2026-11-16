@@ -1,24 +1,31 @@
-# Request: Ice golem
+# Request: Golem
 
 - **Sprite id:** `golem` (deliver `golem.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/golem@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/golem.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
-A **Ice golem** card. It appears in: Mine, Frozen Cavern. In play: An ice monster. Ice traps cannot hurt it, and fire traps hurt it double. The number on the card is its health.
+A **Golem** card. It appears in: Mine, Frozen Cavern. It used to be the Ice golem; since 2026-11-16 it
+is a plain stone golem with no element, so fire and ice both hurt it normally.
+
+In play: it **never moves**. When the hero moves, cards slide up to it but never push it, and a new card
+appears in the space it leaves open. It also stops corner shifts and arrow slides, and when frozen it
+cannot be swapped: the hero just bumps into it. It deals damage equal to its number, which is its health.
 
 ## What it must look like
 
-- The **Ice golem**. Currently a blue block. Redraw as a **full figure** built from chunky ice blocks (`#2ce8f5` lit, `#0099db` mid, `#124e89` shade), glowing white eyes.
-- Heavy and slow-looking; square shoulders.
-- Ice monster: ice cannot hurt it.
+- A full figure built from chunky grey stone blocks, with patches of green moss and glowing eyes, like
+  the current sprite.
+- Heavy, rooted and planted: wide feet, square shoulders. It should look like it cannot be pushed.
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
+- Do not make it icy or blue: it is no longer an ice monster.
+- Do not draw it walking or mid-stride.
 
 ## Deliver
 
-`golem.png` (18×18) and `golem@8x.png`. Optionally up to three variants as `golem-1.png`, `golem-2.png`, `golem-3.png`.
+`golem.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `golem-1.png`, `golem-2.png`, `golem-3.png`.

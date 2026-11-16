@@ -2,8 +2,8 @@
 
 - **Sprite id:** `p_scythe` (deliver `p_scythe.png`)
 - **Kind:** power icon
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/p_scythe@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/p_scythe.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -15,9 +15,9 @@ The icon of the **Scythe** power. It sits on a small button in the top bar durin
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Scythe weapon (`scythe`) or the Tremor icon.
 
 ## Deliver
 
-`p_scythe.png` (18×18) and `p_scythe@8x.png`. Optionally up to three variants as `p_scythe-1.png`, `p_scythe-2.png`, `p_scythe-3.png`.
+`p_scythe.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `p_scythe-1.png`, `p_scythe-2.png`, `p_scythe-3.png`.

@@ -29,7 +29,8 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-img, canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+/* Sprites are 96px art (src/img/sprites/), drawn smaller than that: let the browser smooth them. */
+img { image-rendering: auto; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: 3px solid var(--saffron); outline-offset: 3px;
@@ -372,7 +373,7 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .lv-art { width: 96px; height: 96px; display: grid; place-items: center; background: #14121f; border: 5px solid var(--ra, #9a6fd0); }
 .lv-panel.locked .lv-art { border-color: #4a4660; }
 .lv-panel.done .lv-art { border-color: var(--moss); }
-.lv-art img { width: 64px; height: 64px; image-rendering: pixelated; }
+.lv-art img { width: 64px; height: 64px; }
 .lv-panel.locked .lv-art img { opacity: .55; }
 .lv-num { margin-top: 8px; font-family: var(--display); font-size: .6rem; color: var(--ra, var(--saffron)); }
 .lv-panel.locked .lv-num { color: #8b86a0; }
@@ -385,7 +386,7 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .lv-panel.done .f-best { color: #b9f1ad; }
 .lv-reward { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; text-align: left; max-width: 320px; }
 .lv-reward .rw { flex: 0 0 auto; }
-.lv-reward .rw { width: 32px; height: 32px; padding: 2px; background: #14121f; image-rendering: pixelated; }
+.lv-reward .rw { width: 32px; height: 32px; padding: 2px; background: #14121f; }
 .lv-panel.locked .lv-reward .rw { filter: brightness(.6); }
 .lv-status { margin: 2px 0 8px; color: #d6d2e4; font-size: .95rem; }
 .lv-panel.done .lv-status { color: #b9f1ad; }
@@ -560,14 +561,74 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 /* ---- football map and themed rooms ---- */
 body { background-color: var(--bodybg, var(--ink)); transition: background-color .3s; }
 .card { background-color: var(--tc, #34364b) !important; }
+.map .paths .ball { fill: #191525; stroke: #3a3252; stroke-width: 4; }
+.map .paths .stripes rect { fill: #2a2340; }
+.room { background-color: var(--rb, #3a3350); }
+.room.locked { background-color: #1e1a2a; }
+.room .n { color: var(--ra, var(--saffron)); display: flex; align-items: center; gap: 6px; }
+.room .n img { width: 26px; height: 26px; }
+.room .rw { position: absolute; right: -10px; top: -12px; width: 30px; height: 30px; background: #0c0a14; padding: 2px; box-shadow: 0 0 0 3px #0c0a14; z-index: 3; }
+.room.done .rw { opacity: .45; filter: grayscale(.6); }
+.room.locked .rw { filter: brightness(.45); }
+.room.locked .n img { opacity: .55; }
+.room.done .m { color: #b9f1ad; }
 .stat .v small { font-size: .55rem; color: var(--muted); }
 .stat .v img.tgt { width: 20px; height: 20px; margin-left: 4px; vertical-align: -3px; opacity: .85; }
 .stat .v img.tgt.ready { animation: bob 0.8s steps(2) infinite; opacity: 1; }
-.card .bars { position: absolute; left: 10%; top: 10%; width: 80%; height: 80%; z-index: 3; pointer-events: none; image-rendering: pixelated; }
+.card .bars { position: absolute; left: 10%; top: 10%; width: 80%; height: 80%; z-index: 3; pointer-events: none; }
 .card.k-reward { box-shadow: 0 0 0 3px var(--saffron), 0 0 18px 4px rgba(254,231,97,.55) !important; animation: aim .8s steps(2) infinite; }
 .card.k-reward .art { width: 54%; height: 54%; margin-top: 8%; }
 
+.paths .i path.dark { stroke: #2d2840; stroke-dasharray: none; }
 
+/* ---- map in the node-and-line style ---- */
+.mapwrap { padding: 8px 0 26px; }
+.map { overflow: visible; }
+.maphead { position: absolute; left: 0; right: 0; top: 4px; text-align: center; z-index: 1; }
+.maphead .ch { font-family: var(--display); font-size: 1.15rem; color: #e9ebf5; }
+.maphead .chs { margin-top: 8px; color: #9b78d6; font-size: .95rem; }
+.map .paths line { stroke-width: 6; shape-rendering: crispEdges; }
+.map .paths line.lit { stroke: #9a6fd0; }
+.map .paths line.dark { stroke: #3d3a52; stroke-dasharray: none; }
+.room.node { width: 70px; height: 70px; padding: 0; background: none !important; box-shadow: none !important; display: block; transform: translate(-50%, -50%); }
+.room.node::before, .room.node::after { display: none; }
+.node .box { position: absolute; inset: 0; background: #2a2840; border: 5px solid var(--ra, #9a6fd0); display: grid; place-items: center; }
+.node .box img { width: 40px; height: 40px; }
+.node .num { position: absolute; left: 0; top: -18px; font-family: var(--display); font-size: .6rem; color: #b9c7cf; }
+.node .sz { position: absolute; right: 4px; bottom: 3px; font-family: var(--display); font-size: .42rem; color: #dfe6ea; z-index: 2; text-shadow: 0 2px 0 #14121f; }
+.node .sc { position: absolute; left: 50%; transform: translateX(-50%); top: 74px; font-family: var(--display); font-size: .6rem; color: #f0a93a; background: rgba(20,18,31,.7); padding: 2px 4px; white-space: nowrap; }
+.node .rw { right: -16px; top: -16px; width: 36px; height: 36px; background: #14121f; padding: 3px; box-shadow: 0 0 0 2px #14121f; }
+.node.locked .box { border-color: #4a4660; background: #1e1c2c; }
+.node.locked .box img { opacity: .5; }
+.node.locked .sc { color: #6f6885; }
+.node.done .box { border-color: #63c74d; }
+.node.done .sc { color: #b9f1ad; }
+.node.boss .box { width: 70px; }
+.node:not(.locked):not(:disabled):active .box { transform: translateY(3px); }
+.node:focus-visible { outline: 4px solid #fff; outline-offset: 6px; }
+.entrance { z-index: 2; }
+
+/* ---- Area tabs above the map, keys ---- */
+.areatabs { display: flex; gap: 8px; margin: 18px 0 -8px; overflow-x: auto; padding: 4px 4px 8px; scrollbar-width: thin; }
+.atab { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 9px 12px 7px; background: #262236; color: #d7d2e6; border: 0; font: inherit; cursor: pointer; box-shadow: 0 0 0 3px #0c0a14; }
+.atab .an { font-family: var(--display); font-size: .7rem; color: var(--saffron); }
+.atab .at { font-weight: 600; font-size: .92rem; white-space: nowrap; }
+.atab .alock { width: 18px; height: 18px; opacity: .7; }
+.atab.on { background: #4a3a72; color: #fff; box-shadow: 0 0 0 3px #9a6fd0; }
+.atab.locked { background: #1a1725; color: #6f6885; }
+.atab.locked .an { color: #6f6885; }
+.atab.locked.on { box-shadow: 0 0 0 3px #4a4660; }
+.atab:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.maphead .keys { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 4px; color: #fee761; font-size: .9rem; }
+.maphead .keys:empty { display: none; }
+.maphead .keys img { width: 24px; height: 24px; }
+.maphead .keys img.km { filter: grayscale(1) brightness(.45); }
+.maphead .keys span { margin-left: 6px; }
+.node .kb { position: absolute; left: -14px; top: -14px; width: 30px; height: 30px; background: #14121f; padding: 3px; box-shadow: 0 0 0 2px #fee761; z-index: 3; }
+.node.done .kb { opacity: .5; box-shadow: 0 0 0 2px #63c74d; }
+.node.locked .kb { filter: brightness(.5); }
+.node.keyroom .num { left: 20px; }
+.f.check { display: flex; align-items: center; gap: 8px; }
 
 /* ---- Power casts: each power gives the hero its own look while it fires ----
    .au.bk paints behind the sprite, .au.fr in front. 1em = 1% of a card (font-size below),

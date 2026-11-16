@@ -2,8 +2,8 @@
 
 - **Sprite id:** `imp` (deliver `imp.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/imp@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/imp.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Fire imp** card. It appears in: Mine, Ember Halls (also its map icon). In pl
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it blue or cold.
 
 ## Deliver
 
-`imp.png` (18×18) and `imp@8x.png`. Optionally up to three variants as `imp-1.png`, `imp-2.png`, `imp-3.png`.
+`imp.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `imp-1.png`, `imp-2.png`, `imp-3.png`.

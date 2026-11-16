@@ -2,108 +2,78 @@
 
 Each `.md` file in this folder (except this one and `TEMPLATE.md`) is one image request for an art agent.
 There is one request for every sprite in the game; the full list is at the bottom of this file.
-Give the agent **this README plus the request file**, and the PNGs in `art/` (at the repo root) that the request names.
+Give the agent **this README plus the request file**, and the images that the request names.
 This README is the style guide every request must follow.
+
+The first full set of art arrived on 2026-11-16 as eight sheets (`art/sheets/`) and is now in the game.
+The requests stay as the brief for redrawing any single sprite later. Where a request's "What it must
+look like" describes the old 18×18 sprite, the sprite in `src/img/sprites/` now wins on the details;
+the request still sets what the sprite is for and what it must not be confused with.
 
 ## Where the art lives
 
-- `art/` (repo root) holds every sprite currently in the game: `<id>.png` is the real 18×18 file and
-  `<id>@8x.png` is an 8× enlarged copy for viewing.
-- The game itself loads sprites from `src/js/sprites.js`. After changing that file, run
-  `node scripts/export-sprites.js` to refresh `art/` so the two stay in step.
+- `art/sheets/` (repo root) holds the source sheets. Each sheet is a grid of icons on a transparent
+  background (5 columns × 2 rows, or 3 × 3).
+- `node scripts/cut-sheets.js` cuts every sheet into `src/img/sprites/<id>.png` (96 × 96) and rewrites
+  `src/js/sprites.js`, the id → file map the game loads. The order of the ids on each sheet is listed
+  at the top of that script. Add `--sheet out.png` to also get one image of every cut sprite to review.
+- To change a sprite, redraw it in its cell on its sheet (or replace the sheet) and run the script.
 
 ## The game, in one paragraph
 
-Crypt Cards is a pixel-art dungeon card game. The board is a 3×3 (up to 7×7) grid of cards: monsters,
+Crypt Cards is a dungeon card game. The board is a 3×3 (up to 7×7) grid of cards: monsters,
 coins, potions, weapons, traps. The hero moves one square at a time and the cards slide in behind.
-Each card shows one small sprite in the middle of a dark card face, with numbers in the corners.
-Sprites must read instantly at small size on a phone.
+Each card shows one sprite in the middle of a dark card face, with numbers in the corners.
+Sprites must read instantly at small size on a phone (a card is about 100 px wide).
 
-## Hard rules (the build will not accept anything else)
+## Hard rules
 
 | Rule | Value |
 |---|---|
-| Size | exactly **18 × 18 pixels** |
 | Format | **PNG, RGBA**, 8 bits per channel |
-| Background | fully **transparent** (alpha 0) |
-| Alpha | every pixel is either fully opaque (255) or fully transparent (0). No anti-aliasing, no soft edges, no semi-transparent pixels |
-| Colours | **only** the palette below. Exact hex values, no in-between shades |
-| File name | `<sprite id>.png`, the id given in the request (for example `zombie.png`) |
+| Background | fully **transparent** |
+| Size | at least **256 × 256 pixels** per icon; it is shrunk to 96 × 96 |
+| Framing | the icon centred, filling most of its square; nothing touching the edge |
+| Delivery | either a sheet in the same grid and order as the one it replaces, or single files named `<sprite id>.png` |
 
-The game scales sprites up with nearest-neighbour (crisp pixels), so every pixel shows.
-
-## Palette
-
-These are the only colours the game's sprites use (a subset of the Endesga 32 palette).
-Outline colour first, then roughly light to dark within each family.
-
-| Use | Hex |
-|---|---|
-| **Outline (always)** | `#181425` |
-| White / highlight | `#ffffff` |
-| Light grey / bone | `#c0cbdc` |
-| Grey | `#8b9bb4` |
-| Dark grey | `#5a6988` |
-| Slate | `#3a4466` |
-| Darkest slate | `#262b44` |
-| Light green | `#63c74d` |
-| Green | `#3e8948` |
-| Dark green | `#265c42` |
-| Yellow | `#fee761` |
-| Gold / orange | `#feae34` |
-| Orange | `#f77622` |
-| Red | `#e43b44` |
-| Dark red | `#a22633` |
-| Pink | `#ff8fa8` |
-| Purple | `#b55088` |
-| Dark purple | `#68386c` |
-| Cyan | `#2ce8f5` |
-| Blue | `#0099db` |
-| Dark blue | `#124e89` |
-| Sand / skin | `#ead4aa` |
-| Tan / skin | `#e4a672` |
-| Light brown | `#c28a54` |
-| Brown | `#733e39` |
-| Dark brown | `#3e2731` |
+Faint glow (alpha below about 10%) is dropped when the sheet is cut, so a glow should be part of the
+drawing, not a soft haze.
 
 ## Style
 
-- **Outline:** a 1-pixel `#181425` outline around the whole silhouette and between major parts
-  (head and body, shirt and trousers). The outline is what makes sprites readable; never skip it.
-- **Shading:** two-tone, lit from the left. The left half of each shape uses the lighter shade of its
-  colour and the right half the darker shade, split roughly down the middle (see `art/knight@8x.png`).
-- **Characters and monsters** are drawn as a full figure, head to feet, centred, standing on a dark
-  floor strip of `#181425` along the bottom (rows 15–16 of 18). Leave the very bottom row and a pixel or
-  two at the sides empty. See `knight`, `cactus` and `zombie` in `art/`. Many monsters are still just a
-  head today; their requests ask for the full figure. Flying and floating creatures (bats, ghosts,
-  winged monsters) and crawling ones (slimes, spiders, insects) are drawn whole but need no floor strip.
-- **Objects** (tombs, chests, items) sit centred, using about 12–16 pixels of the width.
-- **Faces:** big, simple eyes (1–2 pixels), clear expressions. One idea per sprite; no tiny clutter.
-- **Contrast:** the sprite must read on every room's card colour. The darkest card faces are
-  `#45433f`, `#3f3530`, `#2b4a42`, `#3a4262` and `#2e5469`, so keep the silhouette and outline strong.
+Match the sheets in `art/sheets/`:
 
-## Reference sprites
+- **Look:** chunky, chibi pixel-art style. Big heads, short bodies, simple shapes.
+- **Outline:** a thick dark outline around the whole silhouette. This is what makes sprites readable on
+  the dark cards; never skip it.
+- **Faces:** big, simple eyes and a clear expression. Monsters look grumpy or fierce, heroes friendly.
+- **Characters and monsters** are drawn as a full figure, head to feet. Flying and floating creatures
+  (bats, ghosts, winged monsters) and crawling ones (slimes, spiders, insects) are drawn whole.
+- **Objects** (tombs, chests, items, weapons) sit centred. Weapons point up and to the right.
+- **Arrows** (`firearrow`, `icearrow`) are rotated by the game, so they must point exactly one way:
+  draw them pointing up-right like the sheet (the cut script turns them upright), or straight up as single files.
+- **One idea per sprite.** Sets that belong together (fire and ice versions, the swords, the spiders,
+  the wolves) keep matching shapes so they read as a family.
 
-`art/` holds every sprite already in the game. Each comes as the real 18×18 file and an 8× enlarged
-copy (`@8x`) for viewing. Match their outline weight, shading and level of detail. **`knight` is the
-quality bar for characters.** Sets that belong together (fire and ice versions, the swords, the
-spiders, the wolves) should keep matching shapes so they read as a family.
+## Contrast
+
+The sprite must read on every room's card colour. The darkest card faces are `#45433f`, `#3f3530`,
+`#2b4a42`, `#3a4262` and `#2e5469`, so keep the silhouette and outline strong. The colours named in
+the requests (hex values from the old palette) are a guide to the intended colour, not a hard rule.
 
 ## What to send back
 
-1. The 18×18 PNG, named as the request says.
-2. An 8× enlarged copy for review, named `<sprite id>@8x.png`.
-3. One or two sentences on any choice that is not obvious.
+1. The sheet or files, as above.
+2. One or two sentences on any choice that is not obvious.
 
 If the request asks for options, send each one as `<sprite id>-1.png`, `<sprite id>-2.png` and so on.
-
 ## All requests
 
 One request per sprite in the game (77 in all).
 
 **Heroes (5):** [Knight](knight.md), [Sorcerer](sorcerer.md), [Yeti](yeti.md), [Ninja](rogue.md), [Cactus](cactus.md)
 
-**Monsters (36):** [Skeleton](skeleton.md), [Ogre](ogre.md), [Rat](rat.md), [Bat](bat.md), [Golden skeleton](goldskull.md), [Hive queen](hive.md), [Fire imp](imp.md), [Ice golem](golem.md), [Slime](slime.md), [Magma slime](magmaslime.md), [Goblin](goblin.md), [Zombie](zombie.md), [Cultist](cultist.md), [Lich](lich.md), [Troll](troll.md), [Vampire](vampire.md), [Mummy](mummy.md), [Ghost](ghost.md), [Wraith](wraith.md), [Banshee](banshee.md), [Frost wisp](frostwisp.md), [Wolf](wolf.md), [Frost wolf](frostwolf.md), [Minotaur](minotaur.md), [Cave spider](spider.md), [Ice spider](icespider.md), [Scorpion](scorpion.md), [Beetle](beetle.md), [Viper](snake.md), [Salamander](salamander.md), [Spore shroom](shroom.md), [Harpy](harpy.md), [Gargoyle](gargoyle.md), [Phoenix](phoenix.md), [Web spider](webspider.md), [Tomb](tomb.md)
+**Monsters (36):** [Skeleton](skeleton.md), [Ogre](ogre.md), [Rat](rat.md), [Bat](bat.md), [Golden skeleton](goldskull.md), [Hive queen](hive.md), [Fire imp](imp.md), [Golem](golem.md), [Slime](slime.md), [Magma slime](magmaslime.md), [Goblin](goblin.md), [Zombie](zombie.md), [Cultist](cultist.md), [Lich](lich.md), [Troll](troll.md), [Vampire](vampire.md), [Mummy](mummy.md), [Ghost](ghost.md), [Wraith](wraith.md), [Banshee](banshee.md), [Frost wisp](frostwisp.md), [Wolf](wolf.md), [Frost wolf](frostwolf.md), [Minotaur](minotaur.md), [Cave spider](spider.md), [Ice spider](icespider.md), [Scorpion](scorpion.md), [Beetle](beetle.md), [Viper](snake.md), [Salamander](salamander.md), [Spore shroom](shroom.md), [Harpy](harpy.md), [Gargoyle](gargoyle.md), [Phoenix](phoenix.md), [Web spider](webspider.md), [Tomb](tomb.md)
 
 **Board items (6):** [Gem](gem.md), [Coin](coin.md), [Potion](potion.md), [Poison](poison.md), [Bomb](bomb.md), [Chest](chest.md)
 
@@ -115,8 +85,4 @@ One request per sprite in the game (77 in all).
 
 **Interface (3):** [Spider web](web.md), [Lock bars](bars.md), [Key](key.md)
 
-**Board and interface frames:** [Board and UI](board-and-ui.md) covers everything around the sprites (board,
-card frames, HUD, power buttons, pop-ups, title and upgrade screens, level select, buttons). It is one request with many pieces and
-its own size rules; it delivers into `art/ui/`.
-
-`art/ghoul.png` is an older sprite that the game no longer shows, so it has no request.
+The old 18 × 18 sprites (and an unused ghoul) are in git history before the sheets landed.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `icearrow` (deliver `icearrow.png`)
 - **Kind:** trap (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/icearrow@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/icearrow.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Ice arrow** card. It appears in: Frozen Cavern, Bone Library. In play: The a
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not draw it diagonally.
 
 ## Deliver
 
-`icearrow.png` (18×18) and `icearrow@8x.png`. Optionally up to three variants as `icearrow-1.png`, `icearrow-2.png`, `icearrow-3.png`.
+`icearrow.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `icearrow-1.png`, `icearrow-2.png`, `icearrow-3.png`.

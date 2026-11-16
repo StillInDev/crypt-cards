@@ -2,8 +2,8 @@
 
 - **Sprite id:** `sorcerer` (deliver `sorcerer.png`)
 - **Kind:** hero, full figure
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/sorcerer@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/sorcerer.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,9 +17,9 @@ A playable hero, shown in game as **Sorcerer**. It stands on the board as the he
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Lich or the Cultist (no skull face, no red hood).
 
 ## Deliver
 
-`sorcerer.png` (18×18) and `sorcerer@8x.png`. Optionally up to three variants as `sorcerer-1.png`, `sorcerer-2.png`, `sorcerer-3.png`.
+`sorcerer.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `sorcerer-1.png`, `sorcerer-2.png`, `sorcerer-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `troll` (deliver `troll.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/troll@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/troll.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Troll** card. It appears in: Throne Room. In play: Deals damage equal to its
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Ogre (ogre is brighter green, horned and squat).
 
 ## Deliver
 
-`troll.png` (18×18) and `troll@8x.png`. Optionally up to three variants as `troll-1.png`, `troll-2.png`, `troll-3.png`.
+`troll.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `troll-1.png`, `troll-2.png`, `troll-3.png`.

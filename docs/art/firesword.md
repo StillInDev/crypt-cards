@@ -2,8 +2,8 @@
 
 - **Sprite id:** `firesword` (deliver `firesword.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/firesword@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/firesword.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -15,9 +15,9 @@ A **Fire sword** card. It appears in: Frozen Cavern, Ember Halls, Armory. In pla
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not change the angle or length from `sword`.
 
 ## Deliver
 
-`firesword.png` (18×18) and `firesword@8x.png`. Optionally up to three variants as `firesword-1.png`, `firesword-2.png`, `firesword-3.png`.
+`firesword.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `firesword-1.png`, `firesword-2.png`, `firesword-3.png`.

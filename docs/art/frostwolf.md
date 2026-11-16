@@ -2,8 +2,8 @@
 
 - **Sprite id:** `frostwolf` (deliver `frostwolf.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/frostwolf@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/frostwolf.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Frost wolf** card. It appears in: Frozen Cavern. In play: An ice monster. Ic
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`frostwolf.png` (18×18) and `frostwolf@8x.png`. Optionally up to three variants as `frostwolf-1.png`, `frostwolf-2.png`, `frostwolf-3.png`.
+`frostwolf.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `frostwolf-1.png`, `frostwolf-2.png`, `frostwolf-3.png`.

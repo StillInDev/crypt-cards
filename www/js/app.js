@@ -45,14 +45,24 @@
     { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst' } },
     { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero', id: 'sorcerer' } },
     { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward' } },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero', id: 'icemage' } },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero', id: 'icemage' }, key: true },
     { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport' } },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire' } },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire' }, key: true },
     { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero', id: 'rogue' } },
     { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder' } },
     { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice' } }
   ];
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
+  // The dungeon is split into areas, picked with the tabs above the map. An area opens once the last room
+  // (the boss room) of the area before it is cleared. A boss room stays sealed until every key room in its
+  // area is cleared. Areas 2 to 5 are placeholders for now: copies of area 1's rooms.
+  var AREAS = [
+    { name: 'The Crypt' },
+    { name: 'The Depths' },
+    { name: 'Sunken Halls' },
+    { name: 'Ashen Keep' },
+    { name: 'The Abyss' }
+  ];
   var START_HEROES = ['knight', 'cactus'];
   var START_POWERS = ['heal', 'forge', 'dart'];
   var TYPE_ORDER = Object.keys(TYPES).filter(function (k) { return !TYPES[k].hidden; });
@@ -96,6 +106,8 @@
       w: clampInt(L.w, 2, 7, 3), h: clampInt(L.h, 2, 7, 3),
       heroHP: clampInt(L.heroHP, 3, 60, DC.HERO_BASE_HP),
       from: cleanFrom(L.from, i),
+      area: clampInt(L.area, 1, AREAS.length, 1),
+      key: !!L.key,
       req: clampInt(L.req, 1, 9999, 30 + 5 * i),
       theme: THEMES[L.theme] ? L.theme : (THEME_ORDER[i] || 'cellar'),
       reward: cleanReward(L.reward),
@@ -118,14 +130,35 @@
     return w;
   }
   function defaultLevels() {
-    return ROOMS.map(function (R, i) {
-      var diff = 1 + R.row * 2;
-      var L = DC.nextLevel(null, diff);
-      L.name = R.name; L.theme = R.theme; L.from = R.from.slice(); L.req = R.req; L.reward = { kind: R.reward.kind, id: R.reward.id };
-      L.weights = themedWeights(R.theme, diff);
-      L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
-      return sanitize(L, i);
+    var out = [];
+    AREAS.forEach(function (A, a) {
+      var base = a * ROOMS.length;
+      ROOMS.forEach(function (R) {
+        var diff = 1 + R.row * 2;
+        var L = DC.nextLevel(null, diff);
+        L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1; L.key = !!R.key;
+        L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
+        // Heroes and powers are only found in area 1; the placeholder areas just open the way on.
+        L.reward = a === 0 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
+        L.weights = themedWeights(R.theme, diff);
+        L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
+        out.push(sanitize(L, out.length));
+      });
     });
+    return out;
+  }
+  // Levels saved before areas existed are all area 1: give them area 1's key rooms and append the other areas.
+  function addAreas(list) {
+    var defs = defaultLevels(), shift = list.length - ROOMS.length;
+    list.forEach(function (L) {
+      defs.forEach(function (d) { if (d.area === 1 && d.name === L.name) L.key = d.key; });
+    });
+    defs.forEach(function (d) {
+      if (d.area === 1) return;
+      d.from = d.from.map(function (p) { return p === 0 ? 0 : p + shift; });
+      list.push(sanitize(d, list.length));
+    });
+    return list;
   }
   function parseLevels(text) {
     var d = JSON.parse(text);
@@ -139,10 +172,14 @@
   var purse = 0, ups = {}, hups = {};
   function loadAll(snapshot) {
     levels = null;
-    try { var t = store.get('cc_levels2'); if (t) levels = parseLevels(t); } catch (e) { levels = null; }
+    var hasAreas = false;
+    try { var t = store.get('cc_levels2'); if (t) { levels = parseLevels(t); hasAreas = t.indexOf('"area"') >= 0; } } catch (e) { levels = null; }
     // A snapshot from the old score-gated map has no rewards or themes, so it is ignored.
-    if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) { try { levels = snapshot.levels.map(sanitize); } catch (e) { /* keep */ } }
+    if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) {
+      try { levels = snapshot.levels.map(sanitize); hasAreas = snapshot.levels.some(function (L) { return L.area != null; }); } catch (e) { /* keep */ }
+    }
     if (!levels) levels = defaultLevels();
+    else if (!hasAreas) levels = addAreas(levels);
     // Saved levels from before the newer cards existed get the new cards added, so they still show up.
     var OLD = ['coin', 'gem', 'potion', 'chest', 'poison', 'trap', 'rat', 'bat', 'skeleton', 'ogre', 'goldskull', 'hive', 'sword', 'bomb', 'blank'];
     var newKeys = Object.keys(TYPES).filter(function (k) { return OLD.indexOf(k) < 0; });
@@ -218,9 +255,29 @@
   function saveLevels() { store.set('cc_levels2', JSON.stringify(levels)); }
   function saveCleared() { store.set('cc_clear', JSON.stringify(cleared)); }
   function saveBest() { store.set('cc_best', JSON.stringify(best)); }
+  // Areas are 0-based here (level data stores them 1-based, like room numbers).
+  function areaOf(i) { return levels[i].area - 1; }
+  function areaRooms(a) {
+    var out = [];
+    levels.forEach(function (L, i) { if (L.area - 1 === a) out.push(i); });
+    return out;
+  }
+  function bossOf(a) { var r = areaRooms(a); return r.length ? r[r.length - 1] : -1; }
+  function isBoss(i) { return bossOf(areaOf(i)) === i; }
+  function keyRooms(a) { return areaRooms(a).filter(function (i) { return levels[i].key && !isBoss(i); }); }
+  function keysHeld(a) { return keyRooms(a).filter(function (i) { return !!cleared[i]; }).length; }
+  function areaOpen(a) {
+    if (unlockAll || a <= 0) return true;
+    var b = bossOf(a - 1);
+    return b < 0 ? areaOpen(a - 1) : !!cleared[b];
+  }
+  // A room opens once any room leading to it is cleared, its area is open and, for a boss room, every key is held.
+  function pathOpen(i) {
+    return unlockAll || levels[i].from.some(function (p) { return p === 0 || !!cleared[p - 1]; });
+  }
+  function needsKeys(i) { return !unlockAll && isBoss(i) && keysHeld(areaOf(i)) < keyRooms(areaOf(i)).length; }
   function isUnlocked(i) {
-    var L = levels[i];
-    return unlockAll || L.from.some(function (p) { return p === 0 || !!cleared[p - 1]; });
+    return areaOpen(areaOf(i)) && pathOpen(i) && !needsKeys(i);
   }
   function childrenOf(i) {
     var out = [];
@@ -231,7 +288,7 @@
   function rewardSprite(rw) {
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) return DC.HEROES[rw.id].sprite;
     if (rw && rw.kind === 'power' && DC.POWERS[rw.id]) return DC.POWERS[rw.id].sprite;
-    return 'key';
+    return 'chest';
   }
   function rewardName(rw) {
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) return 'the ' + DC.HEROES[rw.id].name + ' hero';
@@ -266,66 +323,86 @@
   };
 
   // ---- Menu -----------------------------------------------------------------
+  // Levels are numbered tabs (1, 2, 3, ...). The chosen tab shows that level and its Play button.
+  var menuSel = null;
+  function firstOpenLevel() {
+    for (var i = 0; i < levels.length; i++) if (isUnlocked(i) && !cleared[i]) return i;
+    for (var j = 0; j < levels.length; j++) if (isUnlocked(j)) return j;
+    return 0;
+  }
+  function selectTab(i, focus) {
+    menuSel = i;
+    renderMenu();
+    var t = $('#lv-tabs').children[i];
+    if (t) {
+      if (focus) t.focus();
+      t.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+  }
+  function renderLevelPanel(i) {
+    var pn = $('#lv-panel'), L = levels[i], th = THEMES[L.theme] || THEMES.cellar;
+    var ok = isUnlocked(i), done = !!cleared[i], bs = best[i] || 0, boss = i === levels.length - 1;
+    pn.setAttribute('aria-labelledby', 'lv-tab-' + i);
+    pn.className = 'lv-panel' + (ok ? '' : ' locked') + (done ? ' done' : '');
+    pn.style.setProperty('--ra', th.acc); pn.style.setProperty('--rb', th.card);
+    pn.innerHTML = '<div class="lv-art"></div>' +
+      '<div class="lv-num"></div><h3 class="lv-name"></h3><p class="lv-sub"></p>' +
+      '<dl class="lv-facts"><div><dt>Board</dt><dd class="f-sz"></dd></div><div><dt>Target</dt><dd class="f-req"></dd></div><div><dt>Best</dt><dd class="f-best"></dd></div></dl>' +
+      '<p class="lv-reward"><span class="rwl"></span></p><p class="lv-status"></p>';
+    pn.querySelector('.lv-art').appendChild(img(ok ? (boss ? 'goldskull' : th.icon) : 'bars'));
+    pn.querySelector('.lv-num').textContent = 'Level ' + (i + 1) + (boss ? ' · Final' : '');
+    pn.querySelector('.lv-name').textContent = ok ? L.name : 'Sealed';
+    pn.querySelector('.lv-sub').textContent = ok ? th.sub : 'This level is still locked.';
+    pn.querySelector('.f-sz').textContent = L.w + '×' + L.h;
+    pn.querySelector('.f-req').textContent = L.req;
+    pn.querySelector('.f-best').textContent = bs || '–';
+    var rw = pn.querySelector('.lv-reward');
+    rw.insertBefore(img(rewardSprite(L.reward), 'rw'), rw.firstChild);
+    rw.querySelector('.rwl').textContent = (done ? 'Unlocked ' : 'Reward: ') + rewardName(L.reward);
+    var st = pn.querySelector('.lv-status');
+    if (done) st.textContent = '✓ Cleared';
+    else if (ok) st.textContent = 'Reach ' + L.req + ' to unlock the reward.';
+    else {
+      var via = L.from.filter(function (p) { return p > 0; });
+      st.textContent = via.length ? 'Clear level ' + via.join(' or ') + ' to open it.' : 'Sealed.';
+    }
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'btn go lv-play'; go.id = 'lv-play';
+    go.textContent = ok ? (done ? 'Play again' : 'Play') : 'Locked';
+    go.disabled = !ok;
+    go.addEventListener('click', function () { startLevel(i); });
+    pn.appendChild(go);
+  }
   function renderMenu() {
-    var map = $('#map');
-    map.innerHTML = '';
-    var COLW = 106, ROWH = 142, NS = 70, TOP = 190;
-    var depth = [0], rows = [[]];
-    levels.forEach(function (L, i) {
-      var d = 1;
-      L.from.forEach(function (p) { d = Math.max(d, (depth[p] || 0) + 1); });
-      depth[i + 1] = d;
-      (rows[d] = rows[d] || []).push(i + 1);
-    });
-    var maxD = rows.length - 1, maxN = 1, off = [0];
-    rows.forEach(function (r) { if (!r) return; maxN = Math.max(maxN, r.length); r.forEach(function (k, ix) { off[k] = ix - (r.length - 1) / 2; }); });
-    var W = maxN * COLW + 40, H = TOP + (maxD + 1) * ROWH;
-    map.style.width = W + 'px'; map.style.height = H + 'px';
-    function cx(k) { return Math.round(W / 2 + off[k] * COLW); }
-    function cy(k) { return TOP + depth[k] * ROWH - 30; }
-    // Header
-    var hd = document.createElement('div');
-    hd.className = 'maphead';
-    hd.innerHTML = '<div class="ch">The Crypt</div><div class="chs"></div>';
+    if (menuSel == null || menuSel >= levels.length) menuSel = firstOpenLevel();
     var cl = 0; levels.forEach(function (L, i) { if (cleared[i]) cl++; });
-    hd.querySelector('.chs').textContent = cl + ' of ' + levels.length + ' rooms cleared';
-    map.appendChild(hd);
-    var svg = '<svg class="paths" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    $('#lv-count').textContent = cl + ' of ' + levels.length + ' levels cleared';
+    var tabs = $('#lv-tabs');
+    tabs.innerHTML = '';
     levels.forEach(function (L, i) {
-      var k = i + 1;
-      L.from.forEach(function (p) {
-        var lit = p === 0 || cleared[p - 1] || unlockAll;
-        var x1 = cx(p), y1 = p === 0 ? TOP - 66 : cy(p), x2 = cx(k), y2 = cy(k);
-        svg += '<line class="' + (lit ? 'lit' : 'dark') + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+      var ok = isUnlocked(i), done = !!cleared[i], sel = i === menuSel;
+      var t = document.createElement('button');
+      t.type = 'button'; t.id = 'lv-tab-' + i;
+      t.className = 'lv-tab' + (ok ? '' : ' locked') + (done ? ' done' : '') + (sel ? ' on' : '');
+      t.setAttribute('role', 'tab');
+      t.setAttribute('aria-selected', sel ? 'true' : 'false');
+      t.setAttribute('aria-controls', 'lv-panel');
+      t.tabIndex = sel ? 0 : -1;
+      t.textContent = i + 1;
+      t.setAttribute('aria-label', 'Level ' + (i + 1) + (done ? ', cleared' : ok ? '' : ', sealed'));
+      t.style.setProperty('--ra', (THEMES[L.theme] || THEMES.cellar).acc);
+      t.addEventListener('click', function () { selectTab(i, true); });
+      t.addEventListener('keydown', function (e) {
+        var n = levels.length, k = e.key, to = null;
+        if (k === 'ArrowRight') to = (i + 1) % n;
+        else if (k === 'ArrowLeft') to = (i - 1 + n) % n;
+        else if (k === 'Home') to = 0;
+        else if (k === 'End') to = n - 1;
+        if (to != null) { e.preventDefault(); selectTab(to, true); }
       });
+      tabs.appendChild(t);
     });
-    svg += '</svg>';
-    map.insertAdjacentHTML('beforeend', svg);
-    var ent = document.createElement('div');
-    ent.className = 'entrance';
-    ent.style.left = cx(0) + 'px'; ent.style.top = (TOP - 66) + 'px';
-    ent.textContent = 'Entrance';
-    map.appendChild(ent);
-    levels.forEach(function (L, i) {
-      var k = i + 1, ok = isUnlocked(i), bs = best[i] || 0, th = THEMES[L.theme], done = !!cleared[i];
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'room node' + (ok ? '' : ' locked') + (done ? ' done' : '') + (i === levels.length - 1 ? ' boss' : '');
-      b.style.left = cx(k) + 'px'; b.style.top = cy(k) + 'px';
-      b.style.setProperty('--ra', th.acc); b.style.setProperty('--rb', th.card);
-      b.innerHTML = '<span class="num"></span><span class="box"></span><span class="sz"></span><span class="sc"></span>';
-      b.querySelector('.num').textContent = k;
-      b.querySelector('.box').appendChild(img(ok ? (i === levels.length - 1 ? 'goldskull' : th.icon) : 'bars'));
-      b.querySelector('.sz').textContent = L.w + '×' + L.h;
-      b.querySelector('.sc').textContent = done ? '✓ ' + (bs || L.req) : L.req;
-      var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward);
-      b.appendChild(rw);
-      b.setAttribute('aria-label', 'Room ' + k + ', ' + (ok ? L.name + (done ? ', cleared' : ', reach ' + L.req + ' to unlock ' + rewardName(L.reward)) : 'sealed'));
-      b.title = ok ? L.name + ' · ' + th.sub : 'Sealed';
-      b.disabled = !ok;
-      b.addEventListener('click', function () { startLevel(i); });
-      map.appendChild(b);
-    });
+    renderLevelPanel(menuSel);
     var lg = $('#legend');
     if (!lg.children.length) {
       TYPE_ORDER.forEach(function (k) {
@@ -383,7 +460,9 @@
 
   function startLevel(i) {
     bankRun();
+    menuSel = i;
     cur = i;
+    menuArea = areaOf(i); store.set('cc_area', String(menuArea));
     fixSelection();
     S = DC.newGame(levels[i], null, { hero: heroSel, powers: powSel, powerLevel: powerLevel(), upgrades: ups, heroLevel: heroUpLv(heroSel), claimed: !!cleared[i] });
     rewardShown = S.rewardGiven;
@@ -821,13 +900,16 @@
   // Stepping on the locked reward clears the room: its hero or power unlocks and the rooms below it open.
   function claimReward(i, rw) {
     var wasOpen = levels.map(function (L, j) { return isUnlocked(j); });
+    var a = areaOf(i), areaWas = AREAS.map(function (A, x) { return areaOpen(x); }), firstClear = !cleared[i];
     cleared[i] = 1; saveCleared();
     var msgs = [];
-    if (i === levels.length - 1) msgs.push('Dungeon conquered!');
+    if (isBoss(i)) msgs.push(a + 1 < AREAS.length ? AREAS[a].name + ' conquered!' : 'Dungeon conquered!');
+    if (firstClear && keyRooms(a).indexOf(i) >= 0) msgs.push('Key found (' + keysHeld(a) + ' of ' + keyRooms(a).length + ')');
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) msgs.push('Hero unlocked: ' + DC.HEROES[rw.id].name);
     if (rw && rw.kind === 'power' && DC.POWERS[rw.id]) msgs.push('Power unlocked: ' + DC.POWERS[rw.id].name);
+    AREAS.forEach(function (A, x) { if (!areaWas[x] && areaOpen(x)) msgs.push('New area: ' + A.name); });
     var rooms = [];
-    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j)) rooms.push(L.name); });
+    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j) && areaOf(j) === a) rooms.push(L.name); });
     if (rooms.length) msgs.push('New room' + (rooms.length > 1 ? 's' : '') + ': ' + rooms.join(', '));
     if (!msgs.length) msgs.push('Room cleared');
     toast(msgs.join('. '), 4200);
@@ -844,9 +926,15 @@
     if (cleared[cur]) {
       kidsOf.forEach(function (j) {
         if (isUnlocked(j)) open.push(j);
-        note += (note ? ' ' : '') + levels[j].name + (isUnlocked(j) ? ' is open.' : ' is still sealed.');
+        var why = needsKeys(j) && pathOpen(j) ? ' needs ' + (keyRooms(areaOf(j)).length - keysHeld(areaOf(j))) + ' more key(s).' : ' is still sealed.';
+        note += (note ? ' ' : '') + levels[j].name + (isUnlocked(j) ? ' is open.' : why);
       });
-      if (!kidsOf.length) note = 'The end of the dungeon.';
+      var na = areaOf(cur) + 1;
+      if (isBoss(cur) && na < AREAS.length && areaRooms(na).length) {
+        var first = areaRooms(na).filter(isUnlocked)[0];
+        if (first != null && open.indexOf(first) < 0) open.push(first);
+        note += (note ? ' ' : '') + AREAS[na].name + ' is open.';
+      } else if (!kidsOf.length) note = 'The end of the dungeon.';
     } else if (S.rewardGiven) {
       note = 'The locked reward appeared, but you fell before reaching it.';
     } else {
@@ -1375,6 +1463,7 @@
     ['w', 'Columns (2–7)', 'number', 2, 7],
     ['h', 'Rows (2–7)', 'number', 2, 7],
     ['heroHP', 'Hero health', 'number', 3, 60],
+    ['area', 'Area (1–' + AREAS.length + '; its last room is the boss)', 'number', 1, AREAS.length],
     ['from', 'Reached from rooms (numbers, 0 = entrance)', 'text'],
     ['req', 'Score that reveals the reward', 'number', 1, 9999, true],
     ['ramp', 'Turns per difficulty step', 'number', 1, 99],
@@ -1437,6 +1526,11 @@
     Object.keys(DC.POWERS).forEach(function (k) { opt('power:' + k, 'Power: ' + DC.POWERS[k].name, L.reward.kind === 'power' && L.reward.id === k); });
     rs.addEventListener('change', function () { var p = rs.value.split(':'); L.reward = { kind: p[0], id: p[1] || null }; commit(); renderEditor(); });
     rl.appendChild(rs); fields.appendChild(rl);
+    var kl = document.createElement('label'); kl.className = 'f check';
+    var kc = document.createElement('input'); kc.type = 'checkbox'; kc.checked = !!L.key;
+    kc.addEventListener('change', function () { L.key = kc.checked; commit(); renderEditor(); });
+    kl.appendChild(kc); kl.appendChild(document.createTextNode(' Key room (the boss needs every key in its area)'));
+    fields.appendChild(kl);
     f.appendChild(fields);
 
     var total = 0;
@@ -1471,7 +1565,7 @@
     var n = DC.nextLevel(prev, levels.length + 1);
     // Keep the new level at least as big and as long-lived as the last one.
     n.heroHP = Math.max(n.heroHP, prev.heroHP);
-    n.from = [levels.length]; n.req = prev.req + 10; n.theme = 'throne'; n.reward = { kind: 'door' };
+    n.from = [levels.length]; n.req = prev.req + 10; n.theme = 'throne'; n.reward = { kind: 'door' }; n.area = prev.area;
     levels.push(n); ed = levels.length - 1;
     commit(); renderEditor(); setMsg('Added level ' + levels.length + '. Tune it, then press Play this level.');
   });
@@ -1510,7 +1604,7 @@
     if (!done) setMsg('Select the text above and copy it by hand.', true);
   });
   $('#e-reset').addEventListener('click', function () {
-    levels = defaultLevels(); best = {}; saveBest(); cleared = {}; saveCleared(); saveLevels(); ed = 0; renderEditor(); setMsg('Back to the 12 starter rooms. Progress was reset.');
+    levels = defaultLevels(); best = {}; saveBest(); cleared = {}; saveCleared(); saveLevels(); ed = 0; renderEditor(); setMsg('Back to the starter dungeon (' + AREAS.length + ' areas). Progress was reset.');
   });
 
   // Closing the app mid-run still banks that run's gold.
