@@ -2,8 +2,8 @@
 
 - **Sprite id:** `chest` (deliver `chest.png`)
 - **Kind:** board item (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/chest@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/chest.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Chest** card. In play: Step toward it to open it. You stay where you are and
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`chest.png` (18×18) and `chest@8x.png`. Optionally up to three variants as `chest-1.png`, `chest-2.png`, `chest-3.png`.
+`chest.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `chest-1.png`, `chest-2.png`, `chest-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `p_fire` (deliver `p_fire.png`)
 - **Kind:** power icon
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/p_fire@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/p_fire.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -15,8 +15,8 @@ The icon of the **Fire touch** power. It sits on a small button in the top bar d
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`p_fire.png` (18×18) and `p_fire@8x.png`. Optionally up to three variants as `p_fire-1.png`, `p_fire-2.png`, `p_fire-3.png`.
+`p_fire.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `p_fire-1.png`, `p_fire-2.png`, `p_fire-3.png`.

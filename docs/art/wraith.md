@@ -2,8 +2,8 @@
 
 - **Sprite id:** `wraith` (deliver `wraith.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/wraith@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/wraith.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Wraith** card. It appears in: Catacombs, Bone Library. In play: Deals damage
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`wraith.png` (18×18) and `wraith@8x.png`. Optionally up to three variants as `wraith-1.png`, `wraith-2.png`, `wraith-3.png`.
+`wraith.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `wraith-1.png`, `wraith-2.png`, `wraith-3.png`.

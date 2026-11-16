@@ -2,8 +2,8 @@
 
 - **Sprite id:** `webspider` (deliver `webspider.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/webspider@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/webspider.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Web spider** card. It appears in: Fungus Caves. In play: It hides in its web
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it purple or blue (those are the Cave and Ice spiders).
 
 ## Deliver
 
-`webspider.png` (18×18) and `webspider@8x.png`. Optionally up to three variants as `webspider-1.png`, `webspider-2.png`, `webspider-3.png`.
+`webspider.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `webspider-1.png`, `webspider-2.png`, `webspider-3.png`.

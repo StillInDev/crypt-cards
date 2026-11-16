@@ -2,8 +2,8 @@
 
 - **Sprite id:** `ghost` (deliver `ghost.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/ghost@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/ghost.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -17,8 +17,8 @@ A **Ghost** card. It appears in: Catacombs, Bone Library. In play: Deals damage 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`ghost.png` (18×18) and `ghost@8x.png`. Optionally up to three variants as `ghost-1.png`, `ghost-2.png`, `ghost-3.png`.
+`ghost.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `ghost-1.png`, `ghost-2.png`, `ghost-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `coin` (deliver `coin.png`)
 - **Kind:** board item (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/coin@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/coin.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Coin** card. In play: Step on it to add its value to your gold.
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`coin.png` (18×18) and `coin@8x.png`. Optionally up to three variants as `coin-1.png`, `coin-2.png`, `coin-3.png`.
+`coin.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `coin-1.png`, `coin-2.png`, `coin-3.png`.

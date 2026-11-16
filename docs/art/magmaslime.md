@@ -2,8 +2,8 @@
 
 - **Sprite id:** `magmaslime` (deliver `magmaslime.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/magmaslime@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/magmaslime.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Magma slime** card. It appears in: Ember Halls. In play: A fire monster. Fir
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`magmaslime.png` (18×18) and `magmaslime@8x.png`. Optionally up to three variants as `magmaslime-1.png`, `magmaslime-2.png`, `magmaslime-3.png`.
+`magmaslime.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `magmaslime-1.png`, `magmaslime-2.png`, `magmaslime-3.png`.

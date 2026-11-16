@@ -2,8 +2,8 @@
 
 - **Sprite id:** `scythe` (deliver `scythe.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/scythe@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/scythe.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Scythe** card. It appears in: Barracks, Armory. In play: Step toward a monst
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the Scythe power icon (`p_scythe`).
 
 ## Deliver
 
-`scythe.png` (18×18) and `scythe@8x.png`. Optionally up to three variants as `scythe-1.png`, `scythe-2.png`, `scythe-3.png`.
+`scythe.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `scythe-1.png`, `scythe-2.png`, `scythe-3.png`.
