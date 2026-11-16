@@ -570,6 +570,28 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 
 
 
+/* ---- Area tabs above the map, keys ---- */
+.areatabs { display: flex; gap: 8px; margin: 18px 0 -8px; overflow-x: auto; padding: 4px 4px 8px; scrollbar-width: thin; }
+.atab { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 9px 12px 7px; background: #262236; color: #d7d2e6; border: 0; font: inherit; cursor: pointer; box-shadow: 0 0 0 3px #0c0a14; }
+.atab .an { font-family: var(--display); font-size: .7rem; color: var(--saffron); }
+.atab .at { font-weight: 600; font-size: .92rem; white-space: nowrap; }
+.atab .alock { width: 18px; height: 18px; opacity: .7; }
+.atab.on { background: #4a3a72; color: #fff; box-shadow: 0 0 0 3px #9a6fd0; }
+.atab.locked { background: #1a1725; color: #6f6885; }
+.atab.locked .an { color: #6f6885; }
+.atab.locked.on { box-shadow: 0 0 0 3px #4a4660; }
+.atab:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.maphead .keys { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 4px; color: #fee761; font-size: .9rem; }
+.maphead .keys:empty { display: none; }
+.maphead .keys img { width: 24px; height: 24px; }
+.maphead .keys img.km { filter: grayscale(1) brightness(.45); }
+.maphead .keys span { margin-left: 6px; }
+.node .kb { position: absolute; left: -14px; top: -14px; width: 30px; height: 30px; background: #14121f; padding: 3px; box-shadow: 0 0 0 2px #fee761; z-index: 3; }
+.node.done .kb { opacity: .5; box-shadow: 0 0 0 2px #63c74d; }
+.node.locked .kb { filter: brightness(.5); }
+.node.keyroom .num { left: 20px; }
+.f.check { display: flex; align-items: center; gap: 8px; }
+
 /* ---- Power casts: each power gives the hero its own look while it fires ----
    .au.bk paints behind the sprite, .au.fr in front. 1em = 1% of a card (font-size below),
    so pixel particles drawn with box-shadow scale with the board. */
