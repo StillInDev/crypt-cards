@@ -478,7 +478,7 @@
       }
     });
     place(heroEl, H.pos);
-    heroEl.querySelector('.hp b').textContent = H.hp + '/' + H.max;
+    heroEl.querySelector('.hp b').textContent = H.hp;
     var heldEl = heroEl.querySelector('.held');
     heldEl.style.display = H.sword ? '' : 'none';
     if (H.sword) heldEl.src = SPR[H.sword.type || 'sword'] || '';
