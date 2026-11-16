@@ -1139,6 +1139,10 @@
     var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
       level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
     if (open) {
+      var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
+      o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
+        note: !on && powSel.length >= slots ? 'Replaces ' + DC.POWERS[powSel[0]].name + '.' : '',
+        fn: function () { togglePower(id); loInfo(powerInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
       else o.up = { text: 'Next level: ' + DC.upgradeWhat(id, lv) + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
@@ -1165,6 +1169,14 @@
     if (o.level != null) d.appendChild(pips(o.level, 'li-lv', o.max));
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
+    var row = document.createElement('div'); row.className = 'li-btns';
+    if (o.equip) {
+      var eb = document.createElement('button');
+      eb.type = 'button'; eb.className = 'btn li-equip' + (o.equip.on ? ' quiet' : '');
+      eb.textContent = o.equip.label;
+      eb.addEventListener('click', o.equip.fn);
+      row.appendChild(eb);
+    }
     if (o.up) {
       line('p', 'li-up', o.up.text);
       if (o.up.buy) {
@@ -1175,10 +1187,12 @@
         bb.appendChild(document.createTextNode(o.up.cost));
         bb.setAttribute('aria-label', o.up.label + ' for ' + o.up.cost + ' gold');
         bb.addEventListener('click', o.up.buy);
-        d.appendChild(bb);
-        line('p', 'li-short', o.up.short);
+        row.appendChild(bb);
       }
     }
+    if (row.children.length) d.appendChild(row);
+    if (o.equip) line('p', 'li-short', o.equip.note);
+    if (o.up) line('p', 'li-short', o.up.short);
     el.appendChild(d);
     el.classList.add('on');
     loGen++;
@@ -1323,8 +1337,8 @@
 
   function renderHero() {
     fixSelection();
-    var ms = maxScore(), slots = DC.HEROES[heroSel].slots;
-    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers. Your best single run is ' + ms + ' gold.';
+    var slots = DC.HEROES[heroSel].slots;
+    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers.';
 
     // Loadout: powers above the head, then the hero.
     fillLoadout('hp', function (pid) { powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero(); },
@@ -1369,10 +1383,14 @@
       var av = $('#hp-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
       return;
     }
+    // Powers are not equipped on tap: the details open, with an Equip button.
+    loInfo(powerInfo(id));
+  }
+  function togglePower(id) {
     var slots = DC.HEROES[heroSel].slots, at = powSel.indexOf(id);
     if (at >= 0) powSel.splice(at, 1);
     else { powSel.push(id); if (powSel.length > slots) powSel.shift(); hpPop = id; }
-    saveSelection(); renderHero();
+    saveSelection(); refreshLoadoutScreen();
   }
 
   // Pager. Only two pages, so "the other page" always sits on whichever side you drag toward: a seamless loop.
