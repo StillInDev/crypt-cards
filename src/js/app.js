@@ -18,7 +18,7 @@
     sewers:   { bg: '#13241f', card: '#2b4a42', acc: '#63c74d', icon: 'slime',     sub: 'Slime and poison',
                 w: { slime: 8, rat: 6, snake: 6, zombie: 2, poison: 12, potion: 14, trap: 3 } },
     barracks: { bg: '#1b1f31', card: '#3a4262', acc: '#f0883a', icon: 'goblin',    sub: 'Goblins and steel',
-                w: { goblin: 8, skeleton: 5, cultist: 2, goldskull: 3, sword: 16, scythe: 6, gemblade: 4, ninjastar: 3, trap: 5 } },
+                w: { goblin: 8, skeleton: 5, cultist: 2, goldskull: 3, sword: 16, scythe: 6, windblade: 2, painblade: 2, ninjastar: 3, trap: 5 } },
     fungus:   { bg: '#231a30', card: '#4a3560', acc: '#e07bd8', icon: 'shroom',    sub: 'Spores everywhere',
                 w: { shroom: 8, spider: 6, hive: 3, slime: 3, beetle: 3, poison: 10, potion: 18, webspider: 3 } },
     catacombs:{ bg: '#1a1a1b', card: '#45433f', acc: '#e0dac0', icon: 'skeleton',  sub: 'The restless dead',
@@ -32,7 +32,7 @@
     ember:    { bg: '#2a1410', card: '#5d2e25', acc: '#ff6a1f', icon: 'imp',       sub: 'Fire and brimstone',
                 w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, firetrap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
     armory:   { bg: '#1a2029', card: '#4a5569', acc: '#c0cbdc', icon: 'gargoyle',  sub: 'Every weapon you can think of',
-                w: { gargoyle: 6, goblin: 4, minotaur: 3, skeleton: 4, sword: 14, firesword: 4, icesword: 4, scythe: 5, gemblade: 5, ninjastar: 4, elecbow: 3 } },
+                w: { gargoyle: 6, goblin: 4, minotaur: 3, skeleton: 4, sword: 14, firesword: 4, icesword: 4, scythe: 5, windblade: 3, painblade: 3, ninjastar: 4, elecbow: 3 } },
     vampire:  { bg: '#270f1d', card: '#5b2641', acc: '#ff5560', icon: 'vampire',   sub: 'They hunt in the dark',
                 w: { vampire: 6, bat: 8, wolf: 4, mummy: 4, banshee: 3, potion: 8, poison: 6, trap: 4 } },
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
@@ -108,7 +108,7 @@
   // Every room gets its own monsters and items: start from the depth's generic odds, drop all monsters, then apply the theme.
   function themedWeights(themeKey, diffId) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
-    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'firearrow', 'icearrow', 'elecbow', 'ninjastar', 'gemblade', 'scythe', 'trap', 'poison', 'goldskull'];
+    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'firearrow', 'icearrow', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
       var T = TYPES[k];
       w[k] = (T.kind === 'monster' || CLEAR.indexOf(k) >= 0) ? 0 : (base[k] || 0);
@@ -331,7 +331,7 @@
       card.className = 'card k-empty';
       card.innerHTML = '<span class="chip"></span>';
     } else {
-      card.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="dm"><b></b></span><span class="val"></span><span class="shd"><svg class="ic" viewBox="0 0 7 8" shape-rendering="crispEdges"><path fill="#41a6f6" d="M0 0h7v4H6v2H5v1H4v1H3V7H2V6H1V4H0z"/><path fill="#b3d4ff" d="M1 1h2v3H1z"/><path fill="#1d5fa8" d="M4 1h2v3H4z"/></svg></span><span class="jw"><i></i><i></i><i></i></span><span class="chip"></span>';
+      card.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="dm"><b></b></span><span class="val"></span><span class="shd"><svg class="ic" viewBox="0 0 7 8" shape-rendering="crispEdges"><path fill="#41a6f6" d="M0 0h7v4H6v2H5v1H4v1H3V7H2V6H1V4H0z"/><path fill="#b3d4ff" d="M1 1h2v3H1z"/><path fill="#1d5fa8" d="M4 1h2v3H4z"/></svg></span><span class="chip"></span>';
       card.insertBefore(img(c.kind === 'reward' ? rewardSprite(c.rw) : c.type, 'art'), card.firstChild);
       if (c.kind === 'reward') card.appendChild(img('bars', 'bars'));
       if (c.kind === 'dtrap') {
@@ -370,7 +370,7 @@
     lastHp = S.hero.hp;
     var hc = document.createElement('div');
     hc.className = 'card';
-    hc.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="jw"><i></i><i></i><i></i></span>';
+    hc.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span>';
     hc.insertBefore(img(DC.HEROES[heroSel].sprite, 'art'), hc.firstChild);
     // Power cast layers: one paints behind the hero sprite, one in front (see .cast-* in the CSS).
     var auB = document.createElement('span'); auB.className = 'au bk'; hc.insertBefore(auB, hc.firstChild);
@@ -440,9 +440,6 @@
     var had = el._sh; el._sh = !!c.sh;
     shd.style.display = c.sh ? '' : 'none';
     if (had && !c.sh) { flash(el, 'strike', 380); burst('fx-break', pos); }
-    var jw = el.querySelector('.jw');
-    jw.style.display = c.g ? '' : 'none';
-    if (c.g) Array.prototype.forEach.call(jw.children, function (i, k) { i.className = c.g[k] || ''; });
     if (c.kind === 'arrow') {
       var art2 = el.querySelector('.art');
       if (el._ah == null) el._rot = c.h * 90;
@@ -482,8 +479,6 @@
     });
     place(heroEl, H.pos);
     heroEl.querySelector('.hp b').textContent = H.hp + '/' + H.max;
-    var hj = heroEl.querySelector('.jw'); hj.style.display = H.sword && H.sword.g ? '' : 'none';
-    if (H.sword && H.sword.g) Array.prototype.forEach.call(hj.children, function (i, k) { i.className = H.sword.g[k] || ''; });
     var heldEl = heroEl.querySelector('.held');
     heldEl.style.display = H.sword ? '' : 'none';
     if (H.sword) heldEl.src = SPR[H.sword.type || 'sword'] || '';
@@ -881,9 +876,9 @@
         break;
       }
       case 'chest': t = 'Step toward it to open it. You stay put and the turn is spent, then an item (a sword, potion or gem) appears in its place to pick up.'; break;
-      case 'weapon': if (T.gems) {
-          var jn = c.g.filter(Boolean).length, green = c.g.indexOf('g') >= 0;
-          t = (green ? 'Green' : 'Blue') + ' jewel blade, power ' + n + ', ' + jn + (jn === 1 ? ' jewel' : ' jewels') + '. It gains ' + jn + ' power ' + (green ? 'every time you take damage.' : 'every time you move.');
+      case 'weapon': if (T.grows) {
+          t = 'Power ' + n + '. While it lies here it gains 1 power ' + (T.grows === 'wind' ? 'every time it slides to a new square.' : 'every time you take damage.') +
+            ' Pick it up and it stops growing: it fights like a normal sword, wearing down by the damage it deals.';
           break;
         }
         if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', ' + c.t + ' throws. Tap a monster in your row or column to hit it. No chain.'; break; }

@@ -28,7 +28,8 @@
     firearrow: { kind: 'arrow',   name: 'Fire arrow',      lo: 2, hi: 4, bf: 0.5, el: 'fire', tip: 'The arrow turns every turn. Tap it to fire: the whole row or column it points along slides one square that way and every monster in it takes its number as fire damage. You only slide if you are in that line.' },
     icearrow:  { kind: 'arrow',   name: 'Ice arrow',       lo: 2, hi: 4, bf: 0.5, el: 'ice',  tip: 'The arrow turns every turn. Tap it to fire: the whole row or column it points along slides one square that way and every monster in it takes its number as ice damage and freezes if it survives. You only slide if you are in that line.' },
     ninjastar: { kind: 'weapon',  name: 'Ninja star',      lo: 3, hi: 6, bf: 1,   bow: true, star: true, tip: 'Five throws. Tap a monster in your row or column to hit it for the star\'s power. No chain, and nothing outside your row or column can be hit.' },
-    gemblade:  { kind: 'weapon',  name: 'Jewel blade',     lo: 2, hi: 4, bf: 0.5, gems: true, tip: 'A sword set with 1 to 3 jewels, all the same colour. A green blade gains 1 power per jewel every time you take damage. A blue blade gains 1 power per jewel every time you move.' },
+    windblade: { kind: 'weapon',  name: 'Wind blade',      lo: 2, hi: 4, bf: 0.5, grows: 'wind', tip: 'While it lies on the board it gains 1 power every time it slides to a new square. Once you pick it up it stops growing and fights like a normal sword.' },
+    painblade: { kind: 'weapon',  name: 'Blade of pain',   lo: 2, hi: 4, bf: 0.5, grows: 'pain', tip: 'While it lies on the board it gains 1 power every time you take damage. Once you pick it up it stops growing and fights like a normal sword.' },
     elecbow:   { kind: 'weapon',  name: 'Electric bow',   lo: 3, hi: 5, bf: 0.5, bow: true, tip: 'A bow with 5 arrows. Tap any monster on the board to shoot it for the bow\'s power. The shock then jumps to every monster touching the one it hit, 1 weaker with each jump. Frozen monsters are not hit. Stepping into a monster with a bow is just like having no weapon.' },
     firewand:  { kind: 'weapon',  name: 'Fire wand',       lo: 1, hi: 3, bf: 0.5, el: 'fire', wand: true, tip: 'A wand with 6 charges. Step toward an adjacent monster to fire a beam from you to the far edge of that row or column. It burns every monster on the way for its power: fire monsters are immune, ice monsters take double.' },
     icewand:   { kind: 'weapon',  name: 'Ice wand',        lo: 1, hi: 3, bf: 0.5, el: 'ice',  wand: true, tip: 'A wand with 6 charges. Step toward an adjacent monster to fire a beam from you to the far edge of that row or column. Every monster it hits but does not kill freezes. Ice monsters are immune, fire monsters take double. It can kill a Phoenix.' },
@@ -110,10 +111,6 @@
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
     if (T.wand) c.t = 6; // charges
     if (T.bow) c.t = 5; // arrows
-    if (T.gems) { // three slots holding 1-3 jewels, all one colour: green grows with damage taken, blue with movement
-      const col = S.rng() < 0.5 ? 'g' : 'b', r = S.rng(), n = r < 0.35 ? 1 : r < 0.75 ? 2 : 3;
-      c.g = [0, 1, 2].map(function (k) { return k < n ? col : null; });
-    }
     if (T.kind === 'arrow') c.h = Math.floor(S.rng() * 4); // which way it points now
     if (T.kind === 'monster' && L.shieldP && S.rng() < L.shieldP) c.sh = 1; // the first hit is absorbed
     if (T.kind === 'dtrap') {
@@ -213,11 +210,11 @@
     // Copy without the rng so a preview never advances the real game.
     return {
       level: S.level, rng: null, uid: S.uid, over: S.over, powerLevel: S.powerLevel,
-      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, g: c.g && c.g.slice() }; }),
+      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, mark: S.hero.mark && { cell: S.hero.mark.cell, dmg: S.hero.mark.dmg },
-        sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star, g: S.hero.sword.g },
+        sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd }; })
       }
     };
@@ -303,7 +300,7 @@
   // ---- One move -------------------------------------------------------------
   // Mutates S. Returns null when the move is off the grid.
   // Chests hold one of these. Weights, not levels: a chest is a gamble on what you need.
-  const LOOT = { sword: 4, scythe: 2, firesword: 1, icesword: 1, firewand: 1, icewand: 1, elecbow: 1, ninjastar: 1, gemblade: 1, potion: 3, gem: 2 };
+  const LOOT = { sword: 4, scythe: 2, firesword: 1, icesword: 1, firewand: 1, icewand: 1, elecbow: 1, ninjastar: 1, windblade: 1, painblade: 1, potion: 3, gem: 2 };
   function lootCard(S) {
     return makeCard(S, pickFrom(S, LOOT, 'potion'));
   }
@@ -344,11 +341,27 @@
     fx.push({ cell: line[0], text: '', cls: 'info', anim: 'puff' });
   }
 
+  // Growing blades on the board: a wind blade gains 1 power each time it slides to a new square,
+  // a blade of pain gains 1 power each time the hero is hurt. Picked up, they are plain swords.
+  function bladeSnap(S) {
+    const at = {};
+    S.grid.forEach(function (c, p) { if (c && TYPES[c.type].grows) at[c.uid] = p; });
+    return at;
+  }
+  function bladeGrowth(S, before, hits, fx) {
+    S.grid.forEach(function (c, p) {
+      if (!c || before[c.uid] == null) return; // only blades that were already on the board
+      const g = TYPES[c.type].grows;
+      const gain = g === 'wind' ? (before[c.uid] !== p ? 1 : 0) : g === 'pain' ? hits : 0;
+      if (gain > 0) { c.v = Math.min(99, c.v + gain); fx.push({ cell: p, text: '+' + gain, cls: 'info', anim: 'spark' }); }
+    });
+  }
+
   // sell: 'sword' turns the held weapon into gold and spends the turn in place.
   function step(S, dir, doSpawn, sell, aim) {
     const L = S.level, w = L.w, h = L.h, H = S.hero;
     const hx = H.pos % w, hy = (H.pos / w) | 0;
-    const hurt0 = S.hurts | 0, extraSpawn = [];
+    const hurt0 = S.hurts | 0, extraSpawn = [], blades0 = bladeSnap(S);
     let tpos, card = null, T = null;
     if (sell) {
       if (sell === 'bow') {
@@ -519,7 +532,7 @@
       S.claimed = card.rw;
       fx.push({ cell: tpos, text: 'Unlocked!', cls: 'gold', anim: 'gold' });
     } else if (card.kind === 'weapon') {
-      H.sword = T.bow ? { v: card.v, type: card.type, el: null, bow: true, star: !!T.star, c: card.t } : T.gems ? { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: null, g: card.g.slice() } : T.sweep ? { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: null, sweep: true } : T.wand ? { v: card.v, type: card.type, el: T.el, wand: true, c: card.t } : { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: T.el || null }; fx.push({ cell: tpos, text: 'Sword ' + H.sword.v, cls: 'info' });
+      H.sword = T.bow ? { v: card.v, type: card.type, el: null, bow: true, star: !!T.star, c: card.t } : T.sweep ? { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: null, sweep: true } : T.wand ? { v: card.v, type: card.type, el: T.el, wand: true, c: card.t } : { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: T.el || null }; fx.push({ cell: tpos, text: 'Sword ' + H.sword.v, cls: 'info' });
     } else if (card.kind === 'bomb') {
       swap = true; fx.push({ cell: tpos, text: 'Swap', cls: 'info' });
     }
@@ -592,12 +605,6 @@
     // Arrows turn a quarter every turn.
     for (let p = 0; p < S.grid.length; p++) { const a = S.grid[p]; if (a && a.kind === 'arrow') a.h = (a.h + 1) % 4; }
 
-    // Jewels: green ones add power for every hit you took this turn, blue ones for every step.
-    if (H.sword && H.sword.g) {
-      const gr = H.sword.g.filter(function (x) { return x === 'g'; }).length, bl = H.sword.g.filter(function (x) { return x === 'b'; }).length;
-      const gain = gr * ((S.hurts | 0) - hurt0) + (attacked || sell ? 0 : bl);
-      if (gain > 0) { H.sword.v = Math.min(99, H.sword.v + gain); fx.push({ cell: H.pos, text: '+' + gain, cls: 'info', anim: 'gem' }); }
-    }
 
     // Powers recharge and frost wears off.
     for (const pw of H.powers) if (pw.cd > 0) pw.cd--;
@@ -696,6 +703,9 @@
     // The elemental shield wears off after the end-of-turn traps have fired.
     if (H.ward > 0) H.ward--;
 
+    // Growing blades still lying on the board.
+    bladeGrowth(S, blades0, (S.hurts | 0) - hurt0, fx);
+
     return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
   }
 
@@ -770,7 +780,7 @@
       target = foes[Math.floor((S.rng ? S.rng() : Math.random()) * foes.length)];
     }
     const w = S.level.w, h = S.level.h;
-    const fx = [], holes = [];
+    const fx = [], holes = [], blades0 = bladeSnap(S);
     let extra = null;
 
     switch (pw.id) {
@@ -817,6 +827,7 @@
     }
     pw.cd = pw.max;
     const spawned = settle(S, DIRS[S.lastDir == null ? 1 : S.lastDir]);
+    bladeGrowth(S, blades0, 0, fx); // wind blades the refill slid along grow too
     return { fx: fx, spawned: spawned, id: pw.id, target: target, from: extra };
   }
 
@@ -828,7 +839,7 @@
   const HERO_BASE_HP = 8;
   const SIZES = [[3, 3], [3, 4], [4, 4], [4, 5], [5, 5], [5, 6], [6, 6], [6, 7], [7, 7]];
 
-  const BASE_WEIGHTS = { coin: 28, gem: 5, potion: 12, chest: 3, poison: 6, trap: 6, rat: 14, bat: 10, skeleton: 8, ogre: 2, goldskull: 3, hive: 0, sword: 10, scythe: 0, firesword: 0, icesword: 0, firewand: 0, icewand: 0, elecbow: 0, ninjastar: 0, gemblade: 0, firearrow: 0, icearrow: 0, webspider: 0, phoenix: 0, bomb: 5, imp: 0, golem: 0, firetrap: 0, icetrap: 0 };
+  const BASE_WEIGHTS = { coin: 28, gem: 5, potion: 12, chest: 3, poison: 6, trap: 6, rat: 14, bat: 10, skeleton: 8, ogre: 2, goldskull: 3, hive: 0, sword: 10, scythe: 0, firesword: 0, icesword: 0, firewand: 0, icewand: 0, elecbow: 0, ninjastar: 0, windblade: 0, painblade: 0, firearrow: 0, icearrow: 0, webspider: 0, phoenix: 0, bomb: 5, imp: 0, golem: 0, firetrap: 0, icetrap: 0 };
   MORE.forEach(function (m) { BASE_WEIGHTS[m[0]] = 0; });
 
   // Builds the next level from the one before it, a little harder each time.
@@ -860,7 +871,8 @@
     wts.webspider = i >= 1 ? 3 : 0;
     wts.firearrow = i >= 2 ? 3 : 0;
     wts.icearrow = i >= 2 ? 3 : 0;
-    wts.gemblade = i >= 1 ? Math.round(3 * wm) : 0;
+    wts.windblade = i >= 1 ? Math.round(1.5 * wm) : 0;
+    wts.painblade = i >= 1 ? Math.round(1.5 * wm) : 0;
     wts.ninjastar = i >= 2 ? Math.round(2 * wm) : 0;
     wts.elecbow = i >= 2 ? Math.round(2 * wm) : 0;
     wts.firewand = i >= 2 ? Math.round(2 * wm) : 0;

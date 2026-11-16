@@ -493,10 +493,6 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .card .ic.sw { width: calc(var(--cs) * .12); }
 .card .shd { position: absolute; left: 7%; top: 5%; z-index: 4; }
 .card .shd .ic { width: calc(var(--cs) * .15); }
-.card .jw { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 4; }
-.card .jw i { width: calc(var(--cs) * .08); height: calc(var(--cs) * .08); background: #25263a; box-shadow: 0 0 0 2px #14121f; display: block; }
-.card .jw i.g { background: #63c74d; }
-.card .jw i.b { background: #41a6f6; }
 .slot.webbed .art { opacity: .5; }
 .card .art { transition: transform .16s steps(4); }
 .slot.hero > .card > .val { display: none; }
@@ -512,7 +508,6 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .card .val, .card .wv { font-size: max(10px, calc(var(--cs) * .15)); right: 8%; bottom: 6%; }
 .card .art { filter: none; }
 .card .shd { left: 8%; top: 6%; }
-.card .jw { bottom: 8%; }
 
 .slot.hero .card .hp b { font-size: max(9px, calc(var(--cs) * .125)); }
 .slot.hero .card .art { margin-top: 10%; }
