@@ -92,6 +92,44 @@
     ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
   };
 
+  // ---- Power upgrades (bought with banked gold between runs) ----------------
+  // Each power has levels 0..POWER_MAX_LV. amt: [base, gain per level] for its main number;
+  // cdCut: turns of recharge removed per level. {n} in the text is the current amount.
+  const POWER_MAX_LV = 3;
+  const UPGRADE_COST = [150, 450, 1200]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
+  const UPGRADES = {
+    heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
+    forge:    { amt: [10, 3], text: 'Conjure a sword of power {n}. It replaces the one you hold.', what: '+3 sword power' },
+    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and dies if that is enough.', what: '+2 damage' },
+    fire:     { cdCut: 2, what: '2 turns faster recharge' },
+    scythe:   { cdCut: 2, what: '2 turns faster recharge' },
+    massheal: { amt: [2, 1],  text: 'Heal {n}, and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
+    thunder:  { amt: [3, 1],  text: 'Every monster on the board takes {n} damage.', what: '+1 damage' },
+    ice:      { amt: [3, 1],  text: 'Monsters deal no damage for your next {n} moves.', what: '+1 frozen move' },
+    teleport: { cdCut: 2, what: '2 turns faster recharge' },
+    quake:    { amt: [0, 1],  what: '+1 tremor damage' },
+    burst:    { cdCut: 2, what: '2 turns faster recharge' },
+    ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.', what: '+1 shielded turn' }
+  };
+  function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
+  function powerAmount(id, lv) { const u = UPGRADES[id]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
+  function powerCd(id, lv) { const u = UPGRADES[id]; return Math.max(1, POWERS[id].cd - (u && u.cdCut ? u.cdCut * clampLv(lv) : 0)); }
+  function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
+
+  // Hero upgrades: each level adds HERO_UP_HP max health.
+  const HERO_UPGRADE_COST = [100, 250, 500, 1000, 2000, 4000, 8000];
+  const HERO_MAX_LV = HERO_UPGRADE_COST.length;
+  const HERO_UP_HP = 2;
+  function heroLv(lv) { return Math.max(0, Math.min(HERO_MAX_LV, lv | 0)); }
+  function heroHpBonus(lv) { return HERO_UP_HP * heroLv(lv); }
+  function heroUpgradeCost(lv) { lv = lv | 0; return lv >= HERO_MAX_LV ? null : HERO_UPGRADE_COST[lv]; }
+  // The tip text for a power at an upgrade level (and, for Tremor, the player's power level).
+  function powerTip(id, lv, plv) {
+    const u = UPGRADES[id];
+    if (id === 'quake') return POWERS.quake.tip + ' Right now: ' + quakeDamage(plv, lv) + ' damage.';
+    return u && u.text ? u.text.replace(/\{n\}/g, powerAmount(id, lv)) : POWERS[id].tip;
+  }
+
   const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // up, right, down, left
   const ALL8 = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
 
@@ -189,7 +227,7 @@
     const HD = HEROES[hid];
     const pass = Object.assign({}, HD.pass);
     const ids = (opts.powers || []).filter(function (p, i, a) { return POWERS[p] && a.indexOf(p) === i; }).slice(0, HD.slots);
-    const maxHp = Math.max(3, level.heroHP + HD.hp);
+    const maxHp = Math.max(3, level.heroHP + HD.hp + heroHpBonus(opts.heroLevel));
     const S = {
       level: level,
       rng: mulberry32(seed == null ? (Math.random() * 4294967296) >>> 0 : seed),
@@ -202,9 +240,10 @@
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
         sword: null, poison: 0, frost: 0, ward: 0, pass: pass,
         powers: ids.map(function (id) {
-          if (POWERS[id].passive) return { id: id, max: 0, cd: 0 };
-          const rc = Math.max(1, Math.ceil(POWERS[id].cd * (pass.rech || 1)));
-          return { id: id, max: rc, cd: HD.startReady ? 0 : Math.ceil(rc / 2) };
+          const lv = clampLv((opts.upgrades || {})[id]);
+          if (POWERS[id].passive) return { id: id, max: 0, cd: 0, lv: lv };
+          const rc = Math.max(1, Math.ceil(powerCd(id, lv) * (pass.rech || 1)));
+          return { id: id, max: rc, cd: HD.startReady ? 0 : Math.ceil(rc / 2), lv: lv };
         })
       },
       over: false,
@@ -223,7 +262,7 @@
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
-        powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd }; })
+        powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
     };
   }
@@ -667,11 +706,12 @@
     }
 
     // Tremor (passive): every step, a monster that slid into the square the hero left is hit.
-    if (S.rng && H.pos !== from && H.hp > 0 && H.powers.some(function (p) { return p.id === 'quake'; })) {
+    const qp = H.powers.find(function (p) { return p.id === 'quake'; });
+    if (S.rng && H.pos !== from && H.hp > 0 && qp) {
       const mp = from, m = S.grid[mp];
       if (m && m.kind === 'monster') {
         tremor = mp;
-        const res = hurtMonster(m, quakeDamage(S.powerLevel), null, false);
+        const res = hurtMonster(m, quakeDamage(S.powerLevel, qp.lv), null, false);
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         fx.push({ cell: mp, text: '', cls: 'info', anim: 'quake' });
@@ -794,7 +834,8 @@
     else fx.push({ cell: pos, text: '−' + res.dealt, cls: 'info', hit: m.uid });
   }
 
-  function quakeDamage(lv) { return Math.min(12, 3 + (lv | 0)); }
+  // lv: the player's power level (best score / 25); up: Tremor's upgrade level, added on top of the cap.
+  function quakeDamage(lv, up) { return Math.min(12, 3 + (lv | 0)) + powerAmount('quake', up); }
 
   // Activates the power in slot idx. Free action: it does not take a turn.
   // Returns null when it cannot be used, else { fx, spawned }.
@@ -815,16 +856,17 @@
     const w = S.level.w, h = S.level.h;
     const fx = [], holes = [], blades0 = bladeSnap(S);
     let extra = null;
+    const amt = powerAmount(pw.id, pw.lv);
 
     switch (pw.id) {
       case 'heal': {
-        const g = Math.min(5, H.max - H.hp); H.hp += g;
+        const g = Math.min(amt, H.max - H.hp); H.hp += g;
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); break;
       }
       case 'forge':
-        H.sword = { v: 10, type: 'sword', el: null };
-        fx.push({ cell: H.pos, text: 'Sword 10', cls: 'info', anim: 'gold' }); break;
-      case 'dart': hitMonster(S, target, 4, holes, fx); extra = { dart: target }; break;
+        H.sword = { v: amt, type: 'sword', el: null };
+        fx.push({ cell: H.pos, text: 'Sword ' + amt, cls: 'info', anim: 'gold' }); break;
+      case 'dart': hitMonster(S, target, amt, holes, fx); extra = { dart: target }; break;
       case 'fire': S.grid[target] = null; holes.push(target); fx.push({ cell: target, text: 'Burn', cls: 'hurt', anim: 'fire' }); break;
       case 'scythe': {
         const x = H.pos % w, y = (H.pos / w) | 0;
@@ -838,14 +880,14 @@
         break;
       }
       case 'massheal': {
-        const g = Math.min(2, H.max - H.hp); H.hp += g;
+        const g = Math.min(amt, H.max - H.hp); H.hp += g;
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' });
-        S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += 2; fx.push({ cell: p, text: '+2', cls: 'heal', anim: 'heal' }); } });
+        S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += amt; fx.push({ cell: p, text: '+' + amt, cls: 'heal', anim: 'heal' }); } });
         break;
       }
-      case 'thunder': S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') { fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, 3, holes, fx); } }); break;
-      case 'ice': H.frost = 3; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
-      case 'ward': H.ward = 4; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
+      case 'thunder': S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') { fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, amt, holes, fx); } }); break;
+      case 'ice': H.frost = amt; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
+      case 'ward': H.ward = amt; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
         extra = H.pos; S.grid[target] = null; H.pos = target;
         fx.push({ cell: target, text: 'Warp', cls: 'info', anim: 'swirl' }); fx.push({ cell: extra, text: '', cls: 'info', anim: 'swirl' }); break;
@@ -941,7 +983,9 @@
 
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
-    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage, preview: preview, usePower: usePower, validTarget: validTarget,
+    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage,
+    POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost,
+    HERO_MAX_LV: HERO_MAX_LV, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
