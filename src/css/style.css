@@ -627,8 +627,6 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .node .kb { position: absolute; left: -14px; top: -14px; width: 30px; height: 30px; background: #14121f; padding: 3px; box-shadow: 0 0 0 2px #fee761; z-index: 3; }
 .node.done .kb { opacity: .5; box-shadow: 0 0 0 2px #63c74d; }
 .node.locked .kb { filter: brightness(.5); }
-.node.keyroom .num { left: 20px; }
-.f.check { display: flex; align-items: center; gap: 8px; }
 
 /* ---- Power casts: each power gives the hero its own look while it fires ----
    .au.bk paints behind the sprite, .au.fr in front. 1em = 1% of a card (font-size below),
