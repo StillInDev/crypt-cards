@@ -1136,7 +1136,7 @@
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
-    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
+    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
       level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
@@ -1166,16 +1166,20 @@
     line('span', 'li-lock', o.lock);
     line('b', 'li-name', o.title);
     line('span', 'li-tag', o.tag);
-    if (o.level != null) d.appendChild(pips(o.level, 'li-lv', o.max));
+    line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
     var row = document.createElement('div'); row.className = 'li-btns';
     if (o.equip) {
+      // Equip toggle in the top-right corner: a check mark, green when equipped, grey when not.
       var eb = document.createElement('button');
-      eb.type = 'button'; eb.className = 'btn li-equip' + (o.equip.on ? ' quiet' : '');
-      eb.textContent = o.equip.label;
+      eb.type = 'button'; eb.className = 'li-check' + (o.equip.on ? ' on' : '');
+      eb.setAttribute('aria-pressed', o.equip.on);
+      eb.setAttribute('aria-label', o.equip.on ? 'Equipped. Tap to unequip' : 'Not equipped. Tap to equip');
+      eb.title = o.equip.label;
+      eb.innerHTML = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
       eb.addEventListener('click', o.equip.fn);
-      row.appendChild(eb);
+      el.appendChild(eb);
     }
     if (o.up) {
       line('p', 'li-up', o.up.text);
