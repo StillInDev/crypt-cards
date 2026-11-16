@@ -1130,14 +1130,23 @@
       if (cost == null) o.up = { text: 'Fully upgraded.' };
       else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
-        buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to level ' + heroUpLv(id)); } } };
+        buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to Lvl. ' + (heroUpLv(id) + 1)); } } };
     }
     return o;
+  }
+  // The numbers shown at the top of a power's details: its recharge and, where it has one, its power.
+  function powerStats(id, lv) {
+    var P = DC.POWERS[id], U = DC.UPGRADES[id] || {}, s = [];
+    if (!P.passive) s.push(['Recharge', DC.powerCd(id, lv) + ' turns']);
+    if (id === 'forge') { var b = DC.powerAmount(id, lv); s.push(['Power', 'Max health' + (b ? ' +' + b : '')]); }
+    else if (id === 'quake') s.push(['Power', String(DC.quakeDamage(powerLevel(), lv))]);
+    else if (U.amt) s.push(['Power', String(DC.powerAmount(id, lv))]);
+    return s;
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
     var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
-      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
+      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : '', stats: powerStats(id, lv) };
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
       o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
@@ -1146,7 +1155,7 @@
       if (cost == null) o.up = { text: 'Fully upgraded.' };
       else o.up = { text: 'Next level: ' + DC.upgradeWhat(id, lv) + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
-        buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to level ' + upLv(id)); } } };
+        buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to Lvl. ' + (upLv(id) + 1)); } } };
     }
     return o;
   }
@@ -1167,6 +1176,15 @@
     line('b', 'li-name', o.title);
     line('span', 'li-tag', o.tag);
     line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
+    if (o.stats && o.stats.length) {
+      var st = document.createElement('dl'); st.className = 'li-stats';
+      o.stats.forEach(function (kv) {
+        var dt = document.createElement('dt'); dt.textContent = kv[0];
+        var dd = document.createElement('dd'); dd.textContent = kv[1];
+        st.appendChild(dt); st.appendChild(dd);
+      });
+      d.appendChild(st);
+    }
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
     var row = document.createElement('div'); row.className = 'li-btns';
@@ -1206,7 +1224,7 @@
     var v = $(sel);
     v.addEventListener('pointerdown', function () { loGenAtDown = loGen; }, true);
     // A tap closes what was already showing. Info that appeared during this very press stays.
-    v.addEventListener('click', function () { if (loGen === loGenAtDown) loHide(); }, true);
+    v.addEventListener('click', function (e) { if (e.target.closest('.lo-info button')) return; if (loGen === loGenAtDown) loHide(); }, true);
   });
 
   // Press-and-hold for a single element outside the pager (the avatar and the slots above its head).
@@ -1628,6 +1646,7 @@
     best = {}; saveBest(); cleared = {}; saveCleared();
     commit(); renderEditor(); setMsg('Deleted. Progress was reset because room numbers shifted.');
   });
+  $('#e-gold').addEventListener('click', function () { purse += 5000; savePurse(); refreshLoadoutScreen(); toast('Added 5000 gold for testing'); }); // testing only
   $('#e-all').addEventListener('change', function (e) { unlockAll = e.target.checked; store.set('cc_all', unlockAll ? '1' : '0'); });
   $('#e-apply').addEventListener('click', function () {
     try { levels = parseLevels($('#e-json').value); saveLevels(); ed = 0; renderEditor(); setMsg('Loaded ' + levels.length + ' levels.'); }

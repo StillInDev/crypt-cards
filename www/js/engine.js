@@ -100,7 +100,7 @@
   const UPGRADE_COST = [150, 450, 1200]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
-    forge:    { bonus: [0, 1, 3, 7], text: 'Conjure a sword as strong as your max health{+n}. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.', what: ['+1 sword power', '+2 sword power', '+4 sword power'] },
+    forge:    { bonus: [0, 1, 3, 7], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power'] },
     dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and dies if that is enough.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
@@ -132,7 +132,6 @@
   function powerTip(id, lv, plv) {
     const u = UPGRADES[id];
     if (id === 'quake') return POWERS.quake.tip + ' Right now: ' + quakeDamage(plv, lv) + ' damage.';
-    if (id === 'forge') { const b = powerAmount(id, lv); return u.text.replace('{+n}', b ? ' + ' + b : ''); }
     return u && u.text ? u.text.replace(/\{n\}/g, powerAmount(id, lv)) : POWERS[id].tip;
   }
 

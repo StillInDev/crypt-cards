@@ -13,7 +13,7 @@ S=mk(['heal'],{heal:2}); S.hero.hp=10; DC.usePower(S,0); assert.strictEqual(S.he
 // forge: max health (30 here), then +1, +2, +4 per level
 [30,31,33,37].forEach((v,lv)=>{S=mk(['forge'],{forge:lv}); DC.usePower(S,0); assert.strictEqual(S.hero.sword.v,v);}); console.log('forge scales');
 assert.strictEqual(DC.upgradeWhat('forge',0),'+1 sword power'); assert.strictEqual(DC.upgradeWhat('forge',2),'+4 sword power');
-assert(DC.powerTip('forge',3).includes('max health + 7')); assert(DC.powerTip('forge',0).includes('max health.'));
+assert.strictEqual(DC.powerTip('forge',3),'Conjure a sword.');
 // thunder level 1 deals 4
 S=mk(['thunder'],{thunder:1}); const og=M(S,'ogre',9); S.grid[0]=og; DC.usePower(S,0); assert.strictEqual(og.v,5); console.log('thunder scales');
 // ward/ice duration
