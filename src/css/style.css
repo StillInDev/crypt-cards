@@ -763,3 +763,8 @@ body {
 .tile .tlv { display: block; font-size: .72rem; color: var(--muted); text-align: center; }
 .tile.sel .tlv { color: var(--saffron); }
 .slot.poisoned .card { box-shadow: 0 -4px 0 0 #63c74d, 0 4px 0 0 #63c74d, -4px 0 0 0 #63c74d, 4px 0 0 0 #63c74d, inset 0 0 16px 3px rgba(99,199,77,.55); }
+.home-loadout { cursor: pointer; }
+/* Keep the purse clear of Done: nothing on the right shrinks, and the money sits further left. */
+.top-r > * { flex-shrink: 0; }
+.top-r .purse { margin-right: 14px; }
+.top > div:first-child { min-width: 0; }

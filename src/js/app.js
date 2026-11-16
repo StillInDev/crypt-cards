@@ -1510,6 +1510,15 @@
   });
   holdable($('#hp-avatar'), function () { return heroInfo(heroSel); }, function () { if (hpPage !== 0) hpGo(-1); });
   holdable($('#home-avatar'), function () { return heroInfo(heroSel); }, function () { show('hero', 0); });
+  // The whole loadout box on the home screen opens Hero & powers. The hero and power slots keep
+  // their own tap and press-and-hold; a tap that only closes an open details panel does nothing else.
+  var homeLo = $('.home-loadout'), homeInfoWasOpen = false, homeGen = -1;
+  homeLo.addEventListener('pointerdown', function () { homeInfoWasOpen = $('#home-info').classList.contains('on'); homeGen = loGen; }, true);
+  homeLo.addEventListener('click', function (e) {
+    // Skip if details were open (this tap closes them) or opened during this press (a press-and-hold).
+    if (homeInfoWasOpen || homeGen !== loGen || e.target.closest('button, .lo-info')) return;
+    show('hero', 0);
+  });
   document.addEventListener('keydown', function (e) {
     if (current !== 'hero' || e.metaKey || e.ctrlKey) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); hpGo(-1); }
