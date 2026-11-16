@@ -1,6 +1,7 @@
 const DC = require('../src/js/engine.js');
 const assert = require('assert');
-function lvl(req, reward) { const L = DC.nextLevel(null, 1); L.req = req; L.reward = reward; return L; }
+// Health is pinned so the scripted walk lives long enough to test the reward rules, whatever the balance.
+function lvl(req, reward) { const L = DC.nextLevel(null, 1); L.req = req; L.reward = reward; L.heroHP = 15; return L; }
 let appeared = 0, claimedRuns = 0;
 for (let seed = 1; seed <= 60; seed++) {
   const S = DC.newGame(lvl(6, { kind: 'hero', id: 'sorcerer' }), seed, {});

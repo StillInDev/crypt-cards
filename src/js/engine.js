@@ -11,12 +11,12 @@
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1.' },
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
-    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Costs you health equal to its number when you step on it. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
-    bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
-    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
-    ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
+    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Deals damage equal to its number. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
+    bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Deals damage equal to its number.' },
+    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Deals damage equal to its number.' },
+    ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Deals damage equal to its number.' },
     goldskull: { kind: 'monster', name: 'Golden skeleton', lo: 2, hi: 5, bf: 0.7, pays: true, tip: 'Hurts like a monster, but pays out its number in gold.' },
-    hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Every 4 turns it turns a neighbouring card into a bat. Hurts when stepped on.' },
+    hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Every 4 turns it turns a neighbouring card into a bat. Deals damage equal to its number.' },
     imp:       { kind: 'monster', name: 'Fire imp',       lo: 2, hi: 5, bf: 1,   el: 'fire', tip: 'A fire monster. Fire traps cannot hurt it, and ice traps hurt it double.' },
     golem:     { kind: 'monster', name: 'Ice golem',       lo: 3, hi: 6, bf: 1,   el: 'ice',  tip: 'An ice monster. Ice traps cannot hurt it, and fire traps hurt it double.' },
     firetrap:  { kind: 'dtrap',   name: 'Fire trap',       lo: 1, hi: 3, bf: 0.5, el: 'fire', tip: 'Burns every card its heads point at, then turns clockwise each turn. Fire monsters are immune, ice monsters take double.' },
@@ -52,23 +52,25 @@
   ];
   MORE.forEach(function (m) {
     TYPES[m[0]] = { kind: 'monster', name: m[1], lo: m[2], hi: m[3], bf: 1, el: m[4],
-      tip: m[4] ? (m[4] === 'fire' ? 'A fire monster. Fire cannot hurt it and ice hurts it double.' : 'An ice monster. Ice cannot hurt it and fire hurts it double.') : 'Costs you health equal to its number when you step on it.' };
+      tip: m[4] ? (m[4] === 'fire' ? 'A fire monster. Fire cannot hurt it and ice hurts it double.' : 'An ice monster. Ice cannot hurt it and fire hurts it double.') : 'Deals damage equal to its number.' };
   });
   // Monster gimmicks for the looped-in monsters.
-  TYPES.zombie.tip = 'Costs you health equal to its number when you step on it. Killed by a weapon, it leaves a tomb in its square.';
+  TYPES.zombie.tip = 'Deals damage equal to its number. Killed by a weapon, it leaves a tomb in its square.';
   // A dead zombie's tomb: any damage at all shatters it. Bare-handed, you just bump into it.
   TYPES.tomb = { kind: 'monster', name: 'Tomb', lo: 1, hi: 1, bf: 0, hidden: true, tomb: true,
     tip: 'A zombie\'s tomb. It blocks the way: bump into it bare-handed and your turn is spent. Any damage at all shatters it, from a weapon, a power, a trap or a bomb.' };
   TYPES.snake.venom = true;
-  TYPES.snake.tip = 'Costs you health equal to its number when you step on it, and its bite poisons you for that many turns too: 1 damage a turn, never below 1 health.';
+  TYPES.snake.tip = 'Deals damage equal to its number, and its bite poisons you for that many turns too: 1 damage a turn, never below 1 health.';
 
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
   const HEROES = {
     knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 2, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Sturdy. Swords you pick up are 1 stronger.' },
     sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Frail, but powers start ready and recharge 30% faster. Carries three powers.' },
-    icemage:  { name: 'Ice Mage', sprite: 'icemage',  hp: 0,  slots: 2, unlock: 60, pass: { cut: 1 }, desc: 'Frost armour: monsters hit you for 1 less.' },
-    rogue:    { name: 'Rogue',    sprite: 'rogue',    hp: -1, slots: 2, unlock: 90, pass: { gold: 1 }, desc: 'Light fingers: +1 gold from every coin and gem.' },
+    // Shown as the Yeti; the id stays 'icemage' so saved picks and the Frozen Cavern reward keep working.
+    icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 2, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
+    // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
+    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 2, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
     cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 2, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
   };
 
@@ -514,6 +516,8 @@
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
         H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' });
+      } else if (H.pass.trapproof) {
+        fx.push({ cell: tpos, text: 'Dodged', cls: 'info', anim: 'immune' }); // the Ninja steps over traps
       } else if (T.el && H.ward > 0) {
         fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       } else {
@@ -547,6 +551,8 @@
       H.pos = tpos;
     }
     H.turn++;
+
+    let tremor = null; // the square Tremor hit this turn, if any (set after the slide below)
 
     // Poison: 1 damage a turn while it lasts, but it never takes the hero below 1 health.
     if (H.poison > 0) {
@@ -622,6 +628,20 @@
         S.grid[far] = null;
         spawned.push({ card: spawn(S, far), cell: far });
       }
+      // Stepping into the middle square (odd-by-odd boards only): the square you left is filled
+      // clockwise. The card just before it going clockwise around the middle slides in, and its
+      // own square is then refilled by the normal slide below, so new cards still enter at the edge.
+      // E.g. on 1 2 3 / 4 5 6 / 7 8 9, moving 2 -> 5 slides 1 into 2 and a new card appears at 1.
+      const mid = (w % 2 && h % 2) ? ((h - 1) / 2) * w + (w - 1) / 2 : -1;
+      const gx = fx0 - (w - 1) / 2, gy = fy0 - (h - 1) / 2; // where the gap sits relative to the middle
+      // Skipped when this turn left other gaps too (a scythe swing killing several monsters): two gaps
+      // in one line would push a new card off the edge, so those turns refill the usual way.
+      const onlyGap = S.grid.every(function (c, p) { return c || p === from || p === H.pos; });
+      if (!sell && !attacked && !swap && !S.over && onlyGap && H.pos === mid && Math.abs(gx) + Math.abs(gy) === 1) {
+        const prev = (fy0 - gx) * w + (fx0 + gy); // one step back, clockwise: above -> left, right -> above, below -> right, left -> below
+        S.grid[from] = S.grid[prev];
+        S.grid[prev] = null;
+      }
       spawned = spawned.concat(settle(S, DIRS[dir]));
     }
 
@@ -643,6 +663,7 @@
     if (S.rng && H.pos !== from && H.hp > 0 && H.powers.some(function (p) { return p.id === 'quake'; })) {
       const mp = from, m = S.grid[mp];
       if (m && m.kind === 'monster') {
+        tremor = mp;
         const res = hurtMonster(m, quakeDamage(S.powerLevel), null, false);
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
@@ -686,6 +707,7 @@
           const ap = ay * w + ax;
           fx.push({ cell: ap, text: '', cls: 'info', anim: TYPES[tr.type].el });
           if (ap === H.pos) {
+            if (H.pass.trapproof) { fx.push({ cell: ap, text: 'Dodged', cls: 'info', anim: 'immune' }); continue; }
             if (H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; }
             const lost = hurtHero(S, tr.v, true);
             fx.push({ cell: ap, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
@@ -705,7 +727,7 @@
     // The elemental shield wears off after the end-of-turn traps have fired.
     if (H.ward > 0) H.ward--;
 
-    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits };
+    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
   }
 
   // What stepping in a direction would do, without changing the game.
@@ -835,8 +857,8 @@
   const WEAPON_RATE = 0.5;
   // Turns per +1 to new card values. Room targets run up to 100 gold, so runs are long and the climb is gentle.
   const RAMP = 30;
-  // Starting health before the hero's own bonus. Raised with the longer runs.
-  const HERO_BASE_HP = 15;
+  // Starting health before the hero's own bonus (halved from 15 to make runs tighter).
+  const HERO_BASE_HP = 8;
   const SIZES = [[3, 3], [3, 4], [4, 4], [4, 5], [5, 5], [5, 6], [6, 6], [6, 7], [7, 7]];
 
   const BASE_WEIGHTS = { coin: 28, gem: 5, potion: 12, chest: 3, poison: 6, trap: 6, rat: 14, bat: 10, skeleton: 8, ogre: 2, goldskull: 3, hive: 0, sword: 10, scythe: 0, firesword: 0, icesword: 0, firewand: 0, icewand: 0, elecbow: 0, ninjastar: 0, gemblade: 0, firearrow: 0, icearrow: 0, webspider: 0, phoenix: 0, bomb: 5, imp: 0, golem: 0, firetrap: 0, icetrap: 0 };
