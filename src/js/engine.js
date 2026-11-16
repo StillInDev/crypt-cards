@@ -18,7 +18,8 @@
     goldskull: { kind: 'monster', name: 'Golden skeleton', lo: 2, hi: 5, bf: 0.7, pays: true, tip: 'Hurts like a monster, but pays out its number in gold.' },
     hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Every 4 turns it turns a neighbouring card into a bat. Deals damage equal to its number.' },
     imp:       { kind: 'monster', name: 'Fire imp',       lo: 2, hi: 5, bf: 1,   el: 'fire', tip: 'A fire monster. Fire traps cannot hurt it, and ice traps hurt it double.' },
-    golem:     { kind: 'monster', name: 'Ice golem',       lo: 3, hi: 6, bf: 1,   el: 'ice',  tip: 'An ice monster. Ice traps cannot hurt it, and fire traps hurt it double.' },
+    // anchor: never moves. Cards slide up to it but never push it; the space it would have filled gets a new card.
+    golem:     { kind: 'monster', name: 'Golem',           lo: 3, hi: 6, bf: 1,   anchor: true, tip: 'A stone golem. It never moves: cards slide up to it but never push it, and a new card appears in the space it leaves open. Frozen, it cannot be swapped either. Deals damage equal to its number.' },
     firetrap:  { kind: 'dtrap',   name: 'Fire trap',       lo: 1, hi: 3, bf: 0.5, el: 'fire', tip: 'Burns every card its heads point at, then turns clockwise each turn. Fire monsters are immune, ice monsters take double.' },
     icetrap:   { kind: 'dtrap',   name: 'Ice trap',        lo: 1, hi: 3, bf: 0.5, el: 'ice',  tip: 'Freezes every card its heads point at, then turns clockwise each turn. Ice monsters are immune, fire monsters take double.' },
     firesword: { kind: 'weapon',  name: 'Fire sword',      lo: 4, hi: 8, bf: 1, el: 'fire', tip: 'A fire weapon. It cannot hurt fire monsters and hits ice monsters for double.' },
@@ -305,12 +306,16 @@
       for (let i = 0; i < len; i++) {
         const p = at(l, i);
         if (p === S.hero.pos) { fix(seg, lb, 'hero'); seg = []; lb = 'hero'; }
+        else if (isAnchor(S.grid[p])) { fix(seg, lb, 'edge'); seg = []; lb = 'edge'; } // a golem bounds the line like an edge
         else seg.push(p);
       }
       fix(seg, lb, 'edge');
     }
     return out;
   }
+
+  // Cards that never move (golems). Slides stop at them and new cards fill the space they leave.
+  function isAnchor(c) { return !!(c && TYPES[c.type] && TYPES[c.type].anchor); }
 
   // ---- One move -------------------------------------------------------------
   // Mutates S. Returns null when the move is off the grid.
@@ -346,14 +351,25 @@
       }
     });
     // Slide everything one square along the arrow. The hero is a token in the line.
-    const n = line.length - 1, HERO = {};
-    const items = line.map(function (p) { return p === H.pos ? HERO : S.grid[p]; });
-    const next = items[n] === HERO ? [null].concat(items.slice(0, n - 1), [HERO]) : [null].concat(items.slice(0, n));
-    line.forEach(function (p, k) {
-      if (next[k] === HERO) { H.pos = p; S.grid[p] = null; } else S.grid[p] = next[k];
+    // Golems never move: they cut the line into stretches, each slid on its own as if the golem
+    // were the board's edge (the card pushed against it is lost, a new card fills the stretch's start).
+    const HERO = {}, segs = [];
+    let seg = [];
+    line.forEach(function (p) {
+      if (p !== H.pos && isAnchor(S.grid[p])) { if (seg.length) segs.push(seg); seg = []; } else seg.push(p);
     });
-    if (S.rng) { const c = spawn(S, line[0]); extraSpawn.push({ card: c, cell: line[0] }); } // previews have no dice
-    fx.push({ cell: line[0], text: '', cls: 'info', anim: 'puff' });
+    if (seg.length) segs.push(seg);
+    segs.forEach(function (cells) {
+      const n = cells.length - 1;
+      const items = cells.map(function (p) { return p === H.pos ? HERO : S.grid[p]; });
+      const next = items[n] === HERO ? [null].concat(items.slice(0, n - 1), [HERO]) : [null].concat(items.slice(0, n));
+      cells.forEach(function (p, k) {
+        if (next[k] === HERO) { H.pos = p; S.grid[p] = null; } else S.grid[p] = next[k];
+      });
+      if (cells[0] === H.pos) return; // a lone hero stays put: nothing to refill
+      if (S.rng) { const c = spawn(S, cells[0]); extraSpawn.push({ card: c, cell: cells[0] }); } // previews have no dice
+      fx.push({ cell: cells[0], text: '', cls: 'info', anim: 'puff' });
+    });
   }
 
   // Growing blades on the board: a wind blade gains 1 power each time it slides to a new square,
@@ -441,6 +457,9 @@
       attacked = true; applyArrow(S, tpos, fx, extraSpawn);
     } else if (card.type === 'webspider' && H.sword) {
       fx.push({ cell: tpos, text: 'Webs', cls: 'info', anim: 'puff' }); // hidden: nothing to fight
+    } else if (card.kind === 'monster' && card.frozen && T.anchor) {
+      // A frozen golem cannot be hit and will not move to swap: you just bump into it.
+      attacked = true; fx.push({ cell: tpos, text: 'Bump', cls: 'info', anim: 'frost' });
     } else if (card.kind === 'monster' && card.frozen) {
       // A frozen monster cannot be hit, even with a weapon. You just swap places with it.
       swap = true; fx.push({ cell: tpos, text: 'Swap', cls: 'info', anim: 'frost' });
@@ -630,8 +649,12 @@
         const line = [];
         if (DIRS[dir][0] !== 0) { const sy = fy0 === 0 ? 1 : -1; for (let k = 0; k < h; k++) line.push((fy0 + sy * k) * w + fx0); }
         else { const sx = fx0 === 0 ? 1 : -1; for (let k = 0; k < w; k++) line.push(fy0 * w + fx0 + sx * k); }
-        for (let k = 0; k < line.length - 1; k++) S.grid[line[k]] = S.grid[line[k + 1]];
-        const far = line[line.length - 1];
+        // A golem on that edge stops the shift: everything up to it moves along and the new card
+        // appears right in front of it instead of at the far end.
+        let stop = line.length;
+        for (let k = 1; k < line.length; k++) if (isAnchor(S.grid[line[k]])) { stop = k; break; }
+        for (let k = 0; k < stop - 1; k++) S.grid[line[k]] = S.grid[line[k + 1]];
+        const far = line[stop - 1];
         S.grid[far] = null;
         spawned.push({ card: spawn(S, far), cell: far });
       }
@@ -646,8 +669,10 @@
       const onlyGap = S.grid.every(function (c, p) { return c || p === from || p === H.pos; });
       if (!sell && !attacked && !swap && !S.over && onlyGap && H.pos === mid && Math.abs(gx) + Math.abs(gy) === 1) {
         const prev = (fy0 - gx) * w + (fx0 + gy); // one step back, clockwise: above -> left, right -> above, below -> right, left -> below
-        S.grid[from] = S.grid[prev];
-        S.grid[prev] = null;
+        if (!isAnchor(S.grid[prev])) { // a golem stays put; the normal slide below refills the gap instead
+          S.grid[from] = S.grid[prev];
+          S.grid[prev] = null;
+        }
       }
       spawned = spawned.concat(settle(S, DIRS[dir]));
     }

@@ -29,7 +29,8 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-img, canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+/* Sprites are 96px art (src/img/sprites/), drawn smaller than that: let the browser smooth them. */
+img { image-rendering: auto; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: 3px solid var(--saffron); outline-offset: 3px;
@@ -545,7 +546,7 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .stat .v small { font-size: .55rem; color: var(--muted); }
 .stat .v img.tgt { width: 20px; height: 20px; margin-left: 4px; vertical-align: -3px; opacity: .85; }
 .stat .v img.tgt.ready { animation: bob 0.8s steps(2) infinite; opacity: 1; }
-.card .bars { position: absolute; left: 10%; top: 10%; width: 80%; height: 80%; z-index: 3; pointer-events: none; image-rendering: pixelated; }
+.card .bars { position: absolute; left: 10%; top: 10%; width: 80%; height: 80%; z-index: 3; pointer-events: none; }
 .card.k-reward { box-shadow: 0 0 0 3px var(--saffron), 0 0 18px 4px rgba(254,231,97,.55) !important; animation: aim .8s steps(2) infinite; }
 .card.k-reward .art { width: 54%; height: 54%; margin-top: 8%; }
 

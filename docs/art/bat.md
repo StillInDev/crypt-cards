@@ -2,8 +2,8 @@
 
 - **Sprite id:** `bat` (deliver `bat.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/bat@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/bat.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Bat** card. It appears in: Cellar, Vampire Crypt. In play: Deals damage equa
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`bat.png` (18×18) and `bat@8x.png`. Optionally up to three variants as `bat-1.png`, `bat-2.png`, `bat-3.png`.
+`bat.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `bat-1.png`, `bat-2.png`, `bat-3.png`.

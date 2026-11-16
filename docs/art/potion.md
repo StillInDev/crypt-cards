@@ -2,8 +2,8 @@
 
 - **Sprite id:** `potion` (deliver `potion.png`)
 - **Kind:** board item (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/potion@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/potion.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Potion** card. It appears in: Sewers, Fungus Caves, Vampire Crypt. In play: 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not add a skull or any warning sign.
 
 ## Deliver
 
-`potion.png` (18×18) and `potion@8x.png`. Optionally up to three variants as `potion-1.png`, `potion-2.png`, `potion-3.png`.
+`potion.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `potion-1.png`, `potion-2.png`, `potion-3.png`.

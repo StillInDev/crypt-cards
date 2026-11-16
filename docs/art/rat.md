@@ -2,8 +2,8 @@
 
 - **Sprite id:** `rat` (deliver `rat.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/rat@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/rat.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Rat** card. It appears in: Cellar (also its map icon), Sewers. In play: Deal
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`rat.png` (18×18) and `rat@8x.png`. Optionally up to three variants as `rat-1.png`, `rat-2.png`, `rat-3.png`.
+`rat.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `rat-1.png`, `rat-2.png`, `rat-3.png`.

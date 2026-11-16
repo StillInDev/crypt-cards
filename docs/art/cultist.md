@@ -2,8 +2,8 @@
 
 - **Sprite id:** `cultist` (deliver `cultist.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/cultist@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/cultist.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Cultist** card. It appears in: Barracks, Bone Library. In play: Deals damage
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not use purple: that is the Sorcerer and the Lich.
 
 ## Deliver
 
-`cultist.png` (18×18) and `cultist@8x.png`. Optionally up to three variants as `cultist-1.png`, `cultist-2.png`, `cultist-3.png`.
+`cultist.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `cultist-1.png`, `cultist-2.png`, `cultist-3.png`.

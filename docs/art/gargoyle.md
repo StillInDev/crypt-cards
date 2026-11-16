@@ -2,8 +2,8 @@
 
 - **Sprite id:** `gargoyle` (deliver `gargoyle.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/gargoyle@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/gargoyle.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Gargoyle** card. It appears in: Armory (also its map icon), Throne Room. In 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`gargoyle.png` (18×18) and `gargoyle@8x.png`. Optionally up to three variants as `gargoyle-1.png`, `gargoyle-2.png`, `gargoyle-3.png`.
+`gargoyle.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `gargoyle-1.png`, `gargoyle-2.png`, `gargoyle-3.png`.

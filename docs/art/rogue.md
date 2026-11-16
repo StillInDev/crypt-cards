@@ -2,8 +2,8 @@
 
 - **Sprite id:** `rogue` (deliver `rogue.png`)
 - **Kind:** hero, full figure
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/rogue@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/rogue.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,9 +17,9 @@ A playable hero, shown in game as **Ninja**. It stands on the board as the hero 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make the outfit pure black: it must still read on the darkest card colours.
 
 ## Deliver
 
-`rogue.png` (18×18) and `rogue@8x.png`. Optionally up to three variants as `rogue-1.png`, `rogue-2.png`, `rogue-3.png`.
+`rogue.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `rogue-1.png`, `rogue-2.png`, `rogue-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `skeleton` (deliver `skeleton.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/skeleton@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/skeleton.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,9 +17,9 @@ A **Skeleton** card. It appears in: Cellar, Barracks, Catacombs (also its map ic
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not use gold: that is the Golden skeleton.
 
 ## Deliver
 
-`skeleton.png` (18×18) and `skeleton@8x.png`. Optionally up to three variants as `skeleton-1.png`, `skeleton-2.png`, `skeleton-3.png`.
+`skeleton.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `skeleton-1.png`, `skeleton-2.png`, `skeleton-3.png`.

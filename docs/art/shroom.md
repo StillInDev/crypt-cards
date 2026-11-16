@@ -2,8 +2,8 @@
 
 - **Sprite id:** `shroom` (deliver `shroom.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/shroom@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/shroom.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Spore shroom** card. It appears in: Fungus Caves (also its map icon). In pla
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`shroom.png` (18×18) and `shroom@8x.png`. Optionally up to three variants as `shroom-1.png`, `shroom-2.png`, `shroom-3.png`.
+`shroom.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `shroom-1.png`, `shroom-2.png`, `shroom-3.png`.

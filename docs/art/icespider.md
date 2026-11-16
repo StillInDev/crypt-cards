@@ -2,8 +2,8 @@
 
 - **Sprite id:** `icespider` (deliver `icespider.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/icespider@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/icespider.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Ice spider** card. It appears in: Frozen Cavern (also its map icon). In play
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`icespider.png` (18×18) and `icespider@8x.png`. Optionally up to three variants as `icespider-1.png`, `icespider-2.png`, `icespider-3.png`.
+`icespider.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `icespider-1.png`, `icespider-2.png`, `icespider-3.png`.

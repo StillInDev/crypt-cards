@@ -2,8 +2,8 @@
 
 - **Sprite id:** `zombie` (deliver `zombie.png`)
 - **Kind:** monster, full figure
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/zombie@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/zombie.png` (current version), `src/img/sprites/knight.png` (quality bar)
 
 ## Where it appears
 
@@ -13,7 +13,7 @@ undead and stubborn, not fast or scary-fast.
 
 ## What it must look like
 
-The current version (`art/zombie@8x.png`) has the right idea. Keep:
+The current version (`src/img/sprites/zombie.png`) has the right idea. Keep:
 
 - A full figure, head to feet, standing on the dark floor strip, like the knight.
 - Green skin: `#63c74d` on the lit left side, `#3e8948` on the right. A small `#265c42` rot spot is welcome.
@@ -30,9 +30,9 @@ of highlight, and a better hairline. Stay readable at small size.
 ## Do not
 
 - Do not add blood or gore beyond a small rot spot.
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not change the pose to running or lunging.
 
 ## Deliver
 
-`zombie.png` (18×18) and `zombie@8x.png`. Optionally up to three variants as `zombie-1.png`, `zombie-2.png`, `zombie-3.png`.
+`zombie.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `zombie-1.png`, `zombie-2.png`, `zombie-3.png`.

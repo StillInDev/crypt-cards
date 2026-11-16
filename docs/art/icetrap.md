@@ -2,8 +2,8 @@
 
 - **Sprite id:** `icetrap` (deliver `icetrap.png`)
 - **Kind:** trap (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/icetrap@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/icetrap.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Ice trap** card. It appears in: Catacombs, Frozen Cavern, Throne Room. In pl
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not draw arrows or heads in the sprite.
 
 ## Deliver
 
-`icetrap.png` (18×18) and `icetrap@8x.png`. Optionally up to three variants as `icetrap-1.png`, `icetrap-2.png`, `icetrap-3.png`.
+`icetrap.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `icetrap-1.png`, `icetrap-2.png`, `icetrap-3.png`.

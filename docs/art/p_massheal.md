@@ -2,8 +2,8 @@
 
 - **Sprite id:** `p_massheal` (deliver `p_massheal.png`)
 - **Kind:** power icon
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/p_massheal@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/p_massheal.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ The icon of the **Mass healing** power. It sits on a small button in the top bar
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`p_massheal.png` (18×18) and `p_massheal@8x.png`. Optionally up to three variants as `p_massheal-1.png`, `p_massheal-2.png`, `p_massheal-3.png`.
+`p_massheal.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `p_massheal-1.png`, `p_massheal-2.png`, `p_massheal-3.png`.

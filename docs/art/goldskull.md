@@ -2,8 +2,8 @@
 
 - **Sprite id:** `goldskull` (deliver `goldskull.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/goldskull@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/goldskull.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,9 +17,9 @@ A **Golden skeleton** card. It appears in: Barracks, Catacombs, Mine, Throne Roo
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not change the pose from the Skeleton's: the player should see "same monster, but gold".
 
 ## Deliver
 
-`goldskull.png` (18×18) and `goldskull@8x.png`. Optionally up to three variants as `goldskull-1.png`, `goldskull-2.png`, `goldskull-3.png`.
+`goldskull.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `goldskull-1.png`, `goldskull-2.png`, `goldskull-3.png`.

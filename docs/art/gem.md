@@ -2,8 +2,8 @@
 
 - **Sprite id:** `gem` (deliver `gem.png`)
 - **Kind:** board item (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/gem@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/gem.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Gem** card. It appears in: Mine (also its map icon). In play: Worth a lot of
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`gem.png` (18×18) and `gem@8x.png`. Optionally up to three variants as `gem-1.png`, `gem-2.png`, `gem-3.png`.
+`gem.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `gem-1.png`, `gem-2.png`, `gem-3.png`.

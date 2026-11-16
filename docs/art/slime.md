@@ -2,8 +2,8 @@
 
 - **Sprite id:** `slime` (deliver `slime.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/slime@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/slime.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Slime** card. It appears in: Cellar, Sewers (also its map icon), Fungus Cave
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`slime.png` (18×18) and `slime@8x.png`. Optionally up to three variants as `slime-1.png`, `slime-2.png`, `slime-3.png`.
+`slime.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `slime-1.png`, `slime-2.png`, `slime-3.png`.
