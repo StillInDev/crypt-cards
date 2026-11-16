@@ -77,8 +77,9 @@
     thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Every monster on the board takes 3 damage.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
     teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
-    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 9,  target: null,      unlock: 45, tip: 'Marks your square. After you step away, the card that takes its place is hit if it is a monster. Damage is 3, plus 1 for every 10 points of your best score (up to 12).' },
-    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' }
+    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 9,  target: null,      unlock: 45, tip: 'Marks your square. After you step away, the card that takes its place is hit if it is a monster. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
+    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
+    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
   };
 
   const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // up, right, down, left
@@ -173,7 +174,7 @@
         id: hid,
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
-        sword: null, poison: 0, frost: 0, mark: null, pass: pass,
+        sword: null, poison: 0, frost: 0, ward: 0, mark: null, pass: pass,
         powers: ids.map(function (id) {
           const rc = Math.max(1, Math.ceil(POWERS[id].cd * (pass.rech || 1)));
           return { id: id, max: rc, cd: HD.startReady ? 0 : Math.ceil(rc / 2) };
@@ -193,7 +194,7 @@
       grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, g: c.g && c.g.slice() }; }),
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, poison: S.hero.poison, pass: S.hero.pass, mark: S.hero.mark && { cell: S.hero.mark.cell, dmg: S.hero.mark.dmg },
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, mark: S.hero.mark && { cell: S.hero.mark.cell, dmg: S.hero.mark.dmg },
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star, g: S.hero.sword.g },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd }; })
       }
@@ -478,6 +479,8 @@
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
         H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' });
+      } else if (T.el && H.ward > 0) {
+        fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       } else {
         const lost = hurtHero(S, card.v, true);
         fx.push({ cell: tpos, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
@@ -485,6 +488,7 @@
     } else if (card.kind === 'monster') {
       let lost = 0;
       if (H.frost > 0) fx.push({ cell: tpos, text: 'Frozen', cls: 'info' });
+      else if (T.el && H.ward > 0) fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       else {
         lost = hurtHero(S, Math.max(0, card.v - (H.pass.cut || 0)), true);
         fx.push({ cell: tpos, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
@@ -624,6 +628,7 @@
           const ap = ay * w + ax;
           fx.push({ cell: ap, text: '', cls: 'info', anim: TYPES[tr.type].el });
           if (ap === H.pos) {
+            if (H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; }
             const lost = hurtHero(S, tr.v, true);
             fx.push({ cell: ap, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
             continue;
@@ -638,6 +643,9 @@
       }
       if (H.hp <= 0) { S.over = true; H.hp = 0; }
     }
+
+    // The elemental shield wears off after the end-of-turn traps have fired.
+    if (H.ward > 0) H.ward--;
 
     return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits };
   }
@@ -742,6 +750,7 @@
         fx.push({ cell: H.pos, text: 'Tremor ' + dmg, cls: 'info', anim: 'quake' }); break;
       }
       case 'ice': H.frost = 3; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
+      case 'ward': H.ward = 4; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
         extra = H.pos; S.grid[target] = null; H.pos = target;
         fx.push({ cell: target, text: 'Warp', cls: 'info', anim: 'swirl' }); fx.push({ cell: extra, text: '', cls: 'info', anim: 'swirl' }); break;
@@ -760,6 +769,11 @@
   }
 
   // ---- Level helpers --------------------------------------------------------
+  const WEAPON_RATE = 0.5;
+  // Turns per +1 to new card values. Room targets run up to 100 gold, so runs are long and the climb is gentle.
+  const RAMP = 30;
+  // Starting health before the hero's own bonus. Raised with the longer runs.
+  const HERO_BASE_HP = 15;
   const SIZES = [[3, 3], [3, 4], [4, 4], [4, 5], [5, 5], [5, 6], [6, 6], [6, 7], [7, 7]];
 
   const BASE_WEIGHTS = { coin: 28, gem: 5, potion: 12, chest: 3, poison: 6, trap: 6, rat: 14, bat: 10, skeleton: 8, ogre: 2, goldskull: 3, hive: 0, sword: 10, scythe: 0, firesword: 0, icesword: 0, firewand: 0, icewand: 0, elecbow: 0, ninjastar: 0, gemblade: 0, firearrow: 0, icearrow: 0, webspider: 0, phoenix: 0, bomb: 5, imp: 0, golem: 0, firetrap: 0, icetrap: 0 };
@@ -785,7 +799,8 @@
     wts.firetrap = i >= 2 ? Math.round(3 + 3 * t) : 0;
     wts.icetrap = i >= 2 ? Math.round(3 + 3 * t) : 0;
     // Weapons are twice as common in the early levels, easing back to the normal rate by level 10.
-    const wm = 2 - Math.min(1, i / 10);
+    // WEAPON_RATE scales every weapon's odds: they are both your attack and (sold) your main gold.
+    const wm = (2 - Math.min(1, i / 10)) * WEAPON_RATE;
     wts.sword = Math.round(10 * wm);
     wts.scythe = i >= 1 ? Math.round(3 * wm) : 0;
     wts.firesword = i >= 1 ? Math.round(2 * wm) : 0;
@@ -819,9 +834,9 @@
       name: 'Depth ' + id,
       w: prev ? Math.max(prev.w, size[0]) : size[0],
       h: prev ? Math.max(prev.h, size[1]) : size[1],
-      heroHP: 10 + Math.min(10, Math.floor(i / 3)),
+      heroHP: HERO_BASE_HP + Math.min(10, Math.floor(i / 3)),
       from: id - 1, req: id > 1 ? 14 + (id - 1) : 0,
-      ramp: 12, cap: Math.min(10, 4 + Math.floor(i / 2)),
+      ramp: RAMP, cap: Math.min(10, 4 + Math.floor(i / 2)),
       shieldP: i >= 6 ? Math.min(0.45, (i - 5) * 0.07) : 0, // shielded monsters only show up deep down
       weights: wts
     };
@@ -830,7 +845,7 @@
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: function (lv) { return Math.min(12, 3 + (lv | 0)); }, preview: preview, usePower: usePower, validTarget: validTarget,
-    nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, mulberry32: mulberry32
+    nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DC = api;
