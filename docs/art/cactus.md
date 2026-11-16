@@ -2,8 +2,8 @@
 
 - **Sprite id:** `cactus` (deliver `cactus.png`)
 - **Kind:** hero, full figure
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/cactus@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/cactus.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -17,8 +17,8 @@ A playable hero, shown in game as **Cactus**. It stands on the board as the hero
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`cactus.png` (18×18) and `cactus@8x.png`. Optionally up to three variants as `cactus-1.png`, `cactus-2.png`, `cactus-3.png`.
+`cactus.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `cactus-1.png`, `cactus-2.png`, `cactus-3.png`.

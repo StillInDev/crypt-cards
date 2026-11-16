@@ -2,8 +2,8 @@
 
 - **Sprite id:** `ninjastar` (deliver `ninjastar.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/ninjastar@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/ninjastar.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -15,8 +15,8 @@ A **Ninja star** card. It appears in: Barracks, Armory. In play: Five throws. Ta
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`ninjastar.png` (18×18) and `ninjastar@8x.png`. Optionally up to three variants as `ninjastar-1.png`, `ninjastar-2.png`, `ninjastar-3.png`.
+`ninjastar.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `ninjastar-1.png`, `ninjastar-2.png`, `ninjastar-3.png`.

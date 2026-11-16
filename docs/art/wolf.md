@@ -2,8 +2,8 @@
 
 - **Sprite id:** `wolf` (deliver `wolf.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/wolf@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/wolf.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -15,8 +15,8 @@ A **Wolf** card. It appears in: Vampire Crypt. In play: Deals damage equal to it
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`wolf.png` (18×18) and `wolf@8x.png`. Optionally up to three variants as `wolf-1.png`, `wolf-2.png`, `wolf-3.png`.
+`wolf.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `wolf-1.png`, `wolf-2.png`, `wolf-3.png`.

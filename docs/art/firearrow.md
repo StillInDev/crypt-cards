@@ -2,8 +2,8 @@
 
 - **Sprite id:** `firearrow` (deliver `firearrow.png`)
 - **Kind:** trap (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/firearrow@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/firearrow.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Fire arrow** card. It appears in: Bone Library. In play: The arrow turns eve
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not draw it diagonally.
 
 ## Deliver
 
-`firearrow.png` (18×18) and `firearrow@8x.png`. Optionally up to three variants as `firearrow-1.png`, `firearrow-2.png`, `firearrow-3.png`.
+`firearrow.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `firearrow-1.png`, `firearrow-2.png`, `firearrow-3.png`.

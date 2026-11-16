@@ -323,117 +323,86 @@
   };
 
   // ---- Menu -----------------------------------------------------------------
-  var menuArea = clampInt(store.get('cc_area'), 0, AREAS.length - 1, 0);
-  function pickArea(a) { menuArea = a; store.set('cc_area', String(a)); renderMenu(); }
-  function renderAreaTabs() {
-    var tabs = $('#areatabs');
-    tabs.innerHTML = '';
-    AREAS.forEach(function (A, a) {
-      var open = areaOpen(a), b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'atab' + (a === menuArea ? ' on' : '') + (open ? '' : ' locked');
-      b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', a === menuArea ? 'true' : 'false');
-      b.tabIndex = a === menuArea ? 0 : -1;
-      b.innerHTML = '<span class="an"></span><span class="at"></span>';
-      b.querySelector('.an').textContent = a + 1;
-      b.querySelector('.at').textContent = A.name;
-      if (!open) b.appendChild(img('bars', 'alock'));
-      b.setAttribute('aria-label', 'Area ' + (a + 1) + ', ' + A.name + (open ? '' : ', sealed'));
-      b.addEventListener('click', function () { pickArea(a); });
-      b.addEventListener('keydown', function (e) {
-        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-        if (!d) return;
-        e.preventDefault();
-        pickArea((a + d + AREAS.length) % AREAS.length);
-        var nb = tabs.children[menuArea]; if (nb) nb.focus();
-      });
-      tabs.appendChild(b);
-    });
+  // Levels are numbered tabs (1, 2, 3, ...). The chosen tab shows that level and its Play button.
+  var menuSel = null;
+  function firstOpenLevel() {
+    for (var i = 0; i < levels.length; i++) if (isUnlocked(i) && !cleared[i]) return i;
+    for (var j = 0; j < levels.length; j++) if (isUnlocked(j)) return j;
+    return 0;
+  }
+  function selectTab(i, focus) {
+    menuSel = i;
+    renderMenu();
+    var t = $('#lv-tabs').children[i];
+    if (t) {
+      if (focus) t.focus();
+      t.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+  }
+  function renderLevelPanel(i) {
+    var pn = $('#lv-panel'), L = levels[i], th = THEMES[L.theme] || THEMES.cellar;
+    var ok = isUnlocked(i), done = !!cleared[i], bs = best[i] || 0, boss = i === levels.length - 1;
+    pn.setAttribute('aria-labelledby', 'lv-tab-' + i);
+    pn.className = 'lv-panel' + (ok ? '' : ' locked') + (done ? ' done' : '');
+    pn.style.setProperty('--ra', th.acc); pn.style.setProperty('--rb', th.card);
+    pn.innerHTML = '<div class="lv-art"></div>' +
+      '<div class="lv-num"></div><h3 class="lv-name"></h3><p class="lv-sub"></p>' +
+      '<dl class="lv-facts"><div><dt>Board</dt><dd class="f-sz"></dd></div><div><dt>Target</dt><dd class="f-req"></dd></div><div><dt>Best</dt><dd class="f-best"></dd></div></dl>' +
+      '<p class="lv-reward"><span class="rwl"></span></p><p class="lv-status"></p>';
+    pn.querySelector('.lv-art').appendChild(img(ok ? (boss ? 'goldskull' : th.icon) : 'bars'));
+    pn.querySelector('.lv-num').textContent = 'Level ' + (i + 1) + (boss ? ' · Final' : '');
+    pn.querySelector('.lv-name').textContent = ok ? L.name : 'Sealed';
+    pn.querySelector('.lv-sub').textContent = ok ? th.sub : 'This level is still locked.';
+    pn.querySelector('.f-sz').textContent = L.w + '×' + L.h;
+    pn.querySelector('.f-req').textContent = L.req;
+    pn.querySelector('.f-best').textContent = bs || '–';
+    var rw = pn.querySelector('.lv-reward');
+    rw.insertBefore(img(rewardSprite(L.reward), 'rw'), rw.firstChild);
+    rw.querySelector('.rwl').textContent = (done ? 'Unlocked ' : 'Reward: ') + rewardName(L.reward);
+    var st = pn.querySelector('.lv-status');
+    if (done) st.textContent = '✓ Cleared';
+    else if (ok) st.textContent = 'Reach ' + L.req + ' to unlock the reward.';
+    else {
+      var via = L.from.filter(function (p) { return p > 0; });
+      st.textContent = via.length ? 'Clear level ' + via.join(' or ') + ' to open it.' : 'Sealed.';
+    }
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'btn go lv-play'; go.id = 'lv-play';
+    go.textContent = ok ? (done ? 'Play again' : 'Play') : 'Locked';
+    go.disabled = !ok;
+    go.addEventListener('click', function () { startLevel(i); });
+    pn.appendChild(go);
   }
   function renderMenu() {
-    renderAreaTabs();
-    var map = $('#map');
-    map.innerHTML = '';
-    var area = menuArea, rooms = areaRooms(area), inArea = {};
-    rooms.forEach(function (i) { inArea[i + 1] = true; });
-    var aOpen = areaOpen(area), boss = bossOf(area), keys = keyRooms(area), held = keysHeld(area);
-    var COLW = 106, ROWH = 142, NS = 70, TOP = 190;
-    // Rooms reached from another area hang off this area's entrance.
-    function src(p) { return inArea[p] ? p : 0; }
-    var depth = [0], rows = [[]];
-    rooms.forEach(function (i) {
-      var L = levels[i], d = 1;
-      L.from.forEach(function (p) { d = Math.max(d, (depth[src(p)] || 0) + 1); });
-      depth[i + 1] = d;
-      (rows[d] = rows[d] || []).push(i + 1);
-    });
-    var maxD = rows.length - 1, maxN = 1, off = [0];
-    rows.forEach(function (r) { if (!r) return; maxN = Math.max(maxN, r.length); r.forEach(function (k, ix) { off[k] = ix - (r.length - 1) / 2; }); });
-    var W = maxN * COLW + 40, H = TOP + (maxD + 1) * ROWH;
-    map.style.width = W + 'px'; map.style.height = H + 'px';
-    function cx(k) { return Math.round(W / 2 + off[k] * COLW); }
-    function cy(k) { return TOP + depth[k] * ROWH - 30; }
-    // Header
-    var hd = document.createElement('div');
-    hd.className = 'maphead';
-    hd.innerHTML = '<div class="ch"></div><div class="chs"></div><div class="keys"></div>';
-    hd.querySelector('.ch').textContent = AREAS[area].name;
-    var cl = 0; rooms.forEach(function (i) { if (cleared[i]) cl++; });
-    if (aOpen) hd.querySelector('.chs').textContent = cl + ' of ' + rooms.length + ' rooms cleared';
-    else {
-      var pb = bossOf(area - 1);
-      hd.querySelector('.chs').textContent = 'Sealed. Beat ' + (pb >= 0 ? levels[pb].name : 'the last boss') + ' in ' + AREAS[area - 1].name + ' to open it.';
-    }
-    var kr = hd.querySelector('.keys');
-    if (keys.length && boss >= 0) {
-      for (var ki = 0; ki < keys.length; ki++) kr.appendChild(img('key', ki < held ? 'kh' : 'km'));
-      var kt = document.createElement('span');
-      kt.textContent = held + ' of ' + keys.length + ' keys' + (held >= keys.length ? '. ' + levels[boss].name + ' is unsealed' : ' to open ' + levels[boss].name);
-      kr.appendChild(kt);
-      kr.setAttribute('aria-label', kt.textContent);
-    }
-    map.appendChild(hd);
-    var svg = '<svg class="paths" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
-    rooms.forEach(function (i) {
-      var L = levels[i], k = i + 1;
-      L.from.forEach(function (p0) {
-        var p = src(p0);
-        var lit = aOpen && (p0 === 0 || cleared[p0 - 1] || unlockAll);
-        var x1 = cx(p), y1 = p === 0 ? TOP - 66 : cy(p), x2 = cx(k), y2 = cy(k);
-        svg += '<line class="' + (lit ? 'lit' : 'dark') + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+    if (menuSel == null || menuSel >= levels.length) menuSel = firstOpenLevel();
+    var cl = 0; levels.forEach(function (L, i) { if (cleared[i]) cl++; });
+    $('#lv-count').textContent = cl + ' of ' + levels.length + ' levels cleared';
+    var tabs = $('#lv-tabs');
+    tabs.innerHTML = '';
+    levels.forEach(function (L, i) {
+      var ok = isUnlocked(i), done = !!cleared[i], sel = i === menuSel;
+      var t = document.createElement('button');
+      t.type = 'button'; t.id = 'lv-tab-' + i;
+      t.className = 'lv-tab' + (ok ? '' : ' locked') + (done ? ' done' : '') + (sel ? ' on' : '');
+      t.setAttribute('role', 'tab');
+      t.setAttribute('aria-selected', sel ? 'true' : 'false');
+      t.setAttribute('aria-controls', 'lv-panel');
+      t.tabIndex = sel ? 0 : -1;
+      t.textContent = i + 1;
+      t.setAttribute('aria-label', 'Level ' + (i + 1) + (done ? ', cleared' : ok ? '' : ', sealed'));
+      t.style.setProperty('--ra', (THEMES[L.theme] || THEMES.cellar).acc);
+      t.addEventListener('click', function () { selectTab(i, true); });
+      t.addEventListener('keydown', function (e) {
+        var n = levels.length, k = e.key, to = null;
+        if (k === 'ArrowRight') to = (i + 1) % n;
+        else if (k === 'ArrowLeft') to = (i - 1 + n) % n;
+        else if (k === 'Home') to = 0;
+        else if (k === 'End') to = n - 1;
+        if (to != null) { e.preventDefault(); selectTab(to, true); }
       });
+      tabs.appendChild(t);
     });
-    svg += '</svg>';
-    map.insertAdjacentHTML('beforeend', svg);
-    var ent = document.createElement('div');
-    ent.className = 'entrance';
-    ent.style.left = cx(0) + 'px'; ent.style.top = (TOP - 66) + 'px';
-    ent.textContent = 'Entrance';
-    map.appendChild(ent);
-    rooms.forEach(function (i, n) {
-      var L = levels[i], k = i + 1, ok = isUnlocked(i), bs = best[i] || 0, th = THEMES[L.theme], done = !!cleared[i];
-      var bossRoom = i === boss, isKey = keys.indexOf(i) >= 0, keyWait = aOpen && pathOpen(i) && needsKeys(i);
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'room node' + (ok ? '' : ' locked') + (done ? ' done' : '') + (bossRoom ? ' boss' : '') + (isKey ? ' keyroom' : '');
-      b.style.left = cx(k) + 'px'; b.style.top = cy(k) + 'px';
-      b.style.setProperty('--ra', th.acc); b.style.setProperty('--rb', th.card);
-      b.innerHTML = '<span class="num"></span><span class="box"></span><span class="sz"></span><span class="sc"></span>';
-      b.querySelector('.num').textContent = n + 1;
-      b.querySelector('.box').appendChild(img(ok ? (bossRoom ? 'goldskull' : th.icon) : keyWait ? 'key' : 'bars'));
-      b.querySelector('.sz').textContent = L.w + '×' + L.h;
-      b.querySelector('.sc').textContent = keyWait ? held + '/' + keys.length + ' keys' : done ? '✓ ' + (bs || L.req) : L.req;
-      var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward);
-      b.appendChild(rw);
-      if (isKey) { var kb = img('key', 'kb'); kb.title = done ? 'Key collected' : 'Holds a key'; b.appendChild(kb); }
-      var what = done ? ', cleared' : ', reach ' + L.req + ' to unlock ' + rewardName(L.reward) + (isKey ? ' and a key' : '');
-      b.setAttribute('aria-label', 'Room ' + (n + 1) + ', ' + (ok ? L.name + what : keyWait ? L.name + ', boss room, needs ' + (keys.length - held) + ' more key' + (keys.length - held > 1 ? 's' : '') : 'sealed'));
-      b.title = ok ? L.name + ' · ' + th.sub : keyWait ? L.name + ' · needs every key in this area' : 'Sealed';
-      b.disabled = !ok;
-      b.addEventListener('click', function () { startLevel(i); });
-      map.appendChild(b);
-    });
+    renderLevelPanel(menuSel);
     var lg = $('#legend');
     if (!lg.children.length) {
       TYPE_ORDER.forEach(function (k) {
@@ -491,6 +460,7 @@
 
   function startLevel(i) {
     bankRun();
+    menuSel = i;
     cur = i;
     menuArea = areaOf(i); store.set('cc_area', String(menuArea));
     fixSelection();

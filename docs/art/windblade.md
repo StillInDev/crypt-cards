@@ -2,8 +2,8 @@
 
 - **Sprite id:** `windblade` (deliver `windblade.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/windblade@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/windblade.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Wind blade** card. It appears in: Barracks, Armory. In play: While it lies o
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`windblade.png` (18×18) and `windblade@8x.png`. Optionally up to three variants as `windblade-1.png`, `windblade-2.png`, `windblade-3.png`.
+`windblade.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `windblade-1.png`, `windblade-2.png`, `windblade-3.png`.

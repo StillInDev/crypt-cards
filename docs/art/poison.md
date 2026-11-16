@@ -2,8 +2,8 @@
 
 - **Sprite id:** `poison` (deliver `poison.png`)
 - **Kind:** board item (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/poison@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/poison.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Poison** card. It appears in: Cellar, Sewers, Fungus Caves, Vampire Crypt. I
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`poison.png` (18×18) and `poison@8x.png`. Optionally up to three variants as `poison-1.png`, `poison-2.png`, `poison-3.png`.
+`poison.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `poison-1.png`, `poison-2.png`, `poison-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `firetrap` (deliver `firetrap.png`)
 - **Kind:** trap (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/firetrap@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/firetrap.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Fire trap** card. It appears in: Mine, Ember Halls, Throne Room. In play: Bu
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not draw arrows or heads in the sprite.
 
 ## Deliver
 
-`firetrap.png` (18×18) and `firetrap@8x.png`. Optionally up to three variants as `firetrap-1.png`, `firetrap-2.png`, `firetrap-3.png`.
+`firetrap.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `firetrap-1.png`, `firetrap-2.png`, `firetrap-3.png`.

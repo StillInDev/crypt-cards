@@ -2,8 +2,8 @@
 
 - **Sprite id:** `lich` (deliver `lich.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/lich@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/lich.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,9 +16,9 @@ A **Lich** card. It appears in: Bone Library (also its map icon), Throne Room. I
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 - Do not make it look like the friendly Sorcerer hero (no beard, no pointed hat).
 
 ## Deliver
 
-`lich.png` (18×18) and `lich@8x.png`. Optionally up to three variants as `lich-1.png`, `lich-2.png`, `lich-3.png`.
+`lich.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `lich-1.png`, `lich-2.png`, `lich-3.png`.

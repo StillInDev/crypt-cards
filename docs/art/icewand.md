@@ -2,8 +2,8 @@
 
 - **Sprite id:** `icewand` (deliver `icewand.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/icewand@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/icewand.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -15,8 +15,8 @@ A **Ice wand** card. It appears in: Frozen Cavern, Bone Library. In play: A wand
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`icewand.png` (18×18) and `icewand@8x.png`. Optionally up to three variants as `icewand-1.png`, `icewand-2.png`, `icewand-3.png`.
+`icewand.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `icewand-1.png`, `icewand-2.png`, `icewand-3.png`.

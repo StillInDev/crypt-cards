@@ -2,8 +2,8 @@
 
 - **Sprite id:** `firewand` (deliver `firewand.png`)
 - **Kind:** weapon (object)
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/firewand@8x.png` (current version, to improve on), `art/sword@8x.png` (the base weapon shape)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/firewand.png` (current version), `src/img/sprites/sword.png` (the base weapon shape)
 
 ## Where it appears
 
@@ -15,8 +15,8 @@ A **Fire wand** card. It appears in: Bone Library, Ember Halls. In play: A wand 
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`firewand.png` (18×18) and `firewand@8x.png`. Optionally up to three variants as `firewand-1.png`, `firewand-2.png`, `firewand-3.png`.
+`firewand.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `firewand-1.png`, `firewand-2.png`, `firewand-3.png`.

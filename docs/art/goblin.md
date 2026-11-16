@@ -2,8 +2,8 @@
 
 - **Sprite id:** `goblin` (deliver `goblin.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/goblin@8x.png` (current version, to improve on), `art/knight@8x.png` (quality bar for characters)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/goblin.png` (current version), `src/img/sprites/knight.png` (quality bar for characters)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Goblin** card. It appears in: Barracks (also its map icon), Armory. In play:
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`goblin.png` (18×18) and `goblin@8x.png`. Optionally up to three variants as `goblin-1.png`, `goblin-2.png`, `goblin-3.png`.
+`goblin.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `goblin-1.png`, `goblin-2.png`, `goblin-3.png`.

@@ -2,8 +2,8 @@
 
 - **Sprite id:** `frostwisp` (deliver `frostwisp.png`)
 - **Kind:** monster
-- **Read first:** `README.md` (size, palette and style rules)
-- **References:** `art/frostwisp@8x.png` (current version, to improve on), `art/tomb@8x.png` (object style)
+- **Read first:** `README.md` (format and style rules)
+- **References:** `src/img/sprites/frostwisp.png` (current version), `src/img/sprites/tomb.png` (object style)
 
 ## Where it appears
 
@@ -16,8 +16,8 @@ A **Frost wisp** card. It appears in: Frozen Cavern. In play: An ice monster. Ic
 
 ## Do not
 
-- Do not use colours outside the palette.
+- Do not add a background or a frame: only the icon, on transparency.
 
 ## Deliver
 
-`frostwisp.png` (18×18) and `frostwisp@8x.png`. Optionally up to three variants as `frostwisp-1.png`, `frostwisp-2.png`, `frostwisp-3.png`.
+`frostwisp.png` (at least 256 × 256, transparent; see `README.md`). Optionally up to three variants as `frostwisp-1.png`, `frostwisp-2.png`, `frostwisp-3.png`.
