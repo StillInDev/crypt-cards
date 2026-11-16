@@ -32,7 +32,8 @@ S=blankGame({powers:['teleport']}); S.grid[8]=C('ogre',9); ready(S); DC.usePower
 S=blankGame({powers:['burst']}); S.grid[0]=C('potion',4); S.grid[1]=C('ogre',9); S.grid[3]=C('rat',3); ready(S); DC.usePower(S,0,0); assert(S.grid[1].v===5); assert(S.grid[3].type!=='rat'||S.grid[3].v!==3); ok('burst');
 // hero passives
 S=blankGame({hero:'knight'}); assert(S.hero.max===12); S.grid[1]=C('sword',3); DC.move(S,0); assert(S.hero.sword.v===4); ok('knight');
-S=blankGame({hero:'icemage'}); S.grid[1]=C('rat',3); DC.move(S,0); assert(S.hero.hp===S.hero.max-2); ok('ice mage cut');
+S=blankGame({hero:'icemage'}); S.grid[1]=C('rat',3); DC.move(S,0); assert(S.hero.hp===S.hero.max-2); ok('yeti cut');
+assert.strictEqual(DC.HEROES.icemage.name,'Yeti'); assert.strictEqual(DC.HEROES.icemage.sprite,'yeti');
 S=blankGame({hero:'rogue'}); S.grid[1]=C('coin',2); DC.move(S,0); assert(S.hero.gold===3); ok('rogue');
 S=blankGame({hero:'sorcerer',powers:['heal','fire','ice','scythe']}); assert(S.hero.max===8&&S.hero.powers.length===3&&S.hero.powers.every(p=>p.cd===0)); ok('sorcerer slots/ready');
 // new cards
