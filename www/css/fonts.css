@@ -1,0 +1,6 @@
+/* Fonts are bundled so the game works offline (Press Start 2P and Pixelify Sans, both SIL Open Font License). */
+@font-face { font-family: 'Press Start 2P'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/pixelify-sans-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('../fonts/pixelify-sans-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('../fonts/pixelify-sans-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/pixelify-sans-latin-700-normal.woff2') format('woff2'); }

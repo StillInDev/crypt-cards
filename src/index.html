@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#181425">
+<title>Crypt Cards</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section class="view on" id="v-menu" aria-label="Level select">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Crypt Cards</h1>
+        <p class="sub">Swipe your hero across a grid of cards. Reach a room's target score, then step on the locked reward to clear it and open the rooms below.</p>
+      </div>
+    </div>
+    <div class="row" style="margin:6px 4px 0">
+      <button class="btn go" id="b-hero" type="button">Hero &amp; powers</button>
+      <button class="btn" id="b-edit" type="button">Level editor</button>
+    </div>
+    <div class="mapwrap" role="group" aria-label="Dungeon map"><div class="map" id="map"></div></div>
+    <details>
+      <summary>How it plays</summary>
+      <ul>
+        <li>Swipe (or tap a neighbouring card, or use the arrow keys) to step onto an adjacent card. You use up that card. The cards behind you slide forward to fill the gap, and a new card drops in at the far edge of that row or column. Leave a corner and the cards along the edge behind it shift into the corner instead, with the new card appearing at the far end of that edge.</li>
+        <li>Monsters and traps cost you health equal to their number. Poison hurts 1 health a turn but never kills. A sword lets you attack a monster instead: if it dies, you take its place.</li>
+        <li>A chest costs a turn to open and leaves an item behind. Tapping your sword sells it for gold equal to its power. You can only hold one weapon, and picking up another replaces it, which also costs a turn.</li>
+        <li>Weapons come in fire and ice. A fire weapon cannot hurt fire monsters and hits ice monsters for double, and the other way round. An ice weapon freezes a monster it hits but does not kill: a frozen monster cannot be hit, so you swap places with it instead. Arrow tiles turn every turn; tap one to slide its row or column. Ninja stars hit only your row or column. With a bow in hand, tap any monster to shoot it; the shock jumps to monsters touching it. The scythe sweeps the target and the two squares beside it. Wands fire a beam from you to the far edge of a row or column, hitting every monster in it; fire and ice wands follow the same fire and ice rules and have 6 charges. The Phoenix can only be worn down to 1 health. Step on it with no weapon, or hit it with an ice weapon, to kill it.</li>
+        <li>Press and hold any card, your hero, or a power to see what it does.</li>
+        <li>The chip above each neighbouring card shows what stepping there would do. A red skull means it would kill you.</li>
+        <li>Coins and gems are your score. Reach the room's target and a locked reward card (a symbol behind iron bars) drops onto the board. Step on it to unlock a hero, a power or the next rooms. A room opens once any room leading to it is cleared, and every path ends at the throne room.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Card guide</summary>
+      <div class="legend" id="legend"></div>
+    </details>
+    <p class="fine">A fan remake of the card-grid dungeon idea with original pixel art. Levels are plain data, so the editor can add as many as you like.</p>
+  </div>
+</section>
+
+<section class="play" id="v-play" aria-label="Game">
+  <div class="bar">
+    <button class="btn quiet" id="b-back" type="button">Levels</button>
+    <div class="ttl" id="p-title"></div>
+    <button class="btn quiet" id="b-restart" type="button">Restart</button>
+  </div>
+  <div class="hud">
+    <div class="stat"><div class="k">Health</div><div class="v"><span id="h-hp">0</span><span class="status" id="h-status"></span></div><div class="hpbar"><i id="h-bar"></i></div></div>
+    <div class="stat gold"><div class="k">Gold</div><div class="v" id="h-gold">0</div></div>
+    <div class="stat best"><div class="k">Best</div><div class="v" id="h-best">0</div></div>
+  </div>
+  <div class="powers" id="powerbar"></div>
+  <div class="stage" id="stage"><div class="board" id="board"></div></div>
+  <div class="sellbar" id="h-gear"></div>
+  <div class="hint" id="p-hint">Swipe on the board, or tap a card next to your hero.</div>
+</section>
+
+<section class="view" id="v-edit" aria-label="Level editor">
+  <div class="wrap">
+    <div class="top">
+      <div><h2>Level editor</h2><p class="sub">Each level is a grid size, a target score and card odds. Changes save in this browser.</p></div>
+      <button class="btn" id="e-done" type="button">Done</button>
+    </div>
+    <div class="tabs" id="e-tabs" role="tablist"></div>
+    <div class="form" id="e-form"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn go" id="e-play" type="button">Play this level</button>
+      <button class="btn" id="e-add" type="button">Add a harder level</button>
+      <button class="btn" id="e-dup" type="button">Duplicate</button>
+      <button class="btn bad" id="e-del" type="button">Delete</button>
+    </div>
+    <label class="check"><input type="checkbox" id="e-all"> Unlock every level, for testing</label>
+    <div class="section">
+      <h2>Level data</h2>
+      <p class="sub">Copy this to keep your levels somewhere safe, or paste a list here to load it.</p>
+      <textarea id="e-json" spellcheck="false" aria-label="Level data as JSON"></textarea>
+      <div class="row">
+        <button class="btn" id="e-apply" type="button">Load pasted data</button>
+        <button class="btn" id="e-copy" type="button">Copy</button>
+        <button class="btn bad" id="e-reset" type="button">Reset to the starter levels</button>
+      </div>
+      <div class="msg" id="e-msg" role="status"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-hero" aria-label="Hero and powers">
+  <div class="wrap">
+    <div class="top">
+      <div><h2>Hero &amp; powers</h2><p class="sub" id="hp-sub"></p></div>
+      <button class="btn" id="hp-done" type="button">Done</button>
+    </div>
+    <h2 class="sech">Hero</h2>
+    <div class="heroes" id="hp-heroes"></div>
+    <h2 class="sech">Powers <span class="slots" id="hp-slots"></span></h2>
+    <p class="sub" style="margin:0 4px 14px">Powers are free actions. Each one recharges as you move. Tap to pick or drop.</p>
+    <div class="plist" id="hp-powers"></div>
+  </div>
+</section>
+
+<div class="over" id="over" role="dialog" aria-modal="true" aria-labelledby="o-title">
+  <div class="sheet">
+    <h2 id="o-title">You fell</h2>
+    <div class="big" id="o-score">0</div>
+    <div class="sub" style="margin:0 auto" id="o-sub"></div>
+    <div class="note" id="o-note"></div>
+    <div class="row">
+      <button class="btn go" id="o-again" type="button">Try again</button>
+      <button class="btn" id="o-next" type="button">Next level</button>
+      <button class="btn quiet" id="o-menu" type="button">Levels</button>
+    </div>
+  </div>
+</div>
+<div class="info" id="info" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/sprites.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

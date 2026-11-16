@@ -1,0 +1,23 @@
+{
+  "name": "crypt-cards",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Crypt Cards: a pixel-art dungeon card game.",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node tests/run.js",
+    "assets": "capacitor-assets generate --android --assetPath assets",
+    "sync": "npm run build && cap sync android && node scripts/patch-android.js",
+    "bundle": "npm run sync && cd android && ./gradlew bundleRelease",
+    "open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "latest",
+    "@capacitor/cli": "^8.6.2"
+  }
+}

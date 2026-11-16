@@ -1,0 +1,10 @@
+{
+  "appId": "com.yourname.cryptcards",
+  "appName": "Crypt Cards",
+  "webDir": "www",
+  "backgroundColor": "#181425",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

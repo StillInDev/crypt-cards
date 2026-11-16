@@ -1,0 +1,54 @@
+# Builds a signed Android App Bundle (.aab) for Google Play, no Android Studio needed.
+# Run it from the Actions tab: "Build Android release" -> Run workflow.
+name: Build Android release
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode (a whole number that must go up with every upload to Play)'
+        required: true
+        default: '1'
+      version_name:
+        description: 'versionName shown to players'
+        required: true
+        default: '1.0.0'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.event.inputs.version_code }}
+      VERSION_NAME: ${{ github.event.inputs.version_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Create the Android project from capacitor.config.json
+        run: npx cap add android
+      - name: Generate launcher icons and splash screens
+        run: npm run assets
+      - name: Sync web files and apply Android settings
+        run: npm run sync
+      - name: Build the release bundle
+        run: cd android && ./gradlew bundleRelease
+      - name: Sign with the upload key
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -keystore "$RUNNER_TEMP/upload.jks" -storepass "$KS_PASS" -keypass "$KEY_PASS" \
+            -sigalg SHA256withRSA -digestalg SHA-256 "$AAB" "$KEY_ALIAS"
+          jarsigner -verify "$AAB" | head -3
+          cp "$AAB" crypt-cards-$VERSION_NAME-$VERSION_CODE.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crypt-cards-aab
+          path: crypt-cards-*.aab
