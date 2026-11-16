@@ -2,9 +2,12 @@ const DC=require('../src/js/engine.js'),assert=require('assert');
 function mk(){const S=DC.newGame({id:1,w:3,h:3,heroHP:20,ramp:12,cap:4,weights:{coin:1}},7,{});S.grid=S.grid.map(()=>({uid:++S.uid,type:'coin',kind:'gold',v:1}));S.hero.pos=4;S.grid[4]=null;return S;}
 // loot variety and sell
 const seen={};
-for(let s=1;s<200;s++){const S=mk();S.rng=DC.mulberry32(s);S.grid[1]={uid:++S.uid,type:'chest',kind:'chest',v:0};const r=DC.move(S,0);assert(!r.moved);assert.strictEqual(S.hero.pos,4);seen[S.grid[1].type]=1;}
+// (empty squares around it, so no helpful kind is at its half-board cap)
+for(let s=1;s<200;s++){const S=mk();S.grid=S.grid.map((c,i)=>i===4?null:{uid:++S.uid,type:'blank',kind:'empty',v:0});S.rng=DC.mulberry32(s);S.grid[1]={uid:++S.uid,type:'chest',kind:'chest',v:0};const r=DC.move(S,0);assert(!r.moved);assert.strictEqual(S.hero.pos,4);seen[S.grid[1].type]=1;}
 console.log('loot types',Object.keys(seen).sort().join(','));
 assert(['sword','potion','gem'].every(k=>seen[k]));
+// a chest on a board already half full of coins never drops a gem (gold is capped)
+for(let s=1;s<60;s++){const S=mk();S.rng=DC.mulberry32(s);S.grid[1]={uid:++S.uid,type:'chest',kind:'chest',v:0};DC.move(S,0);assert.notStrictEqual(S.grid[1].kind,'gold','capped gold from chest');}
 // preview doesn't mutate
 let S=mk();S.grid[1]={uid:++S.uid,type:'chest',kind:'chest',v:0};const before=S.grid[1];DC.preview(S,0);assert(S.grid[1]===before);
 // sell sword
