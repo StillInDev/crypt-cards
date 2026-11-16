@@ -11,7 +11,7 @@
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1.' },
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
-    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
+    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Costs you health equal to its number when you step on it. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
     bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
     skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
     ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Costs you health equal to its number when you step on it.' },
@@ -54,6 +54,13 @@
     TYPES[m[0]] = { kind: 'monster', name: m[1], lo: m[2], hi: m[3], bf: 1, el: m[4],
       tip: m[4] ? (m[4] === 'fire' ? 'A fire monster. Fire cannot hurt it and ice hurts it double.' : 'An ice monster. Ice cannot hurt it and fire hurts it double.') : 'Costs you health equal to its number when you step on it.' };
   });
+  // Monster gimmicks for the looped-in monsters.
+  TYPES.zombie.tip = 'Costs you health equal to its number when you step on it. Killed by a weapon, it leaves a tomb in its square.';
+  // A dead zombie's tomb: any damage at all shatters it. Bare-handed, you just bump into it.
+  TYPES.tomb = { kind: 'monster', name: 'Tomb', lo: 1, hi: 1, bf: 0, hidden: true, tomb: true,
+    tip: 'A zombie\'s tomb. It blocks the way: bump into it bare-handed and your turn is spent. Any damage at all shatters it, from a weapon, a power, a trap or a bomb.' };
+  TYPES.snake.venom = true;
+  TYPES.snake.tip = 'Costs you health equal to its number when you step on it, and its bite poisons you for that many turns too: 1 damage a turn, never below 1 health.';
 
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
@@ -217,7 +224,8 @@
     return me === srcEl ? 0 : 2;
   }
   // Applies damage to a monster. Immortal monsters (the Phoenix) stop at 1 health unless lethal.
-  function hurtMonster(m, base, srcEl, lethal) {
+  // byWeapon: the blow came from a weapon the hero holds (sword, scythe, wand, bow, star).
+  function hurtMonster(m, base, srcEl, lethal, byWeapon) {
     const mult = relation(srcEl, m);
     if (m.sh && mult !== 0 && base > 0) { m.sh = 0; return { dealt: 0, killed: false, mult: 0, immune: false, absorbed: true }; }
     if (mult === 0 || base <= 0) return { dealt: 0, killed: false, mult: mult, immune: mult === 0 };
@@ -226,6 +234,12 @@
     const killed = nv <= 0;
     const dealt = m.v - Math.max(nv, 0);
     m.v = Math.max(nv, 0);
+    if (killed && byWeapon && m.type === 'zombie') {
+      // Cut down by a weapon, a zombie does not leave: it becomes a tomb in the same square
+      // (the same card, so it does not slide away). Any other death is final.
+      m.type = 'tomb'; m.v = 1; m.sh = 0; m.frozen = false;
+      return { dealt: dealt, killed: false, entombed: true, mult: mult, immune: false };
+    }
     return { dealt: dealt, killed: killed, mult: mult, immune: false };
   }
 
@@ -312,7 +326,7 @@
       } else if (!res.absorbed) {
         fx.push({ cell: p, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         if (TYPES[m.type].immortal) fx.push({ cell: p, text: 'Reborn', cls: 'info', anim: 'flare' });
-        if (el === 'ice') { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+        if (el === 'ice' && !res.entombed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
       }
     });
     // Slide everything one square along the arrow. The hero is a token in the line.
@@ -366,7 +380,7 @@
         }
       }
       order.forEach(function (p) {
-        const m = S.grid[p], v0 = m.v, res = hurtMonster(m, seen[p], null, false);
+        const m = S.grid[p], v0 = m.v, res = hurtMonster(m, seen[p], null, false, true);
         hits.push({ cell: p, dmg: seen[p] });
         fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' });
         if (res.killed) {
@@ -407,7 +421,7 @@
         const p = cy * w + cx, m = S.grid[p];
         beam.push(p);
         if (m && m.kind === 'monster' && !m.frozen && m.type !== 'webspider') {
-          const v0 = m.v, res = hurtMonster(m, H.sword.v, wel, wel === 'ice');
+          const v0 = m.v, res = hurtMonster(m, H.sword.v, wel, wel === 'ice', true);
           attack.hits++;
           if (res.immune) fx.push({ cell: p, text: 'Immune', cls: 'info', anim: 'immune' });
           else if (res.killed) {
@@ -417,7 +431,7 @@
           } else {
             fx.push({ cell: p, text: '−' + res.dealt, cls: 'info', anim: wel, hit: m.uid });
             if (TYPES[m.type].immortal) fx.push({ cell: p, text: 'Reborn', cls: 'info', anim: 'flare' });
-            if (wel === 'ice' && !res.absorbed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+            if (wel === 'ice' && !res.absorbed && !res.entombed) { m.frozen = true; fx.push({ cell: p, text: 'Frozen', cls: 'info', anim: 'frost' }); }
           }
           if (first) attack.immune = res.immune;
         }
@@ -441,7 +455,7 @@
       cells.forEach(function (p, idx) {
         const m = S.grid[p];
         if (!m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') return;
-        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false);
+        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false, true);
         cost = Math.max(cost, res.dealt);
         if (idx === 0) { attack.dmg = res.dealt; attack.killed = res.killed; }
         if (res.killed) {
@@ -459,7 +473,7 @@
     } else if (card.kind === 'monster' && H.sword && !H.sword.bow) {
       // Armed: hit the monster instead of walking into it. If it dies, take its place.
       const wel = H.sword.el || null, v0 = card.v;
-      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice');
+      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice', true);
       const cost = res.mult ? Math.ceil(res.dealt / res.mult) : 0; // the blade wears down by the power it spends
       H.sword.v -= cost;
       attack = { dmg: res.dealt, killed: res.killed, el: wel, type: H.sword.type || 'sword', immune: res.immune };
@@ -467,9 +481,12 @@
       if (res.immune) fx.push({ cell: tpos, text: 'Immune', cls: 'info', anim: 'immune' });
       else fx.push({ cell: tpos, text: res.killed ? 'Slain' : '−' + res.dealt, cls: 'info', anim: res.killed ? 'puff' : null });
       if (res.killed && T.pays) { H.gold += v0; fx.push({ cell: tpos, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
-      if (!res.killed && !res.immune && !res.absorbed && wel === 'ice') { card.frozen = true; attack.froze = true; fx.push({ cell: tpos, text: 'Frozen', cls: 'info', anim: 'frost' }); }
+      if (!res.killed && !res.immune && !res.absorbed && !res.entombed && wel === 'ice') { card.frozen = true; attack.froze = true; fx.push({ cell: tpos, text: 'Frozen', cls: 'info', anim: 'frost' }); }
       if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Sword broke', cls: 'info', anim: 'break' }); }
       attacked = !res.killed;
+    } else if (card.type === 'tomb') {
+      // Bare-handed (or holding a bow): you bump into the tomb. Nothing breaks, the turn is spent.
+      attacked = true; fx.push({ cell: tpos, text: 'Bump', cls: 'info' });
     } else if (card.kind === 'gold') {
       const g = card.v + (H.pass.gold || 0);
       H.gold += g; fx.push({ cell: tpos, text: '+' + g, cls: 'gold', anim: 'gold' });
@@ -493,6 +510,8 @@
       else {
         lost = hurtHero(S, Math.max(0, card.v - (H.pass.cut || 0)), true);
         fx.push({ cell: tpos, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
+        // Venom: a bite that hurts also poisons you for the monster's number of turns.
+        if (T.venom && lost > 0) { H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' }); }
       }
       if (T.pays) { H.gold += card.v; fx.push({ cell: tpos, text: '+' + card.v + 'G', cls: 'gold' }); }
     } else if (card.kind === 'reward') {
@@ -611,6 +630,28 @@
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         fx.push({ cell: mp, text: '', cls: 'info', anim: 'quake' });
+      }
+    }
+
+    // Rats (passive): checked after the cards have slid. A rat that stays in the same square
+    // for 3 turns turns a random neighbouring card (never the hero or the room's reward,
+    // and not another rat) into a new rat just as strong. Moving resets the count.
+    if (S.rng && H.hp > 0) {
+      const born = [];
+      for (let p = 0; p < S.grid.length; p++) {
+        const r = S.grid[p];
+        if (!r || TYPES[r.type].ability !== 'breed' || born.indexOf(p) >= 0) continue;
+        if (r.rp !== p) { r.rp = p; r.t = 0; continue; }
+        r.t = (r.t || 0) + 1;
+        if (r.t < 3) continue;
+        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && c.kind !== 'reward' && c.type !== 'rat'; });
+        if (!options.length) continue; // boxed in: it stays ready and breeds as soon as there is room
+        r.t = 0;
+        const ap = options[Math.floor(S.rng() * options.length)];
+        const kid = makeCard(S, 'rat');
+        kid.v = r.v; kid.rp = ap; kid.t = 0;
+        S.grid[ap] = kid; born.push(ap);
+        fx.push({ cell: ap, text: 'Rat!', cls: 'hurt', anim: 'puff' });
       }
     }
 

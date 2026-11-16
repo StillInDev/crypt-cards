@@ -14,7 +14,7 @@
   // A room is cleared by reaching its target score and then stepping on the locked reward that appears.
   var THEMES = {
     cellar:   { bg: '#201a16', card: '#3f3530', acc: '#d1a45f', icon: 'rat',       sub: 'Rats and rot',
-                w: { rat: 8, bat: 5, slime: 5, skeleton: 3, poison: 6, trap: 4, bomb: 2 } },
+                w: { rat: 16, bat: 5, slime: 5, skeleton: 3, poison: 6, trap: 4, bomb: 2 } },
     sewers:   { bg: '#13241f', card: '#2b4a42', acc: '#63c74d', icon: 'slime',     sub: 'Slime and poison',
                 w: { slime: 8, rat: 6, snake: 6, zombie: 2, poison: 12, potion: 14, trap: 3 } },
     barracks: { bg: '#1b1f31', card: '#3a4262', acc: '#f0883a', icon: 'goblin',    sub: 'Goblins and steel',
@@ -874,6 +874,10 @@
         if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: 0 health, harmless. Walk through it.';
         if (T.pays) t += ' Pays ' + n + ' gold when you beat it.';
         if (T.ability === 'queen') t += ' In ' + (4 - (c.t || 0)) + ' turns it turns a neighbouring card into a bat.';
+        if (T.tomb) t = T.tip;
+        if (c.type === 'zombie') t += ' Killed by a weapon, it leaves a tomb.';
+        if (T.venom) t +=' Its bite also poisons you for ' + n + ' turns.';
+        if (T.ability === 'breed') t += ' If it stays put ' + (3 - (c.t || 0)) + ' more turns, it turns a neighbouring card into another rat of ' + n + '.';
         break;
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
@@ -892,7 +896,7 @@
       case 'reward': t = 'A locked reward. Step on it to unlock ' + rewardName(c.rw) + ' and clear this room.'; break;
       default: t = T.tip;
     }
-    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' ? '' : ' ' + n), text: t };
+    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
   }
   function describeHero() {
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
