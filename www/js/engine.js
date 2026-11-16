@@ -28,7 +28,7 @@
     firearrow: { kind: 'arrow',   name: 'Fire arrow',      lo: 2, hi: 4, bf: 0.5, el: 'fire', tip: 'The arrow turns every turn. Tap it to fire: the whole row or column it points along slides one square that way and every monster in it takes its number as fire damage. You only slide if you are in that line.' },
     icearrow:  { kind: 'arrow',   name: 'Ice arrow',       lo: 2, hi: 4, bf: 0.5, el: 'ice',  tip: 'The arrow turns every turn. Tap it to fire: the whole row or column it points along slides one square that way and every monster in it takes its number as ice damage and freezes if it survives. You only slide if you are in that line.' },
     ninjastar: { kind: 'weapon',  name: 'Ninja star',      lo: 3, hi: 6, bf: 1,   bow: true, star: true, tip: 'Five throws. Tap a monster in your row or column to hit it for the star\'s power. No chain, and nothing outside your row or column can be hit.' },
-    gemblade:  { kind: 'weapon',  name: 'Jewel blade',     lo: 2, hi: 4, bf: 0.5, gems: true, tip: 'A sword with 3 jewel slots. Each green jewel adds 1 power every time you take damage. Each blue jewel adds 1 power every time you move.' },
+    gemblade:  { kind: 'weapon',  name: 'Jewel blade',     lo: 2, hi: 4, bf: 0.5, gems: true, tip: 'A sword set with 1 to 3 jewels, all the same colour. A green blade gains 1 power per jewel every time you take damage. A blue blade gains 1 power per jewel every time you move.' },
     elecbow:   { kind: 'weapon',  name: 'Electric bow',   lo: 3, hi: 5, bf: 0.5, bow: true, tip: 'A bow with 5 arrows. Tap any monster on the board to shoot it for the bow\'s power. The shock then jumps to every monster touching the one it hit, 1 weaker with each jump. Frozen monsters are not hit. Stepping into a monster with a bow is just like having no weapon.' },
     firewand:  { kind: 'weapon',  name: 'Fire wand',       lo: 1, hi: 3, bf: 0.5, el: 'fire', wand: true, tip: 'A wand with 6 charges. Step toward an adjacent monster to fire a beam from you to the far edge of that row or column. It burns every monster on the way for its power: fire monsters are immune, ice monsters take double.' },
     icewand:   { kind: 'weapon',  name: 'Ice wand',        lo: 1, hi: 3, bf: 0.5, el: 'ice',  wand: true, tip: 'A wand with 6 charges. Step toward an adjacent monster to fire a beam from you to the far edge of that row or column. Every monster it hits but does not kill freezes. Ice monsters are immune, fire monsters take double. It can kill a Phoenix.' },
@@ -115,9 +115,9 @@
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
     if (T.wand) c.t = 6; // charges
     if (T.bow) c.t = 5; // arrows
-    if (T.gems) { // three jewel slots: green grows with damage taken, blue with movement
-      c.g = [0, 1, 2].map(function () { const r = S.rng(); return r < 0.4 ? 'g' : r < 0.8 ? 'b' : null; });
-      if (!c.g.some(Boolean)) c.g[Math.floor(S.rng() * 3)] = S.rng() < 0.5 ? 'g' : 'b';
+    if (T.gems) { // three slots holding 1-3 jewels, all one colour: green grows with damage taken, blue with movement
+      const col = S.rng() < 0.5 ? 'g' : 'b', r = S.rng(), n = r < 0.35 ? 1 : r < 0.75 ? 2 : 3;
+      c.g = [0, 1, 2].map(function (k) { return k < n ? col : null; });
     }
     if (T.kind === 'arrow') c.h = Math.floor(S.rng() * 4); // which way it points now
     if (T.kind === 'monster' && L.shieldP && S.rng() < L.shieldP) c.sh = 1; // the first hit is absorbed
@@ -133,19 +133,39 @@
 
   function blankCard(S) { return { uid: ++S.uid, type: 'blank', kind: 'empty', v: 0 }; }
 
+  // Helpful cards can't flood the board: once one kind of them (all weapons, all potions, all coins and
+  // gems, all chests, all arrow tiles) fills half the squares, no more of that kind appears.
+  // Monsters, traps, poison and bombs are never capped.
+  const HELPFUL = { weapon: 1, heal: 1, gold: 1, chest: 1, arrow: 1 };
+  function cappedKinds(S) {
+    const n = {}, max = Math.floor(S.level.w * S.level.h / 2), full = {};
+    for (const c of S.grid) if (c && HELPFUL[c.kind]) n[c.kind] = (n[c.kind] || 0) + 1;
+    for (const k in n) if (n[k] >= max) full[k] = true;
+    return full;
+  }
+  // Weighted pick from {type: weight}, skipping capped kinds. If everything is capped, the cap is ignored.
+  function pickFrom(S, weights, fallback) {
+    const full = cappedKinds(S);
+    for (let pass = 0; pass < 2; pass++) {
+      let total = 0;
+      const w = {};
+      for (const k in weights) { const x = pass === 0 && full[TYPES[k].kind] ? 0 : weights[k]; w[k] = x; total += x; }
+      if (total <= 0) continue;
+      let r = S.rng() * total;
+      for (const k in w) { r -= w[k]; if (r < 0) return k; }
+    }
+    return fallback;
+  }
+
   function pickType(S) {
     const L = S.level;
     const w = {};
-    let total = 0;
     for (const k in TYPES) {
       let x = Number((L.weights || {})[k]) || 0;
       if (x > 0 && L.adapt !== false && TYPES[k].kind === 'heal' && S.hero.hp / S.hero.max < 0.4) x *= 2;
-      w[k] = x; total += x;
+      if (x > 0) w[k] = x;
     }
-    if (total <= 0) return 'coin';
-    let r = S.rng() * total;
-    for (const k in w) { r -= w[k]; if (r < 0) return k; }
-    return 'coin';
+    return pickFrom(S, w, 'coin');
   }
 
   function spawn(S, pos) {
@@ -298,10 +318,7 @@
   // Chests hold one of these. Weights, not levels: a chest is a gamble on what you need.
   const LOOT = { sword: 4, scythe: 2, firesword: 1, icesword: 1, firewand: 1, icewand: 1, elecbow: 1, ninjastar: 1, gemblade: 1, potion: 3, gem: 2 };
   function lootCard(S) {
-    let total = 0; for (const k in LOOT) total += LOOT[k];
-    let r = S.rng() * total, pick = 'potion';
-    for (const k in LOOT) { r -= LOOT[k]; if (r < 0) { pick = k; break; } }
-    return makeCard(S, pick);
+    return makeCard(S, pickFrom(S, LOOT, 'potion'));
   }
 
   // An arrow tile: the line it points along slides one square that way and every monster in it is hurt.

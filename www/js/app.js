@@ -886,7 +886,11 @@
         break;
       }
       case 'chest': t = 'Step toward it to open it. You stay put and the turn is spent, then an item (a sword, potion or gem) appears in its place to pick up.'; break;
-      case 'weapon': if (T.gems) { t = 'Jewel blade, power ' + n + '. Each green jewel adds 1 power whenever you take damage; each blue jewel adds 1 whenever you move. Slots: ' + c.g.map(function (g) { return g === 'g' ? 'green' : g === 'b' ? 'blue' : 'empty'; }).join(', ') + '.'; break; }
+      case 'weapon': if (T.gems) {
+          var jn = c.g.filter(Boolean).length, green = c.g.indexOf('g') >= 0;
+          t = (green ? 'Green' : 'Blue') + ' jewel blade, power ' + n + ', ' + jn + (jn === 1 ? ' jewel' : ' jewels') + '. It gains ' + jn + ' power ' + (green ? 'every time you take damage.' : 'every time you move.');
+          break;
+        }
         if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', ' + c.t + ' throws. Tap a monster in your row or column to hit it. No chain.'; break; }
         if (T.bow) { t = 'Electric bow, power ' + n + ', ' + c.t + ' arrows. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
         if (T.sweep) { t = 'Power ' + n + '. Step toward a monster to sweep: the target and the two squares beside it (across your swing) all take that much. The scythe loses power equal to the most damage it deals to one monster, and breaks at 0. If the target dies you take its place.'; break; }
