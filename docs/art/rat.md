@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-A **Rat** card. It appears in: Cellar (also its map icon), Sewers. In play: Deals damage equal to its number. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong. The number on the card is its health.
+A **Rat** card. It appears in: Cellar (also its map icon), Sewers. In play: Deals damage equal to its number. If it stays put for 5 turns, it bites a neighbouring card (gold, a trap or a monster) for its number; an empty square, or a card it destroys, becomes another rat just as strong. The number on the card is its health.
 
 ## What it must look like
 

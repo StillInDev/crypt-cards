@@ -11,7 +11,7 @@
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1.' },
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
-    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Deals damage equal to its number. If it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
+    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Deals damage equal to its number. If it stays put for 5 turns, it bites a neighbouring card (gold, a trap or a monster) for its number; an empty square, or a card it destroys, becomes another rat just as strong.' },
     bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   tip: 'Deals damage equal to its number.' },
     skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   tip: 'Deals damage equal to its number.' },
     ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   tip: 'Deals damage equal to its number.' },
@@ -130,6 +130,7 @@
     return c;
   }
 
+  const RAT_TURNS = 5; // still turns before a rat strikes
   function blankCard(S) { return { uid: ++S.uid, type: 'blank', kind: 'empty', v: 0 }; }
 
   // Helpful cards can't flood the board: once one kind of them (all weapons, all potions, all coins and
@@ -679,22 +680,38 @@
     }
 
     // Rats (passive): checked after the cards have slid. A rat that stays in the same square
-    // for 3 turns turns a random neighbouring card (never the hero or the room's reward,
-    // and not another rat) into a new rat just as strong. Moving resets the count.
+    // for 5 turns attacks a random neighbouring card: gold, a trap or another monster (never the
+    // hero, the room's reward or another rat). An empty square is simply taken over by a new rat.
+    // Otherwise the target takes damage equal to the rat's number, and if that destroys it, a new
+    // rat just as strong takes its place. Moving resets the count.
     if (S.rng && H.hp > 0) {
       const born = [];
+      const PREY = { empty: 1, gold: 1, harm: 1, dtrap: 1, monster: 1 };
       for (let p = 0; p < S.grid.length; p++) {
         const r = S.grid[p];
         if (!r || TYPES[r.type].ability !== 'breed' || born.indexOf(p) >= 0) continue;
         if (r.rp !== p) { r.rp = p; r.t = 0; continue; }
         r.t = (r.t || 0) + 1;
-        if (r.t < 3) continue;
-        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && c.kind !== 'reward' && c.type !== 'rat'; });
-        if (!options.length) continue; // boxed in: it stays ready and breeds as soon as there is room
+        if (r.t < RAT_TURNS) continue;
+        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && PREY[c.kind] && c.type !== 'rat'; });
+        if (!options.length) continue; // boxed in: it stays ready and strikes as soon as there is a target
         r.t = 0;
         const ap = options[Math.floor(S.rng() * options.length)];
+        const c = S.grid[ap];
+        let killed;
+        if (c.kind === 'empty') killed = true;
+        else if (c.kind === 'monster') {
+          const res = hurtMonster(c, r.v, null, false);
+          killed = res.killed;
+          if (!killed) fx.push({ cell: ap, text: res.absorbed ? 'Blocked' : '−' + res.dealt, cls: 'hurt', hit: c.uid });
+        } else {
+          const dealt = Math.min(c.v, r.v);
+          c.v -= dealt; killed = c.v <= 0;
+          if (!killed) fx.push({ cell: ap, text: '−' + dealt, cls: 'hurt', hit: c.uid });
+        }
+        if (!killed) continue;
         const kid = makeCard(S, 'rat');
-        kid.v = r.v; kid.rp = ap; kid.t = 0;
+        kid.v = r.v; kid.rp = ap; kid.t = 0; kid.sh = 0;
         S.grid[ap] = kid; born.push(ap);
         fx.push({ cell: ap, text: 'Rat!', cls: 'hurt', anim: 'puff' });
       }
