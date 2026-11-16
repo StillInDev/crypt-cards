@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-A playable hero, shown in game as **Sorcerer**. It stands on the board as the hero card and is shown large on the home screen. Unlocked by clearing the Catacombs. In play: Frail, but powers start ready and recharge 30% faster. Carries three powers.
+A playable hero, shown in game as **Sorcerer**. It stands on the board as the hero card and is shown large on the home screen. Unlocked by clearing the Catacombs. In play: Frail, but powers start ready and recharge 30% faster.
 
 ## What it must look like
 
