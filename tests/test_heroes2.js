@@ -12,14 +12,25 @@ function game(hero, lv) {
 const mon = (S, v) => ({ uid: ++S.uid, type: 'dummy', kind: 'monster', v: v });
 const pot = (S, v) => ({ uid: ++S.uid, type: 'potion', kind: 'heal', v: v });
 
-// Bard: heals 1 every 3 turns, and healing can go over max by 3 + upgrades.
+// Bard: heals 2 + upgrades every turn, and healing can go over max by 3 + upgrades.
 let S = game('bard', 1);
-assert.strictEqual(DC.overheal(1), 4);
-S.hero.hp = S.hero.max - 2;
-DC.move(S, 0); DC.move(S, 2); assert.strictEqual(S.hero.hp, S.hero.max - 2, 'nothing for 2 turns');
-DC.move(S, 0); assert.strictEqual(S.hero.hp, S.hero.max - 1, 'heals 1 on the 3rd turn');
+assert.strictEqual(DC.overheal(1), 4); assert.strictEqual(DC.songHeal(0), 2); assert.strictEqual(DC.songHeal(1), 3);
+S.hero.hp = S.hero.max - 7;
+DC.move(S, 0); assert.strictEqual(S.hero.hp, S.hero.max - 4, 'heals 3 a turn at level 1');
+DC.move(S, 2); assert.strictEqual(S.hero.hp, S.hero.max - 1, 'and again the next turn');
 S.grid[S.hero.pos === 1 ? 5 : 1] = pot(S, 20); DC.move(S, S.hero.pos === 1 ? 2 : 0);
 assert.strictEqual(S.hero.hp, S.hero.max + 4, 'potion overheals up to max + 4');
+DC.move(S, S.hero.pos === 1 ? 2 : 0); assert.strictEqual(S.hero.hp, S.hero.max + 4, 'the song stops at the same cap');
+// Bard: every coin, gem, potion and weapon on the board grows by 1 a turn; monsters, traps and chests do not.
+S = game('bard');
+const sw = { uid: ++S.uid, type: 'sword', kind: 'weapon', v: 4 }, p = pot(S, 2), m = mon(S, 3);
+const tr = { uid: ++S.uid, type: 'trap', kind: 'harm', v: 2 }, ch = { uid: ++S.uid, type: 'chest', kind: 'chest', v: 5 };
+S.grid[0] = sw; S.grid[2] = p; S.grid[8] = m; S.grid[10] = tr; S.grid[11] = ch;
+const coin = S.grid[3]; DC.move(S, 1); // step onto a coin the far side of the hero, away from the test cards
+assert.strictEqual(sw.v, 5); assert.strictEqual(p.v, 3); assert.strictEqual(coin.v, 2, 'coins grow');
+assert.strictEqual(m.v, 3); assert.strictEqual(tr.v, 2); assert.strictEqual(ch.v, 5);
+// Other heroes' cards stay put.
+S = game('knight'); const c2 = S.grid[3]; DC.move(S, 1); assert.strictEqual(c2.v, 1);
 // Other heroes stop at max.
 S = game('knight'); S.hero.hp = S.hero.max - 1; S.grid[1] = pot(S, 20); DC.move(S, 0);
 assert.strictEqual(S.hero.hp, S.hero.max);
