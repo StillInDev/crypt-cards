@@ -1,6 +1,8 @@
 (function () {
   'use strict';
   var DC = window.DC, TYPES = DC.TYPES, SPR = window.SPR || {};
+  // A salamander's dropped tail has no art of its own yet: it borrows the salamander's (drawn small, see .tail).
+  if (!SPR.tail) SPR.tail = SPR.salamander;
   function img(type, cls) {
     var i = document.createElement('img');
     i.src = SPR[type] || ''; i.alt = ''; i.draggable = false;
@@ -26,31 +28,33 @@
     mine:     { bg: '#261e14', card: '#4e4230', acc: '#fee761', icon: 'gem',       sub: 'Gems and gunpowder',
                 w: { scorpion: 6, beetle: 6, goldskull: 5, golem: 3, imp: 3, gem: 14, bomb: 7, trap: 6, firetrap: 3 } },
     frozen:   { bg: '#0f2230', card: '#2e5469', acc: '#2ce8f5', icon: 'icespider', sub: 'Everything is frozen',
-                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, icetrap: 6, icewand: 4, icesword: 4, icearrow: 4, firesword: 3 } },
+                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, icetrap: 6, icewand: 6, icesword: 4, firesword: 3 } },
     library:  { bg: '#1d1730', card: '#403669', acc: '#a58bff', icon: 'lich',      sub: 'Forbidden knowledge',
-                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, firearrow: 4, icearrow: 4, elecbow: 4, firewand: 2, icewand: 2 } },
+                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, elecbow: 4, firewand: 4, icewand: 4 } },
     ember:    { bg: '#2a1410', card: '#5d2e25', acc: '#ff6a1f', icon: 'imp',       sub: 'Fire and brimstone',
                 w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, firetrap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
     armory:   { bg: '#1a2029', card: '#4a5569', acc: '#c0cbdc', icon: 'gargoyle',  sub: 'Every weapon you can think of',
-                w: { gargoyle: 6, goblin: 4, minotaur: 3, skeleton: 4, sword: 14, firesword: 4, icesword: 4, scythe: 5, windblade: 3, painblade: 3, ninjastar: 4, elecbow: 3 } },
+                w: { gargoyle: 6, goblin: 4, skeleton: 5, sword: 14, firesword: 4, icesword: 4, scythe: 5, windblade: 3, painblade: 3, ninjastar: 4, elecbow: 3 } },
     vampire:  { bg: '#270f1d', card: '#5b2641', acc: '#ff5560', icon: 'vampire',   sub: 'They hunt in the dark',
                 w: { vampire: 6, bat: 8, wolf: 4, mummy: 4, banshee: 3, potion: 8, poison: 6, trap: 4 } },
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
   };
+  // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based),
+  // spread out so new things keep turning up the whole way down. Every other room just opens the way on.
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake' } },
-    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal' } },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe' } },
-    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst' } },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero', id: 'sorcerer' } },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward' } },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero', id: 'icemage' } },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport' } },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire' } },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero', id: 'rogue' } },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder' } },
-    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice' } }
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake',    area: 2 } },
+    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal', area: 1 } },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe',   area: 1 } },
+    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst',    area: 3 } },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero',  id: 'sorcerer', area: 1 } },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward',     area: 2 } },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero',  id: 'icemage',  area: 2 } },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport', area: 4 } },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire',     area: 3 } },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero',  id: 'rogue',    area: 4 } },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder',  area: 5 } },
+    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice',     area: 5 } }
   ];
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
   // The dungeon is split into areas, picked with the tabs above the map. An area opens once the last room
@@ -119,7 +123,7 @@
   // Every room gets its own monsters and items: start from the depth's generic odds, drop all monsters, then apply the theme.
   function themedWeights(themeKey, diffId) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
-    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'firearrow', 'icearrow', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
+    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
       var T = TYPES[k];
       w[k] = (T.kind === 'monster' || CLEAR.indexOf(k) >= 0) ? 0 : (base[k] || 0);
@@ -137,8 +141,7 @@
         var L = DC.nextLevel(null, diff);
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
-        // Heroes and powers are only found in area 1; the placeholder areas just open the way on.
-        L.reward = a === 0 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
+        L.reward = R.reward.area === a + 1 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
         L.weights = themedWeights(R.theme, diff);
         L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
         out.push(sanitize(L, out.length));
@@ -414,8 +417,8 @@
       b.querySelector('.box').appendChild(img(ok ? (bossRoom ? 'goldskull' : th.icon) : 'bars'));
       b.querySelector('.sz').textContent = L.w + '×' + L.h;
       b.querySelector('.sc').textContent = done ? '✓ ' + (bs || L.req) : L.req;
-      var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward);
-      b.appendChild(rw);
+      // Only rooms that hold a hero or power get a reward badge; the rest just open the way on.
+      if (L.reward.kind !== 'door') { var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward); b.appendChild(rw); }
       // The boss always drops the special key to the next area.
       if (givesKey) { var kb = img('key', 'kb'); kb.title = done ? 'Key to ' + AREAS[next].name + ' found' : 'Holds the key to ' + AREAS[next].name; b.appendChild(kb); }
       var what = done ? ', cleared' : ', reach ' + L.req + ' to unlock ' + rewardName(L.reward) + (givesKey ? ' and the key to ' + AREAS[next].name : '');
@@ -558,7 +561,7 @@
       if (c.kind === 'monster') dm.querySelector('b').textContent = c.v;
     } else {
       var t = c.kind === 'chest' ? '?' : String(c.v);
-      if (c.t != null && (T.wand || T.bow)) t += '×' + c.t;
+      if (c.t != null && T.bow) t += '×' + c.t;
       val.textContent = t;
     }
     el.classList.toggle('webbed', hidden);
@@ -568,13 +571,6 @@
     var had = el._sh; el._sh = !!c.sh;
     shd.style.display = c.sh ? '' : 'none';
     if (had && !c.sh) { flash(el, 'strike', 380); burst('fx-break', pos); }
-    if (c.kind === 'arrow') {
-      var art2 = el.querySelector('.art');
-      if (el._ah == null) el._rot = c.h * 90;
-      else if (c.h !== el._ah) el._rot += 90 * (((c.h - el._ah) + 4) % 4);
-      el._ah = c.h;
-      art2.style.transform = 'rotate(' + el._rot + 'deg)';
-    }
   }
 
   function render() {
@@ -593,6 +589,9 @@
         el._h = hk;
       }
       el.classList.toggle('frozen', !!c.frozen);
+      el.classList.toggle('faded', !!(c.ph && TYPES[c.type].phase)); // a ghost on its untouchable turn
+      el.classList.toggle('tail', c.type === 'tail');
+      el.classList.toggle('glow', !!(S.glow && S.glow.cell === pos)); // a dead fire imp's square
       if (c.kind === 'bomb') { el.querySelector('.fz').textContent = c.t; el.classList.toggle('fuse', c.t <= 1); }
       var chip = el.querySelector('.chip');
       chip.className = 'chip';
@@ -614,6 +613,7 @@
     wvEl.style.display = H.sword ? '' : 'none';
     if (H.sword) wvEl.textContent = H.sword.c != null ? H.sword.v + '×' + H.sword.c : H.sword.v;
     heroEl.classList.toggle('thorns', !!H.pass.thorns && H.hp * 2 <= H.max);
+    heroEl.classList.toggle('glow', !!(S.glow && S.glow.cell === H.pos));
     if (H.hp < lastHp) {
       heroEl.classList.remove('hit'); void heroEl.offsetWidth; heroEl.classList.add('hit');
       burst('fx-hurt', H.pos);
@@ -890,7 +890,7 @@
         if (tc && tc.kind === 'monster') tEl = els.get(tc.uid);
       }
     }
-    var r = sell === 'bow' ? DC.shootBow(S, aim) : sell === 'arrow' ? DC.fireArrow(S, aim) : sell ? DC.sellItem(S, sell) : DC.move(S, dir);
+    var r = sell === 'bow' ? DC.shootBow(S, aim) : sell ? DC.sellItem(S, sell) : DC.move(S, dir);
     if (!r) {
       board.classList.remove('shake'); void board.offsetWidth; board.classList.add('shake');
       return;
@@ -997,17 +997,20 @@
           : 'Deals ' + n + ' damage when you step on it. ';
         if (c.type !== 'poison' && S.hero.pass.trapproof) t = 'A trap, but harmless to you: the Ninja steps right over it. ';
         break;
-      case 'monster':
-        t = (c.frozen ? 'FROZEN: it cannot be hit, even with a weapon. Step on it to swap places. ' : '') + (T.el ? (T.el === 'fire' ? 'A fire monster. Immune to fire traps and weapons, takes double from ice. ' : 'An ice monster. Immune to ice traps and weapons, takes double from fire. ') : '') + (T.immortal ? 'It cannot be killed by damage, only worn down to 1. Step on it with no weapon, or hit it with an ice weapon, to finish it. ' : '') + 'Has ' + n + ' health. Deals ' + n + ' damage. With a sword you attack it instead, and take its place if it dies.';
-        if (c.sh) t += ' SHIELDED: the first hit is absorbed completely.';
-        if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: 0 health, harmless. Walk through it.';
-        if (T.pays) t += ' Pays ' + n + ' gold when you beat it.';
-        if (T.ability === 'queen') t += ' In ' + (4 - (c.t || 0)) + ' turns it turns a neighbouring card into a bat.';
-        if (T.tomb) t = T.tip;
-        if (c.type === 'zombie') t += ' Killed by a weapon, it leaves a tomb.';
-        if (T.venom) t +=' Its bite also poisons you for ' + n + ' turns.';
-        if (T.ability === 'breed') t += ' If it stays put ' + (3 - (c.t || 0)) + ' more turns, it turns a neighbouring card into another rat of ' + n + '.';
+      case 'monster': {
+        // Only what is special about this monster: its own trick, with live counts where it has one.
+        t = T.tip;
+        var per = DC.PERIOD[T.ability];
+        if (per) t += ' Ready in ' + Math.max(0, per - (c.t || 0)) + (per - (c.t || 0) === 1 ? ' turn.' : ' turns.');
+        if (T.ability === 'breed') t += ' ' + Math.max(0, 3 - (c.t || 0)) + ' more turns to go.';
+        if (T.phase) t += c.ph ? ' Faded right now: you would pass through.' : ' Solid right now.';
+        if (T.loot && c.hitT != null && S.hero.turn - c.hitT <= 2) t += ' Lying low: you hit it recently.';
+        if (S.resist > 0) t += ' Protected by a wraith\'s last breath this turn.';
+        if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: harmless. Walk through it.';
+        if (c.frozen) t += ' Frozen.';
+        if (c.sh) t += ' Shielded.';
         break;
+      }
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
         t = (el === 'fire' ? 'Fire' : 'Ice') + ' trap with ' + n4 + (n4 === 1 ? ' head' : ' heads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its heads point at: you, and monsters. ' +
@@ -1024,7 +1027,7 @@
         if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', ' + c.t + ' throws. Tap a monster in your row or column to hit it. No chain.'; break; }
         if (T.bow) { t = 'Electric bow, power ' + n + ', ' + c.t + ' arrows. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
         if (T.sweep) { t = 'Power ' + n + '. Step toward a monster to sweep: the target and the two squares beside it (across your swing) all take that much. The scythe loses power equal to the most damage it deals to one monster, and breaks at 0. If the target dies you take its place.'; break; }
-        if (T.wand) { t = (T.el === 'ice' ? 'Ice' : 'Fire') + ' wand, power ' + n + ', ' + c.t + ' charges. Step toward an adjacent monster to fire a beam from you to the far edge of that row or column, hitting every monster on the way. ' + (T.el === 'ice' ? 'Survivors freeze. Ice monsters are immune, fire monsters take double. Can kill a Phoenix.' : 'Fire monsters are immune, ice monsters take double.'); break; }
+        if (T.wand) { t = (T.el === 'ice' ? 'Ice' : 'Fire') + ' wand, power ' + n + '. Step toward a monster to hit it like a sword, but it pierces: power left over carries on down that row or column into the monsters behind it. It wears down by the health it cuts through. ' + (T.el === 'ice' ? 'Survivors freeze. Ice monsters are immune, fire monsters take double. Can kill a Phoenix.' : 'Fire monsters are immune, ice monsters take double.'); break; }
         t = (T.el ? (T.el === 'ice' ? 'An ice weapon: no effect on ice monsters, double against fire ones, and a monster it hits but does not kill freezes solid. It can kill a Phoenix. ' : 'A fire weapon: no effect on fire monsters, double against ice ones. ') : '') + 'Power ' + n + '. Step toward a monster to hit it; the sword loses power equal to the damage it deals, and breaks at 0. If the monster dies you take its place.'; break;
       case 'bomb': t = 'Explodes in ' + c.t + ' turns for ' + n + ' damage to you and the monsters next to it. Step on it to swap places. Monsters it kills leave empty spaces.'; break;
       case 'reward': t = 'A locked reward. Step on it to unlock ' + rewardName(c.rw) + ' and clear this room.'; break;
@@ -1037,7 +1040,7 @@
     if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns.';
     if (H.frost > 0) t += ' Frost for ' + H.frost + ' more moves.';
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
-    if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.bow ? ' arrows' : ' charges') : '') + '.';
+    if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.star ? ' throws' : ' arrows') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
   function inspect(x, y) {
@@ -1081,7 +1084,6 @@
     }
     if (cx >= 0 && cy >= 0 && cx < L.w && cy < L.h) {
       var bp = cy * L.w + cx, bc = S.grid[bp];
-      if (bc && bc.kind === 'arrow') { doMove(null, 'arrow', bp); return; }
       var sw = S.hero.sword;
       if (sw && sw.bow && bc && bc.kind === 'monster' && !bc.frozen && bc.type !== 'webspider') {
         var inLine = cx === S.hero.pos % L.w || cy === ((S.hero.pos / L.w) | 0);
@@ -1114,7 +1116,8 @@
 
   function lockText(kind, id) {
     var r = rewardRoom(kind, id);
-    return r < 0 ? 'Not in any room' : 'Clear room ' + (r + 1) + ': ' + levels[r].name;
+    // Room names repeat from area to area, so name the area too.
+    return r < 0 ? 'Not in any room' : 'Clear the ' + levels[r].name + ' in ' + AREAS[areaOf(r)].name;
   }
   // ---- Hero and power select ------------------------------------------------
   // Top: the chosen hero with its equipped powers floating above its head.

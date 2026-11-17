@@ -22,9 +22,9 @@ assert.strictEqual(g.v,6); assert(g.frozen); assert.strictEqual(S.hero.pos,4); c
 S.hero.sword=SW('sword',9); const hp1=S.hero.hp; DC.move(S,0); assert.strictEqual(g.v,6); assert.strictEqual(S.hero.pos,1); assert.strictEqual(S.hero.hp,hp1); assert(S.grid[4]===g); console.log('frozen swaps, not hit');
 // ice sword vs ice monster: immune, no freeze; vs fire monster: double and freeze
 S=mk(); let w=M(S,'frostwolf',6); S.grid[1]=w; S.hero.sword=SW('icesword',3); DC.move(S,0); assert.strictEqual(w.v,6); assert(!w.frozen); console.log('ice vs ice immune');
-S=mk(); let sal=M(S,'salamander',9); S.grid[1]=sal; S.hero.sword=SW('icesword',3); DC.move(S,0); assert.strictEqual(sal.v,3); assert(sal.frozen); assert.strictEqual(S.hero.sword,null,'3 power spent for 6 damage'); console.log('ice vs fire double + freeze');
+S=mk(); let sal=M(S,'magmaslime',9); S.grid[1]=sal; S.hero.sword=SW('icesword',3); DC.move(S,0); assert.strictEqual(sal.v,3); assert(sal.frozen); assert.strictEqual(S.hero.sword,null,'3 power spent for 6 damage'); console.log('ice vs fire double + freeze');
 // fire sword double on ice
-S=mk(); w=M(S,'frostwisp',8); S.grid[1]=w; S.hero.sword=SW('firesword',3); DC.move(S,0); assert.strictEqual(w.v,2); assert(!w.frozen); console.log('fire vs ice double');
+S=mk(); w=M(S,'frostwolf',8); S.grid[1]=w; S.hero.sword=SW('firesword',3); DC.move(S,0); assert.strictEqual(w.v,2); assert(!w.frozen); console.log('fire vs ice double');
 // weapon cost: power 4 vs 2hp neutral keeps 2 (regression)
 S=mk(); let r=M(S,'rat',2); S.grid[1]=r; S.hero.sword=SW('sword',4); DC.move(S,0); assert.strictEqual(S.hero.sword.v,2); console.log('regression sword cost');
 // 25 new monsters exist
@@ -37,22 +37,25 @@ console.log('element tests passed');
 // ---- wands
 {
  const mkw=()=>{const S=mk(); S.hero.pos=0; S.grid[0]=null; return S;};
- const WD=(type,v,c)=>({v,type,el:DC.TYPES[type].el,wand:true,c});
- // 3x3: hero at 0 shoots right along row 0: cells 1,2
- let S=mkw(), a=M(S,'goblin',5), b=M(S,'troll',6); S.grid[1]=a; S.grid[2]=b; S.hero.sword=WD('firewand',2,3);
- let r=DC.move(S,1); assert.strictEqual(S.hero.pos,0,'hero stays'); assert.strictEqual(a.v,3); assert.strictEqual(b.v,4); assert.strictEqual(S.hero.sword.c,2); assert(r.attack.beam&&r.attack.beam.cells.length===2); console.log('wand hits whole row');
- // fire wand: fire monster immune, ice monster double
- S=mkw(); let f=M(S,'salamander',5), i2=M(S,'frostwolf',9); S.grid[1]=f; S.grid[2]=i2; S.hero.sword=WD('firewand',2,3); DC.move(S,1); assert.strictEqual(f.v,5); assert.strictEqual(i2.v,5); console.log('wand elements');
- // ice wand freezes survivors, kills phoenix, frozen skipped next time
- S=mkw(); let g1=M(S,'goblin',9), ph=M(S,'phoenix',7); S.grid[1]=g1; S.grid[2]=ph; S.hero.sword=WD('icewand',1,3); DC.move(S,1);
- assert(g1.frozen&&g1.v===8); assert(!S.grid.includes(ph),'phoenix killed by ice wand'); console.log('ice wand freezes, kills phoenix');
- // adjacent kill moves the hero in; far kill leaves a gap that is filled
- S=mkw(); let k1=M(S,'rat',1), k2=M(S,'rat',1); S.grid[1]=k1; S.grid[2]=k2; S.hero.sword=WD('firewand',3,3); DC.move(S,1);
+ const WD=(type,v)=>({v,type,el:DC.TYPES[type].el,wand:true});
+ // 3x3: hero at 0 hits right along row 0: cells 1,2. One hit, and what is left pierces on.
+ let S=mkw(), a=M(S,'goblin',5), b=M(S,'goblin',6); S.grid[1]=a; S.grid[2]=b; S.hero.sword=WD('firewand',4);
+ let r=DC.move(S,1); assert.strictEqual(S.hero.pos,0,'hero stays'); assert.strictEqual(a.v,1); assert.strictEqual(S.grid[1],a); assert.strictEqual(b.v,6,'not reached: power ran out on the first'); assert.strictEqual(S.hero.sword,null);
+ S=mkw(); a=M(S,'goblin',3); b=M(S,'goblin',6); S.grid[1]=a; S.grid[2]=b; S.hero.sword=WD('firewand',7);
+ r=DC.move(S,1); assert.strictEqual(S.hero.pos,1,'first one died: hero steps in'); assert.strictEqual(b.v,2,'4 power pierced through'); assert.strictEqual(S.hero.sword,null,'all 7 spent'); assert(r.attack.beam&&r.attack.beam.cells.length===2);
+ S=mkw(); a=M(S,'goblin',2); b=M(S,'goblin',2); S.grid[1]=a; S.grid[2]=b; S.hero.sword=WD('firewand',9);
+ DC.move(S,1); assert.strictEqual(S.hero.sword.v,5,'wears down by health cut through, like a sword'); console.log('wand pierces');
+ // fire wand: fire monster immune (no wear, passes on), ice monster double
+ S=mkw(); let f=M(S,'salamander',5), i2=M(S,'frostwolf',9); S.grid[1]=f; S.grid[2]=i2; S.hero.sword=WD('firewand',4); DC.move(S,1); assert.strictEqual(f.v,5); assert.strictEqual(i2.v,1); assert.strictEqual(S.hero.sword,null); console.log('wand elements');
+ // ice wand freezes survivors and kills a phoenix
+ S=mkw(); let g1=M(S,'goblin',9); S.grid[1]=g1; S.hero.sword=WD('icewand',2); DC.move(S,1); assert(g1.frozen&&g1.v===7); assert.strictEqual(S.hero.sword,null);
+ S=mkw(); let g2=M(S,'goblin',3), ph=M(S,'phoenix',4); S.grid[1]=g2; S.grid[2]=ph; S.hero.sword=WD('icewand',6); DC.move(S,1);
+ assert(!S.grid.includes(ph),'phoenix killed by ice wand'); console.log('ice wand freezes, kills phoenix');
+ // far kills leave a gap that is filled
+ S=mkw(); let k1=M(S,'rat',1), k2=M(S,'rat',1); S.grid[1]=k1; S.grid[2]=k2; S.hero.sword=WD('firewand',3); DC.move(S,1);
  assert.strictEqual(S.hero.pos,1,'took adjacent place'); assert(!S.grid.includes(k1)&&!S.grid.includes(k2)); assert(S.grid.every((c,p)=>p===S.hero.pos?c==null:c)); console.log('wand kills fill gaps');
- // charges run out
- S=mkw(); S.grid[1]=M(S,'ogre',9); S.hero.sword=WD('firewand',1,1); DC.move(S,1); assert.strictEqual(S.hero.sword,null); console.log('wand spent');
- // pickup gives charges
- S=mkw(); S.grid[1]={uid:++S.uid,type:'icewand',kind:'weapon',v:2,t:3}; DC.move(S,1); assert(S.hero.sword.wand&&S.hero.sword.c===3&&S.hero.sword.v===2); console.log('wand pickup');
+ // pickup: one power number, no charges
+ S=mkw(); S.grid[1]={uid:++S.uid,type:'icewand',kind:'weapon',v:6}; DC.move(S,1); assert(S.hero.sword.wand&&S.hero.sword.c==null&&S.hero.sword.v===6); console.log('wand pickup');
 }
 console.log('wand tests passed');
 // ---- scythe: grid 1..9, hero 2 hitting 5 hits 4 5 6; hero 4 hitting 5 hits 2 5 8; hero 1 hitting 2 hits 2 and 5 only
