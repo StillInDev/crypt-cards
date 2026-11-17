@@ -123,7 +123,7 @@
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
-    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Every monster on the board takes 3 damage.' },
+    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Lightning strikes 3 random monsters on the board for 3 damage each.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
     teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
     quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
@@ -144,7 +144,7 @@
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
     massheal: { amt: [2, 1],  text: 'Heal {n}, and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
-    thunder:  { amt: [3, 1],  text: 'Every monster on the board takes {n} damage.', what: '+1 damage' },
+    thunder:  { amt: [3, 1],  text: 'Lightning strikes 3 random monsters on the board for {n} damage each.', what: '+1 damage' },
     ice:      { amt: [3, 1],  text: 'Monsters deal no damage for your next {n} moves.', what: '+1 frozen move' },
     teleport: { cdCut: 2, what: '2 turns faster recharge' },
     quake:    { amt: [0, 1],  what: '+1 tremor damage' },
@@ -214,6 +214,7 @@
   }
 
   const RAT_TURNS = 3;
+  const THUNDER_HITS = 3; // monsters the Thunder power strikes
   // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
   const STORM_KILLS = 8, STORM_CHAIN = 4;
   // Bard: heals 2 + upgrades every turn, and every turn the helpful cards on the board (not chests,
@@ -1226,7 +1227,17 @@
         S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += amt; fx.push({ cell: p, text: '+' + amt, cls: 'heal', anim: 'heal' }); } });
         break;
       }
-      case 'thunder': S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') { fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, amt, holes, fx); } }); break;
+      case 'thunder': {
+        // Strikes THUNDER_HITS different monsters at random (all of them if there are fewer).
+        const foes = [];
+        S.grid.forEach(function (c, p) { if (c && c.kind === 'monster') foes.push(p); });
+        const rnd = S.rng || Math.random;
+        for (let n = 0; n < THUNDER_HITS && foes.length; n++) {
+          const p = foes.splice(Math.floor(rnd() * foes.length), 1)[0];
+          fx.push({ cell: p, text: '', cls: 'info', anim: 'bolt' }); hitMonster(S, p, amt, holes, fx);
+        }
+        break;
+      }
       case 'ice': H.frost = amt; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
       case 'ward': H.ward = amt; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
@@ -1326,7 +1337,7 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

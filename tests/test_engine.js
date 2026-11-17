@@ -32,6 +32,14 @@ assert(S.grid[0].type==='coin'||!['ogre'].includes(S.grid[0].type)||true); asser
 S=blankGame({powers:['massheal']}); S.grid[1]=C('potion',3); S.hero.hp=5; ready(S); DC.usePower(S,0); assert(S.hero.hp===7&&S.grid[1].v===5); ok('mass heal');
 // thunder
 S=blankGame({powers:['thunder']}); const og=C('ogre',9); S.grid[0]=og; S.grid[1]=C('rat',2); ready(S); DC.usePower(S,0); assert(og.v===6&&S.grid.includes(og)); assert(!S.grid.some(c=>c&&c.type==='rat'&&c.v===2)); ok('thunder');
+// thunder strikes 3 different random monsters, not the whole board
+for(let seed=0;seed<20;seed++){
+  S=DC.newGame(L,seed,{powers:['thunder']}); S.grid=S.grid.map((c,i)=>i===S.hero.pos?null:{uid:200+i,type:'ogre',kind:'monster',v:20});
+  ready(S); DC.usePower(S,0);
+  const hit=S.grid.filter(c=>c&&c.v===17).length, untouched=S.grid.filter(c=>c&&c.v===20).length;
+  assert.strictEqual(hit,DC.THUNDER_HITS,'exactly 3 monsters hit'); assert.strictEqual(untouched,8-DC.THUNDER_HITS);
+}
+ok('thunder hits 3 random monsters');
 // ice: monsters do no damage for 3 moves
 S=blankGame({powers:['ice']}); S.grid[1]=C('ogre',9); S.grid[0]=C('ogre',9); ready(S); DC.usePower(S,0); assert(S.hero.frost===3);
 S.grid[1]=C('ogre',9); DC.move(S,0); assert(S.hero.hp===S.hero.max,'frozen'); ok('frost');

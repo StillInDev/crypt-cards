@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-The icon of the **Thunder** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Unlocked by clearing the Vampire Crypt. In play: Every monster on the board takes 3 damage. It is shown small, so one bold shape beats detail.
+The icon of the **Thunder** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Unlocked by clearing the Vampire Crypt. In play: Lightning strikes 3 random monsters on the board for 3 damage each. It is shown small, so one bold shape beats detail.
 
 ## What it must look like
 
