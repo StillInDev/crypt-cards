@@ -661,7 +661,7 @@
     // HUD
     $('#h-hp').textContent = H.hp + ' / ' + H.max;
     var bar = $('#h-bar');
-    bar.style.width = (100 * H.hp / H.max) + '%';
+    bar.style.width = Math.min(100, 100 * H.hp / H.max) + '%';
     bar.classList.toggle('low', H.hp / H.max <= 0.35);
     var gEl = $('#h-gold');
     gEl.innerHTML = '';
@@ -694,6 +694,13 @@
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
     if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
+    if (H.pass.storm) {
+      // Lightning Wizard: kills toward the smite, or Smite once charged.
+      var sm = (H.kills | 0) >= DC.STORM_KILLS;
+      stEl.appendChild(img('p_thunder'));
+      // A trailing ⚡ means the next attack also chains lightning.
+      stEl.appendChild(document.createTextNode((sm ? 'Smite' : (H.kills | 0) + '/' + DC.STORM_KILLS) + ((H.hits | 0) === DC.STORM_CHAIN - 1 ? '⚡' : '')));
+    }
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
   }
 
@@ -1047,6 +1054,11 @@
     if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns.';
     if (H.frost > 0) t += ' Frost for ' + H.frost + ' more moves.';
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
+    if (H.pass.storm) {
+      t += (H.kills | 0) >= DC.STORM_KILLS ? ' Smite is charged: your next attack kills outright.' : ' Smite charge: ' + (H.kills | 0) + ' of ' + DC.STORM_KILLS + ' kills.';
+      var left = DC.STORM_CHAIN - (H.hits | 0);
+      t += ' Chain lightning (' + DC.chainDamage(H.lv) + ' damage) ' + (left === 1 ? 'on your next attack.' : 'in ' + left + ' attacks.');
+    }
     if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.bow ? ' arrows' : ' charges') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
@@ -1124,7 +1136,7 @@
 
   function lockText(kind, id) {
     var r = rewardRoom(kind, id);
-    return r < 0 ? 'Not in any room' : 'Clear room ' + (r + 1) + ': ' + levels[r].name;
+    return r < 0 ? 'Buy with gold' : 'Clear room ' + (r + 1) + ': ' + levels[r].name;
   }
   // ---- Hero and power select ------------------------------------------------
   // Top: the chosen hero with its equipped powers floating above its head.
@@ -1134,14 +1146,14 @@
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
     var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
-      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]] };
+      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Overheal', '+' + DC.overheal(lv)]] : []) };
     if (open) {
       var on = id === heroSel;
       // Same check-mark toggle as powers. You always have a hero, so the chosen one cannot be un-ticked.
       o.equip = { label: on ? 'Chosen' : 'Choose', on: on, aria: on ? 'Chosen hero' : 'Not chosen. Tap to choose this hero',
         fn: function () { if (!on) pickHero(id); loInfo(heroInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
-      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health' + (H.pass.storm ? ', +1 chain damage.' : H.pass.song ? ', +1 overheal.' : '.'), label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
         buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to Lvl. ' + (heroUpLv(id) + 1)); } } };
     } else o.up = unlockOffer('hero', id, H.name, heroInfo);
@@ -1175,7 +1187,7 @@
   // A locked hero or power can be bought with gold instead of clearing its room.
   function unlockOffer(kind, id, name, info) {
     var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
-    return { text: 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
+    return { text: rewardRoom(kind, id) < 0 ? '' : 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
       short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
       buy: function () { if (buyUnlock(kind, id)) { refreshLoadoutScreen(); loInfo(info(id)); toast(name + ' unlocked!'); } } };
   }

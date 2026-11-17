@@ -64,7 +64,7 @@ for(const hid of hids) for(let g=0;g<150;g++){
     const d=Math.floor(rng()*4); DC.move(S,d); t++;
     for(let k=0;k<S.grid.length;k++){ if(k!==S.hero.pos&&!S.grid[k]) throw new Error('hole left in grid'); }
     if(S.grid[S.hero.pos]) throw new Error('card under hero');
-    if(S.hero.hp>S.hero.max) throw new Error('hp over max');
+    if(S.hero.hp>DC.healCap(S.hero)) throw new Error('hp over max');
   }
   games++;
 }

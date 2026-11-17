@@ -73,6 +73,11 @@
     icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 3, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
     rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
+    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: '8 kills charge a smite: the next attack kills outright. Every 4th attack chains lightning to the monsters next to the target, for 1 + his level in damage.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Soothing tunes: heals 1 every 3 turns. All healing can take him over his max health, by up to 3 + his upgrades.' },
+    dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Scaly feet: stomps monsters with 1 health, taking no damage and not using his weapon.' },
+    count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Lifesteal: heals 1 for every 3 damage his weapons deal.' },
+    barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'Rage: at a quarter health or less, weapon hits have a 1 in 3 chance to crit for double damage, without wearing the weapon down any faster.' },
     cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 3, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
   };
 
@@ -176,7 +181,19 @@
     return c;
   }
 
-  const RAT_TURNS = 3; // still turns before a rat strikes
+  const RAT_TURNS = 3;
+  // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
+  const STORM_KILLS = 8, STORM_CHAIN = 4;
+  // Bard: heals 1 every SONG_TURNS turns; healing can overfill max health by 3 + upgrades.
+  const SONG_TURNS = 3;
+  function overheal(lv) { return 3 + (lv | 0); }
+  function healCap(H) { return H.max + (H.pass.song ? overheal(H.lv) : 0); }
+  function healBy(H, amt) { const g = Math.max(0, Math.min(amt, healCap(H) - H.hp)); H.hp += g; return g; }
+  // Barbarian: at a quarter health or less, a weapon hit crits (double damage) 1 time in 3.
+  function critMul(S) { const H = S.hero; return H.pass.rage && S.rng && H.hp > 0 && H.hp * 4 <= H.max && S.rng() < 1 / 3 ? 2 : 1; }
+  // Vampire: damage dealt by weapons this step, for lifesteal.
+  let weaponDealt = 0;
+  function chainDamage(lv) { return 2 + (lv | 0); } // 1 + the level shown (Lvl. 1 at no upgrades) // still turns before a rat strikes
   function blankCard(S) { return { uid: ++S.uid, type: 'blank', kind: 'empty', v: 0 }; }
 
   // Helpful cards can't flood the board: once one kind of them (all weapons, all potions, all coins and
@@ -248,6 +265,7 @@
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
         sword: null, forge: 0, poison: 0, frost: 0, ward: 0, pass: pass,
+        lv: heroLv(opts.heroLevel), kills: 0, hits: 0, drain: 0, song: 0,
         powers: ids.map(function (id) {
           const lv = clampLv((opts.upgrades || {})[id]);
           if (POWERS[id].passive) return { id: id, max: 0, cd: 0, lv: lv };
@@ -270,6 +288,7 @@
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
+        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
@@ -300,6 +319,7 @@
     if (TYPES[m.type].immortal) nv = lethal ? 0 : Math.max(1, nv); // only a lethal blow can finish it
     const killed = nv <= 0;
     const dealt = m.v - Math.max(nv, 0);
+    if (byWeapon) weaponDealt += dealt;
     m.v = Math.max(nv, 0);
     if (killed && byWeapon && m.type === 'zombie') {
       // Cut down by a weapon, a zombie does not leave: it becomes a tomb in the same square
@@ -460,11 +480,16 @@
     const from = H.pos;
     const fx = [];
     let swap = false, attacked = false, attack = null;
+    weaponDealt = 0;
+    const swing = sell === 'bow' || (!sell && card.kind === 'monster' && !card.frozen && card.type !== 'webspider' && H.sword && !H.sword.bow);
+    const crit = swing ? critMul(S) : 1;
+    if (crit > 1) fx.push({ cell: sell === 'bow' ? aim : tpos, text: 'Crit!', cls: 'hurt', anim: 'spark' });
+    let struck = 0; // a melee attack on a monster this turn: 1 hit, 2 killed (counted for the Lightning Wizard)
 
     if (sell === 'bow') {
       // Shoot: the target takes full power, and the shock jumps to touching monsters, 1 weaker each jump.
       attacked = true;
-      const seen = { [aim]: H.sword.v }, order = [aim], hits = [];
+      const seen = { [aim]: H.sword.v * crit }, order = [aim], hits = [];
       for (let qi = 0; qi < order.length && !H.sword.star; qi++) {
         const p = order[qi], d = seen[p];
         if (d <= 1) continue;
@@ -510,6 +535,20 @@
     } else if (card.kind === 'monster' && card.frozen) {
       // A frozen monster cannot be hit, even with a weapon. You just swap places with it.
       swap = true; fx.push({ cell: tpos, text: 'Swap', cls: 'info', anim: 'frost' });
+    } else if (card.kind === 'monster' && H.pass.stomp && card.v <= 1 && !(T.immortal)) {
+      // Dragonborn: a 1-health monster is simply stomped. No damage, and the weapon is not used.
+      fx.push({ cell: tpos, text: 'Stomp', cls: 'info', anim: 'puff' });
+      if (T.pays) { H.gold += card.v; fx.push({ cell: tpos, text: '+' + card.v + 'G', cls: 'gold', anim: 'gold' }); }
+      struck = 2;
+    } else if (card.kind === 'monster' && H.pass.storm && (H.kills | 0) >= STORM_KILLS && !(H.sword && H.sword.bow)) {
+      // Smite: the charged attack kills any monster outright and does not wear the weapon down.
+      const v0 = card.v;
+      card.v = 0; H.kills = 0;
+      attack = { dmg: v0, killed: true, el: null, type: 'smite', immune: false };
+      fx.push({ cell: tpos, text: '', cls: 'info', anim: 'bolt' });
+      fx.push({ cell: tpos, text: 'Smite', cls: 'info', anim: 'puff' });
+      if (T.pays) { H.gold += v0; fx.push({ cell: tpos, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
+      struck = 3;
     } else if (card.kind === 'monster' && H.sword && H.sword.wand) {
       // A wand fires a beam from the hero to the far edge of the row or column.
       const wel = H.sword.el, beam = [];
@@ -519,7 +558,7 @@
         const p = cy * w + cx, m = S.grid[p];
         beam.push(p);
         if (m && m.kind === 'monster' && !m.frozen && m.type !== 'webspider') {
-          const v0 = m.v, res = hurtMonster(m, H.sword.v, wel, wel === 'ice', true);
+          const v0 = m.v, res = hurtMonster(m, H.sword.v * crit, wel, wel === 'ice', true);
           attack.hits++;
           if (res.immune) fx.push({ cell: p, text: 'Immune', cls: 'info', anim: 'immune' });
           else if (res.killed) {
@@ -537,6 +576,7 @@
         cx += DIRS[dir][0]; cy += DIRS[dir][1];
       }
       attack.beam.cells = beam;
+      struck = attack.killed ? 2 : 1;
       H.sword.c--;
       if (H.sword.c <= 0) { H.sword = null; fx.push({ cell: from, text: 'Wand spent', cls: 'info', anim: 'break' }); }
       attacked = !attack.killed;
@@ -553,8 +593,8 @@
       cells.forEach(function (p, idx) {
         const m = S.grid[p];
         if (!m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') return;
-        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false, true);
-        cost = Math.max(cost, res.dealt);
+        const v0 = m.v, res = hurtMonster(m, H.sword.v * crit, null, false, true);
+        cost = Math.max(cost, Math.min(H.sword.v, res.dealt));
         if (idx === 0) { attack.dmg = res.dealt; attack.killed = res.killed; }
         if (res.killed) {
           fx.push({ cell: p, text: 'Slain', cls: 'info', anim: 'puff' });
@@ -565,14 +605,15 @@
           if (TYPES[m.type].immortal) fx.push({ cell: p, text: 'Reborn', cls: 'info', anim: 'flare' });
         }
       });
+      struck = attack.killed ? 2 : 1;
       H.sword.v -= cost;
       if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Scythe broke', cls: 'info', anim: 'break' }); }
       attacked = !attack.killed;
     } else if (card.kind === 'monster' && H.sword && !H.sword.bow) {
       // Armed: hit the monster instead of walking into it. If it dies, take its place.
       const wel = H.sword.el || null, v0 = card.v;
-      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice', true);
-      const cost = res.mult ? Math.ceil(res.dealt / res.mult) : 0; // the blade wears down by the power it spends
+      const res = hurtMonster(card, H.sword.v * crit, wel, wel === 'ice', true);
+      const cost = res.mult ? Math.min(H.sword.v, Math.ceil(res.dealt / res.mult)) : 0; // the blade wears down by the power it spends
       H.sword.v -= cost;
       attack = { dmg: res.dealt, killed: res.killed, el: wel, type: H.sword.type || 'sword', immune: res.immune };
       if (T.immortal && !res.killed && !res.immune) fx.push({ cell: tpos, text: 'Reborn', cls: 'info', anim: 'flare' });
@@ -582,6 +623,7 @@
       if (!res.killed && !res.immune && !res.absorbed && !res.entombed && wel === 'ice') { card.frozen = true; attack.froze = true; fx.push({ cell: tpos, text: 'Frozen', cls: 'info', anim: 'frost' }); }
       if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Sword broke', cls: 'info', anim: 'break' }); }
       attacked = !res.killed;
+      if (!res.immune) struck = res.killed ? 2 : 1;
     } else if (card.type === 'tomb') {
       // Bare-handed (or holding a bow): you bump into the tomb. Nothing breaks, the turn is spent.
       attacked = true; fx.push({ cell: tpos, text: 'Bump', cls: 'info' });
@@ -589,8 +631,7 @@
       const g = card.v + (H.pass.gold || 0);
       H.gold += g; fx.push({ cell: tpos, text: '+' + g, cls: 'gold', anim: 'gold' });
     } else if (card.kind === 'heal') {
-      const g = Math.min(card.v, H.max - H.hp);
-      H.hp += g; fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' });
+      const g = healBy(H, card.v); fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' });
       if (T.bonusGold) { H.gold += T.bonusGold; fx.push({ cell: tpos, text: '+' + T.bonusGold + 'G', cls: 'gold' }); }
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
@@ -605,6 +646,7 @@
       }
     } else if (card.kind === 'monster') {
       let lost = 0;
+      struck = 2; // bare-handed you take the hit, and the monster is gone
       if (H.frost > 0) fx.push({ cell: tpos, text: 'Frozen', cls: 'info' });
       else if (T.el && H.ward > 0) fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       else {
@@ -630,6 +672,41 @@
       H.pos = tpos;
     }
     H.turn++;
+
+    // Lightning Wizard: kills charge the smite, and every 4th attack chains lightning to the
+    // monsters next to the target.
+    if (H.pass.storm && struck) {
+      if (struck === 2) H.kills = Math.min(STORM_KILLS, (H.kills | 0) + 1);
+      H.hits = (H.hits | 0) + 1;
+      if (H.hits >= STORM_CHAIN) {
+        H.hits = 0;
+        const zap = chainDamage(H.lv);
+        for (const ap of neighbours4(S, tpos)) {
+          const m = S.grid[ap];
+          if (ap === H.pos || !m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') continue;
+          const v0 = m.v, res = hurtMonster(m, zap, null, false);
+          fx.push({ cell: ap, text: '', cls: 'info', anim: 'bolt' });
+          if (res.killed) {
+            fx.push({ cell: ap, text: 'Slain', cls: 'info', anim: 'puff' });
+            if (TYPES[m.type].pays) { H.gold += v0; fx.push({ cell: ap, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
+            S.grid[ap] = null;
+          } else if (res.dealt) fx.push({ cell: ap, text: '−' + res.dealt, cls: 'info', hit: m.uid });
+        }
+      }
+    }
+
+    // Vampire: weapon damage this step heals 1 per 3, the rest carries over.
+    if (H.pass.drain && weaponDealt > 0 && H.hp > 0) {
+      H.drain = (H.drain | 0) + weaponDealt;
+      const g = Math.min(Math.floor(H.drain / H.pass.drain), Math.max(0, H.max - H.hp));
+      H.drain %= H.pass.drain;
+      if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+    }
+    // Bard: a little healing every few turns.
+    if (H.pass.song && H.hp > 0) {
+      H.song = (H.song | 0) + 1;
+      if (H.song >= SONG_TURNS) { H.song = 0; const g = healBy(H, 1); if (g) fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+    }
 
     let tremor = null; // the square Tremor hit this turn, if any (set after the slide below)
 
@@ -931,7 +1008,7 @@
 
     switch (pw.id) {
       case 'heal': {
-        const g = Math.min(amt, H.max - H.hp); H.hp += g;
+        const g = healBy(H, amt);
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); break;
       }
       case 'forge': {
@@ -960,7 +1037,7 @@
         break;
       }
       case 'massheal': {
-        const g = Math.min(amt, H.max - H.hp); H.hp += g;
+        const g = healBy(H, amt);
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' });
         S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += amt; fx.push({ cell: p, text: '+' + amt, cls: 'heal', anim: 'heal' }); } });
         break;
@@ -1065,7 +1142,7 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, fireArrow: fireArrow, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, SONG_TURNS: SONG_TURNS, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
