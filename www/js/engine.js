@@ -87,6 +87,8 @@
     TYPES[m[0]] = Object.assign({ kind: 'monster', name: m[1], lo: m[2], hi: m[3], bf: 1, el: m[4] }, GIMMICKS[m[0]]);
   });
   // What a salamander leaves behind when it escapes.
+  // The Teleport orb power's weapon: one throw, never found on the board.
+  TYPES.orb = { kind: 'weapon', name: 'Teleport orb', lo: 0, hi: 0, bf: 0, hidden: true, tip: 'Tap any card to throw the orb: you swap places with it. One throw.' };
   TYPES.tail = { kind: 'monster', name: 'Salamander tail', lo: 1, hi: 1, bf: 0, hidden: true,
     tip: 'A salamander\'s dropped tail, still wriggling. The salamander itself got away.' };
   // When a fire imp dies, its square glows for this many turns: whatever is on it counts this much more.
@@ -125,7 +127,7 @@
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2 and make every potion on the board 2 stronger.' },
     thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Hit every monster on the board for 3.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
-    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Jump to any card without using it. It vanishes.' },
+    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: null,      unlock: 80, tip: 'Gives you an orb. Throw it at any card to swap places with it.' },
     quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. A monster that slides into the square you just left takes damage.' },
     burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Explode a potion: monsters next to it take its number in damage.' },
     ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'Fire and ice can\'t hurt you for your next 4 turns.' },
@@ -338,9 +340,9 @@
       resist: S.resist,
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge, orb: S.hero.orb,
         lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song, stood: S.hero.stood,
-        sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
+        sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star, orb: S.hero.sword.orb },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
     };
@@ -652,6 +654,8 @@
         const am = S.grid[aim];
         if (!H.sword || !H.sword.bow || aim === H.pos || !am || am.kind !== 'monster' || am.frozen || am.type === 'webspider') return null;
         if (H.sword.star && (aim % w !== hx && ((aim / w) | 0) !== hy)) return null; // a star only flies along your row or column
+      } else if (sell === 'orb') {
+        if (!H.sword || !H.sword.orb || !orbTarget(S, aim)) return null;
       } else if (!H[sell]) return null;
       tpos = H.pos; dir = S.lastDir == null ? 0 : S.lastDir;
     } else {
@@ -695,6 +699,12 @@
       attack = { dmg: H.sword.v, killed: false, el: null, type: H.sword.type, immune: false, bow: { from: from, target: aim, hits: hits } };
       H.sword.c--;
       if (H.sword.c <= 0) { H.sword = null; fx.push({ cell: from, text: 'Out of ammo', cls: 'info', anim: 'break' }); }
+    } else if (sell === 'orb') {
+      // The orb lands and you trade places with whatever it hit. Nothing is used up but the orb.
+      attacked = true;
+      S.grid[from] = S.grid[aim]; S.grid[aim] = null; H.pos = aim; H.sword = null;
+      attack = { type: 'orb', orb: { from: from, target: aim } };
+      fx.push({ cell: aim, text: 'Swap', cls: 'info', anim: 'swirl' }); fx.push({ cell: from, text: '', cls: 'info', anim: 'swirl' });
     } else if (sell) {
       const g = H[sell].v;
       H.gold += g; H[sell] = null; attacked = true;
@@ -1128,6 +1138,8 @@
       H.sword = { v: H.forge, type: 'sword', el: null }; H.forge = 0;
       fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' });
     }
+    // A Teleport orb that was waiting, likewise.
+    if (H.orb && !H.sword && H.hp > 0) { H.sword = newOrb(); H.orb = 0; fx.push({ cell: H.pos, text: 'Orb', cls: 'info', anim: 'swirl' }); }
 
     let stand = false;
     if (H.standNow) { H.standNow = false; stand = true; fx.push({ cell: H.pos, text: 'Last stand!', cls: 'heal', anim: 'immune' }); }
@@ -1144,6 +1156,17 @@
   }
 
   // Shoot the electric bow at a monster anywhere on the board. Takes a turn, the hero stays put.
+  // Throw the held Teleport orb at any card: you swap places with it. Takes a turn.
+  function newOrb() { return { v: 0, type: 'orb', el: null, bow: true, orb: true, c: 1 }; }
+  function orbTarget(S, pos) {
+    const c = S.grid[pos];
+    return pos !== S.hero.pos && !!c && c.kind !== 'empty' && c.kind !== 'reward' && c.type !== 'phoenix';
+  }
+  function throwOrb(S, pos) {
+    if (S.over) return null;
+    return step(S, 0, true, 'orb', pos);
+  }
+
   function shootBow(S, pos) {
     if (S.over) return null;
     return step(S, 0, true, 'bow', pos);
@@ -1197,7 +1220,8 @@
     if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
     if (pw.id === 'forge' && H.forge) return null; // a forged sword is already waiting
-    if (pw.id === 'whetstone' && !H.sword) return null; // nothing to sharpen
+    if (pw.id === 'whetstone' && (!H.sword || H.sword.orb)) return null; // nothing to sharpen
+    if (pw.id === 'teleport' && (H.orb || (H.sword && H.sword.orb))) return null; // one orb at a time
     if (pw.id === 'magnet' && !S.grid.some(function (c) { return c && c.kind === 'gold'; })) return null;
     if (pw.id === 'hourglass' && !H.powers.some(function (p) { return p !== pw && p.cd > 0; })) return null; // nothing to speed up
     if (pw.id === 'dart') {
@@ -1253,8 +1277,10 @@
       case 'ice': H.frost = amt; fx.push({ cell: H.pos, text: 'Frost', cls: 'info', anim: 'frost' }); break;
       case 'ward': H.ward = amt; fx.push({ cell: H.pos, text: 'Shield', cls: 'info', anim: 'immune' }); break;
       case 'teleport': {
-        extra = H.pos; S.grid[target] = null; H.pos = target;
-        fx.push({ cell: target, text: 'Warp', cls: 'info', anim: 'swirl' }); fx.push({ cell: extra, text: '', cls: 'info', anim: 'swirl' }); break;
+        // Like the forge: a held weapon is never replaced, the orb waits until your hands are empty.
+        if (H.sword) { H.orb = 1; fx.push({ cell: H.pos, text: 'Orb waiting…', cls: 'info', anim: 'swirl' }); }
+        else { H.sword = newOrb(); fx.push({ cell: H.pos, text: 'Orb', cls: 'info', anim: 'swirl' }); }
+        break;
       }
       case 'magnet': {
         // Every coin and gem pays out as if you had stepped on it, plus the upgrade bonus, and leaves the board.
@@ -1368,7 +1394,7 @@
 
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
-    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, quakeDamage: quakeDamage,
+    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
     HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32

@@ -29,5 +29,5 @@ for (let n = 0; n < 100 && !S2.over; n++) { DC.move(S2, n % 4); assert(!S2.grid.
 // powers can't target it
 const S3 = DC.newGame(lvl(1, { kind: 'power', id: 'ice' }), 5, { powers: ['teleport'] });
 S3.hero.gold = 5; let k = -1; S3.grid[0] = { uid: 999, type: 'reward', kind: 'reward', v: 0, rw: { kind: 'door' } }; if (S3.hero.pos === 0) S3.hero.pos = 1;
-assert(!DC.validTarget(S3, 0, 0), 'teleport cannot target the reward');
+assert(!DC.orbTarget(S3, 0), 'the teleport orb cannot swap with the reward');
 console.log('reward tests passed (' + appeared + ' tiles, ' + claimedRuns + ' claims)');

@@ -36,7 +36,12 @@ S=blankGame({powers:['thunder']}); const og=C('ogre',9); S.grid[0]=og; S.grid[1]
 S=blankGame({powers:['ice']}); S.grid[1]=C('ogre',9); S.grid[0]=C('ogre',9); ready(S); DC.usePower(S,0); assert(S.hero.frost===3);
 S.grid[1]=C('ogre',9); DC.move(S,0); assert(S.hero.hp===S.hero.max,'frozen'); ok('frost');
 // teleport
-S=blankGame({powers:['teleport']}); S.grid[8]=C('ogre',9); ready(S); DC.usePower(S,0,8); assert(S.hero.pos===8&&S.hero.hp===S.hero.max&&S.grid[4]); ok('teleport');
+S=blankGame({powers:['teleport']}); S.grid[8]=C('ogre',9); ready(S); assert(DC.usePower(S,0)); assert(S.hero.sword&&S.hero.sword.orb&&S.hero.pos===4); ok('teleport orb goes in your hand');
+ready(S); assert(!DC.usePower(S,0)); ok('one orb at a time');
+{ const og=S.grid[8]; assert(!DC.throwOrb(S,4)); assert(DC.throwOrb(S,8)); assert(S.hero.pos===8&&S.grid[4]===og&&og.v===9&&S.hero.hp===S.hero.max&&!S.hero.sword); ok('thrown orb swaps you with the card, unhurt, and is used up'); }
+S=blankGame({powers:['teleport']}); S.hero.sword={v:3,type:'sword',el:null}; ready(S); DC.usePower(S,0); assert(S.hero.sword.v===3&&S.hero.orb===1); ok('orb never replaces a held weapon');
+DC.sellItem(S,'sword'); assert(S.hero.sword&&S.hero.sword.orb&&!S.hero.orb); ok('waiting orb arrives once the hands are empty');
+S=blankGame({powers:['teleport']}); S.grid[1]=C('rat',3); ready(S); DC.usePower(S,0); DC.move(S,0); assert(S.hero.hp===S.hero.max-3&&S.hero.sword&&S.hero.sword.orb); ok('the orb is no melee weapon and survives a bump');
 // burst
 S=blankGame({powers:['burst']}); S.grid[0]=C('potion',4); S.grid[1]=C('ogre',9); S.grid[3]=C('rat',3); ready(S); DC.usePower(S,0,0); assert(S.grid[1].v===5); assert(S.grid[3].type!=='rat'||S.grid[3].v!==3); ok('burst');
 // hero passives
