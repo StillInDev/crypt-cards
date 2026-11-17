@@ -116,5 +116,7 @@ These are open: nothing has been drawn for them yet. Suggested order:
 5. [Area icons and the boss keys](interface/areas.md): a picture for each area tab, and the special key
 6. [Room floors](backgrounds/room-floors.md): one floor per room theme, behind the play screen
 7. [Dungeon map backdrops](backgrounds/map.md): one backdrop per area, behind the map
+8. New power icons, in the game now with borrowed icons: [Magnet](powers/p_magnet.md), [Hourglass](powers/p_hourglass.md),
+   [Whetstone](powers/p_whetstone.md), [Last Stand](powers/p_laststand.md)
 
 The old 18 × 18 sprites (and an unused ghoul) are in git history before the sheets landed.
