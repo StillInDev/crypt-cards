@@ -795,7 +795,7 @@
     var r = DC.usePower(S, i, target);
     if (!r) {
       // Why a ready power did nothing.
-      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', whetstone: 'You are not holding a weapon' };
+      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready' };
       var pid = S.hero.powers[i] && S.hero.powers[i].id;
       if (why[pid]) toast(why[pid]);
       return;

@@ -35,13 +35,17 @@ assert.strictEqual(S.hero.powers[1].cd, 4); assert.strictEqual(S.hero.powers[2].
 assert.strictEqual(S.hero.powers[0].cd, S.hero.powers[0].max);
 assert.strictEqual(DC.powerCd('hourglass', 2), 16, 'upgrades cut 2 turns each');
 
-// Whetstone: +2 to the held weapon, +1 per upgrade; needs a weapon.
-S = game(['whetstone']);
-assert.strictEqual(DC.usePower(S, 0), null, 'nothing to sharpen');
-S.hero.sword = { v: 4, type: 'sword', el: null }; DC.usePower(S, 0);
-assert.strictEqual(S.hero.sword.v, 6);
-S = game(['whetstone'], { whetstone: 3 }); S.hero.sword = { v: 4, type: 'sword', el: null }; DC.usePower(S, 0);
-assert.strictEqual(S.hero.sword.v, 9);
+// Whetstone (passive): every weapon you pick up or forge is permanently 2 stronger, +1 per upgrade.
+assert(DC.POWERS.whetstone.passive, 'always on');
+S = game(['whetstone']); assert.strictEqual(DC.usePower(S, 0), null, 'nothing to tap');
+S.grid[1] = { uid: ++S.uid, type: 'sword', kind: 'weapon', v: 4 }; DC.move(S, 0);
+assert.strictEqual(S.hero.sword.v, 7, 'sword picked up 2 stronger (plus the Knight\'s own +1)');
+S = game(['whetstone'], { whetstone: 3 }); S.grid[1] = { uid: ++S.uid, type: 'firewand', kind: 'weapon', v: 4 }; DC.move(S, 0);
+assert.strictEqual(S.hero.sword.v, 9, 'wands too, and upgrades add 1 each');
+S = game(['whetstone', 'forge']); S.hero.powers[1].cd = 0; DC.usePower(S, 1);
+assert.strictEqual(S.hero.sword.v, S.hero.max + 2, 'forged swords are sharpened too');
+S = game([]); S.grid[1] = { uid: ++S.uid, type: 'sword', kind: 'weapon', v: 4 }; DC.move(S, 0);
+assert.strictEqual(S.hero.sword.v, 5, 'no Whetstone bonus without it (only the Knight\'s +1)');
 
 // Last Stand: once per room, a killing hit leaves you at 1 (more with upgrades).
 S = game(['laststand']); S.hero.hp = 3; S.grid[1] = mon(S, 9);

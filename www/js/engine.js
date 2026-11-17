@@ -134,7 +134,7 @@
     // Placeholder sprites until their own icons are drawn (art/powers/p_magnet.md and the rest).
     magnet:   { name: 'Magnet',       sprite: 'coin',       cd: 16, target: null,      unlock: 100, desc: 'Every coin and gem on the board flies into your purse. Upgrades add bonus gold to each one.', tip: 'Every coin and gem on the board flies into your purse.' },
     hourglass: { name: 'Hourglass',   sprite: 'p_teleport', cd: 20, target: null,      unlock: 110, desc: 'Halves the time left on your other powers.', tip: 'Halves the time left on your other powers.' },
-    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 10, target: null,      unlock: 120, desc: 'Sharpens the weapon you hold: it gains its power.', tip: 'Sharpen the weapon you hold: it gains 2 power.' },
+    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 0,  target: null,      unlock: 120, passive: true, desc: 'Every weapon you pick up or forge is permanently stronger by its power.', tip: 'Every weapon you pick up or forge is permanently 2 stronger.' },
     laststand: { name: 'Last Stand',  sprite: 'goldskull',  cd: 0,  target: null,      unlock: 130, passive: true, desc: 'Once per room, a hit that would kill you leaves you with health equal to its power instead.', tip: 'Once per room, a hit that would kill you leaves you at 1 health instead.' }
   };
 
@@ -160,7 +160,7 @@
     ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice monsters can\'t hurt you.', what: '+1 shielded turn' },
     magnet:   { amt: [0, 1],  what: '+1 gold from each coin and gem' },
     hourglass: { cdCut: 2,    what: '2 turns faster recharge' },
-    whetstone: { amt: [2, 1], text: 'Sharpen the weapon you hold: it gains {n} power.', what: '+1 power' },
+    whetstone: { amt: [2, 1], text: 'Every weapon you pick up or forge is permanently {n} stronger.', what: '+1 power' },
     laststand: { amt: [1, 1], text: 'Once per room, a hit that would kill you leaves you at {n} health instead.', what: '+1 health left after it saves you' }
   };
   function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
@@ -168,6 +168,8 @@
   // What the next upgrade of a power adds, for the upgrade button.
   function upgradeWhat(id, lv) { const w = UPGRADES[id] && UPGRADES[id].what; return Array.isArray(w) ? w[clampLv(lv)] : w; }
   // Forge: a sword as strong as the hero's max health, plus the upgrade bonus.
+  // Whetstone (passive): how much stronger every weapon the hero gets is. 0 without it.
+  function whet(H) { const w = H.powers.find(function (p) { return p.id === 'whetstone'; }); return w ? powerAmount('whetstone', w.lv) : 0; }
   function forgePower(S, lv) { return S.hero.max + powerAmount('forge', lv); }
   function powerCd(id, lv) { const u = UPGRADES[id]; return Math.max(1, POWERS[id].cd - (u && u.cdCut ? u.cdCut * clampLv(lv) : 0)); }
   function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
@@ -838,7 +840,8 @@
       S.claimed = card.rw;
       fx.push({ cell: tpos, text: 'Unlocked!', cls: 'gold', anim: 'gold' });
     } else if (card.kind === 'weapon') {
-      H.sword = T.bow ? { v: card.v, type: card.type, el: null, bow: true, star: !!T.star, c: card.t } : T.sweep ? { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: null, sweep: true } : T.wand ? { v: card.v, type: card.type, el: T.el, wand: true } : { v: card.v + (H.pass.swordBonus || 0), type: card.type, el: T.el || null }; fx.push({ cell: tpos, text: 'Sword ' + H.sword.v, cls: 'info' });
+      const ws = whet(H); // Whetstone: every weapon is permanently sharper
+      H.sword = T.bow ? { v: card.v + ws, type: card.type, el: null, bow: true, star: !!T.star, c: card.t } : T.sweep ? { v: card.v + ws + (H.pass.swordBonus || 0), type: card.type, el: null, sweep: true } : T.wand ? { v: card.v + ws, type: card.type, el: T.el, wand: true } : { v: card.v + ws + (H.pass.swordBonus || 0), type: card.type, el: T.el || null }; fx.push({ cell: tpos, text: 'Sword ' + H.sword.v, cls: 'info' });
     } else if (card.kind === 'bomb') {
       swap = true; fx.push({ cell: tpos, text: 'Swap', cls: 'info' });
     }
@@ -1134,7 +1137,7 @@
 
     // A forged sword that was waiting arrives once the hero's hands are empty.
     if (H.forge && !H.sword && H.hp > 0) {
-      H.sword = { v: H.forge, type: 'sword', el: null }; H.forge = 0;
+      H.sword = { v: H.forge + whet(H), type: 'sword', el: null }; H.forge = 0;
       fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' });
     }
 
@@ -1206,7 +1209,6 @@
     if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
     if (pw.id === 'forge' && H.forge) return null; // a forged sword is already waiting
-    if (pw.id === 'whetstone' && !H.sword) return null; // nothing to sharpen
     if (pw.id === 'magnet' && !S.grid.some(function (c) { return c && c.kind === 'gold'; })) return null;
     if (pw.id === 'hourglass' && !H.powers.some(function (p) { return p !== pw && p.cd > 0; })) return null; // nothing to speed up
     if (pw.id === 'dart') {
@@ -1231,7 +1233,7 @@
         // Never replaces a held weapon: the sword waits until the hero's hands are empty.
         const v = forgePower(S, pw.lv);
         if (H.sword) { H.forge = v; fx.push({ cell: H.pos, text: 'Forging…', cls: 'info', anim: 'gold' }); }
-        else { H.sword = { v: v, type: 'sword', el: null }; fx.push({ cell: H.pos, text: 'Sword ' + v, cls: 'info', anim: 'gold' }); }
+        else { H.sword = { v: v + whet(H), type: 'sword', el: null }; fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' }); }
         break;
       }
       case 'dart': {
@@ -1289,11 +1291,6 @@
         // Halves (rounding down) the turns left on every other power.
         for (const p of H.powers) if (p !== pw && p.cd > 0) p.cd = Math.floor(p.cd / 2);
         fx.push({ cell: H.pos, text: 'Hurry!', cls: 'info', anim: 'swirl' });
-        break;
-      }
-      case 'whetstone': {
-        H.sword.v += amt;
-        fx.push({ cell: H.pos, text: 'Sharpened +' + amt, cls: 'info', anim: 'gold' });
         break;
       }
       case 'burst': {
