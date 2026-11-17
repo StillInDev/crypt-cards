@@ -30,7 +30,7 @@
     frozen:   { bg: '#0f2230', card: '#2e5469', acc: '#2ce8f5', icon: 'icespider', sub: 'Everything is frozen',
                 w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, trap: 6, icewand: 6, icesword: 4, firesword: 3 } },
     library:  { bg: '#1d1730', card: '#403669', acc: '#a58bff', icon: 'lich',      sub: 'Forbidden knowledge',
-                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, elecbow: 4, firewand: 4, icewand: 4 } },
+                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, sword: 10, scythe: 3, elecbow: 4, firewand: 6, icewand: 6 } },
     ember:    { bg: '#2a1410', card: '#5d2e25', acc: '#ff6a1f', icon: 'imp',       sub: 'Fire and brimstone',
                 w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, trap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
     armory:   { bg: '#1a2029', card: '#4a5569', acc: '#c0cbdc', icon: 'gargoyle',  sub: 'Every weapon you can think of',

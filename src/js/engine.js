@@ -16,7 +16,7 @@
     // fire and ice monsters, shields, freezing) are not repeated on every card.
     rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Breeds: if it stays put for 3 turns, it bites a neighbouring card (even another rat) for its number. An empty square, or a card it destroys, becomes another rat just as strong. When rats bite the same card, only the biggest bite lands.' },
     bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   frail: true, tip: 'Weakness, paper wings: any hit at all kills it.' },
-    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   brittle: true, tip: 'Weakness, brittle bones: weapons hit it for double.' },
+    skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   brittle: true, bones: 3, tip: 'Weakness, brittle bones: weapons hit it for double. Bone wall: when 3 or more skeletons touch in a chain, each one gains a quarter of its health (once).' },
     ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   thick: 1, tip: 'Thick skull: a weapon that hits it wears down 1 extra.' },
     goldskull: { kind: 'monster', name: 'Golden skeleton', lo: 2, hi: 5, bf: 0.7, pays: true, tip: 'Made of gold: beat it and it pays out its number in gold.' },
     hive:      { kind: 'monster', name: 'Hive queen',      lo: 3, hi: 6, bf: 1,   ability: 'queen', tip: 'Swarm: every 4 turns it turns a neighbouring card into a bat.' },
@@ -66,7 +66,7 @@
     wraith:     { resist: true, tip: 'Last breath: when it dies, no monster can be hurt until the end of your next turn.' },
     shroom:     { fragile: 2, tip: 'Weakness, delicate: every time it slides to a new square it loses 2 health, and it crumbles at 0.' },
     gargoyle:   { stone: 2, tip: 'Stone skin: hits of 2 damage or less do nothing to it.' },
-    lich:       { ability: 'raise', tip: 'Necromancer: every 5 turns it turns a random card next to it (anything but a skeleton) into a skeleton.' },
+    lich:       { ability: 'raise', tip: 'Necromancer: every 6 turns it turns a random card next to it (anything but a skeleton) into a skeleton.' },
     harpy:      { ability: 'snatch', tip: 'Magpie: every 3 turns it swoops onto a coin anywhere on the board, taking its square and leaving its old one empty.' },
     troll:      { feeds: 1, tip: 'Glutton: every time another monster dies, it grows 1 bigger.' },
     // The minotaur is a boss: only found in the last room of an area, never more than one on the board.
@@ -94,7 +94,7 @@
   TYPES.tomb = { kind: 'monster', name: 'Tomb', lo: 1, hi: 1, bf: 0, hidden: true, tomb: true,
     tip: 'A zombie\'s tomb. It blocks the way: bump into it bare-handed and your turn is spent. Any damage at all shatters it, from a weapon, a power, a trap or a bomb.' };
   // Abilities that fire every few turns: turns between uses.
-  const PERIOD = { queen: 4, raise: 5, snatch: 3, stampede: 2 };
+  const PERIOD = { queen: 4, raise: 6, snatch: 3, stampede: 2 };
 
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
@@ -328,7 +328,7 @@
     // Copy without the rng so a preview never advances the real game.
     return {
       level: S.level, rng: null, uid: S.uid, over: S.over, powerLevel: S.powerLevel,
-      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, psn: c.psn, mx: c.mx, ph: c.ph }; }),
+      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, psn: c.psn, mx: c.mx, ph: c.ph, wall: c.wall }; }),
       resist: S.resist,
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
@@ -1055,6 +1055,31 @@
         }
       }
       if (H.hp <= 0) { S.over = true; H.hp = 0; }
+    }
+
+    // Bone wall: skeletons that touch in a chain of SKELETON_CHAIN or more each gain a quarter of their
+    // health (rounded up), once per skeleton.
+    if (S.rng && H.hp > 0) {
+      const seen = {};
+      for (let p = 0; p < S.grid.length; p++) {
+        const c0 = S.grid[p];
+        if (seen[p] || !c0 || c0.type !== 'skeleton') continue;
+        const group = [p]; seen[p] = 1;
+        for (let gi = 0; gi < group.length; gi++) {
+          for (const ap of neighbours4(S, group[gi])) {
+            const c = S.grid[ap];
+            if (!seen[ap] && c && c.type === 'skeleton') { seen[ap] = 1; group.push(ap); }
+          }
+        }
+        if (group.length < TYPES.skeleton.bones) continue;
+        group.forEach(function (gp) {
+          const sk = S.grid[gp];
+          if (sk.wall) return;
+          const gain = Math.max(1, Math.ceil(sk.v / 4));
+          sk.v += gain; sk.wall = 1;
+          fx.push({ cell: gp, text: '+' + gain, cls: 'hurt', anim: 'spark' });
+        });
+      }
     }
 
     // End-of-turn monster traits: frost wisps melt, shrooms bruise when they slide, ghosts flicker,
