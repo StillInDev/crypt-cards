@@ -77,3 +77,12 @@ for(const hid of hids) for(let g=0;g<150;g++){
   games++;
 }
 console.log('fuzz games',games,'no errors');
+// bows and ninja stars attack once, then they are gone
+for(const type of ['ninjastar','elecbow']){
+  const S2=blankGame({}); const st=C(type,4); st.t=1; S2.grid[1]=st; DC.move(S2,0);
+  assert(S2.hero.sword&&S2.hero.sword.c===1,type+' picked up with one use');
+  const tgt=S2.grid.findIndex((c,i)=>i!==S2.hero.pos&&(i%3===S2.hero.pos%3||((i/3)|0)===((S2.hero.pos/3)|0)));
+  S2.grid[tgt]=C('ogre',20); DC.shootBow(S2,tgt);
+  assert.strictEqual(S2.hero.sword,null,type+' used up after one attack');
+}
+assert.strictEqual(DC.TYPES.ninjastar.tip.indexOf('One throw'),0); ok('one throw per star, one arrow per bow');

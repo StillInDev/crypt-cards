@@ -28,10 +28,10 @@
     icesword:  { kind: 'weapon',  name: 'Ice sword',       lo: 4, hi: 8, bf: 1, el: 'ice',  tip: 'An ice weapon. It cannot hurt ice monsters and hits fire monsters for double. A monster it hits but does not kill freezes solid, and a frozen monster cannot be hit: you swap places with it. It can kill a Phoenix.' },
     scythe:    { kind: 'weapon',  name: 'Scythe',         lo: 3, hi: 6, bf: 1,   sweep: true, tip: 'Step toward a monster to sweep: the target and the two squares beside it (across your swing) all take the scythe\'s power. The scythe wears down by the most damage it deals to one target.' },
     webspider: { kind: 'monster', name: 'Web spider',     lo: 3, hi: 9, bf: 1,   tip: 'Hides in its web while you hold any weapon: its health drops to 0 and you can walk straight through it. Catch it bare-handed and it fights back.' },
-    ninjastar: { kind: 'weapon',  name: 'Ninja star',      lo: 3, hi: 6, bf: 1,   bow: true, star: true, tip: 'Five throws. Tap a monster in your row or column to hit it for the star\'s power. No chain, and nothing outside your row or column can be hit.' },
+    ninjastar: { kind: 'weapon',  name: 'Ninja star',      lo: 3, hi: 6, bf: 1,   bow: true, star: true, tip: 'One throw. Tap a monster in your row or column to hit it for the star\'s power. No chain, and nothing outside your row or column can be hit.' },
     windblade: { kind: 'weapon',  name: 'Wind blade',      lo: 2, hi: 4, bf: 0.5, grows: 'wind', tip: 'While it lies on the board it gains 1 power every time it slides to a new square. Once you pick it up it stops growing and fights like a normal sword.' },
     painblade: { kind: 'weapon',  name: 'Blade of pain',   lo: 2, hi: 4, bf: 0.5, grows: 'pain', tip: 'While it lies on the board it gains 1 power every time you take damage. Once you pick it up it stops growing and fights like a normal sword.' },
-    elecbow:   { kind: 'weapon',  name: 'Electric bow',   lo: 3, hi: 5, bf: 0.5, bow: true, tip: 'A bow with 5 arrows. Tap any monster on the board to shoot it for the bow\'s power. The shock then jumps to every monster touching the one it hit, 1 weaker with each jump. Frozen monsters are not hit. Stepping into a monster with a bow is just like having no weapon.' },
+    elecbow:   { kind: 'weapon',  name: 'Electric bow',   lo: 3, hi: 5, bf: 0.5, bow: true, tip: 'A bow with one arrow. Tap any monster on the board to shoot it for the bow\'s power. The shock then jumps to every monster touching the one it hit, 1 weaker with each jump. Frozen monsters are not hit. Stepping into a monster with a bow is just like having no weapon.' },
     // A wand fights like a sword, but its hit pierces: whatever power is left after a monster carries on
     // down the line into the next one, to the edge of the board. It wears down by the health it cuts through.
     firewand:  { kind: 'weapon',  name: 'Fire wand',       lo: 4, hi: 8, bf: 1, el: 'fire', wand: true, tip: 'A fire weapon that pierces. Step toward a monster to hit it; any power left over carries on down that row or column into the monsters behind it. It wears down by the health it burns through. Fire monsters are immune, ice monsters take double.' },
@@ -203,7 +203,7 @@
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
-    if (T.bow) c.t = 5; // arrows
+    if (T.bow) c.t = 1; // one throw or shot: no weapon attacks more than once
     if (T.kind === 'monster') c.mx = v; // the strength it arrived with (trolls heal back to it, magma slimes split from it)
     if (T.kind === 'monster' && (T.shell || (L.shieldP && S.rng() < L.shieldP))) c.sh = 1; // the first hit is absorbed
     if (T.kind === 'dtrap') {
@@ -680,7 +680,7 @@
       });
       attack = { dmg: H.sword.v, killed: false, el: null, type: H.sword.type, immune: false, bow: { from: from, target: aim, hits: hits } };
       H.sword.c--;
-      if (H.sword.c <= 0) { H.sword = null; fx.push({ cell: from, text: 'Out of ammo', cls: 'info', anim: 'break' }); }
+      if (H.sword.c <= 0) { const thrown = H.sword.star; H.sword = null; fx.push({ cell: from, text: thrown ? 'Thrown' : 'Bow spent', cls: 'info', anim: 'break' }); }
     } else if (sell) {
       const g = H[sell].v;
       H.gold += g; H[sell] = null; attacked = true;

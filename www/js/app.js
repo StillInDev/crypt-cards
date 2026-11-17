@@ -575,7 +575,7 @@
       if (c.kind === 'monster') dm.querySelector('b').textContent = c.v;
     } else {
       var t = c.kind === 'chest' ? '?' : String(c.v);
-      if (c.t != null && T.bow) t += '×' + c.t;
+      if (c.t > 1 && T.bow) t += '×' + c.t;
       val.textContent = t;
     }
     el.classList.toggle('webbed', hidden);
@@ -627,7 +627,7 @@
     if (H.sword) heldEl.src = SPR[H.sword.type || 'sword'] || '';
     var wvEl = heroEl.querySelector('.wv');
     wvEl.style.display = H.sword ? '' : 'none';
-    if (H.sword) wvEl.textContent = H.sword.c != null ? H.sword.v + '×' + H.sword.c : H.sword.v;
+    if (H.sword) wvEl.textContent = H.sword.c > 1 ? H.sword.v + '×' + H.sword.c : H.sword.v;
     heroEl.classList.toggle('thorns', !!H.pass.thorns && H.hp * 2 <= H.max);
     heroEl.classList.toggle('glow', !!(S.glow && S.glow.cell === H.pos));
     if (H.hp < lastHp) {
@@ -689,7 +689,7 @@
       b.title = 'Sell for ' + H[w].v + ' gold (uses a turn)';
       b.setAttribute('aria-label', 'Sell ' + w + ' for ' + H[w].v + ' gold');
       b.appendChild(img(H[w].type || w));
-      if (H[w].c != null) { var q = document.createElement('small'); q.textContent = '×' + H[w].c; b.appendChild(q); }
+      if (H[w].c > 1) { var q = document.createElement('small'); q.textContent = '×' + H[w].c; b.appendChild(q); }
       var ar = document.createElement('span'); ar.className = 'ar'; ar.textContent = '→'; b.appendChild(ar);
       b.appendChild(img('coin'));
       var g = document.createElement('b'); g.textContent = H[w].v; b.appendChild(g);
@@ -1064,8 +1064,8 @@
             ' Pick it up and it stops growing: it fights like a normal sword, wearing down by the damage it deals.';
           break;
         }
-        if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', ' + c.t + ' throws. Tap a monster in your row or column to hit it. No chain.'; break; }
-        if (T.bow) { t = 'Electric bow, power ' + n + ', ' + c.t + ' arrows. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
+        if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', one throw. Tap a monster in your row or column to hit it. No chain.'; break; }
+        if (T.bow) { t = 'Electric bow, power ' + n + ', one arrow. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
         if (T.sweep) { t = 'Power ' + n + '. Step toward a monster to sweep: the target and the two squares beside it (across your swing) all take that much. The scythe loses power equal to the most damage it deals to one monster, and breaks at 0. If the target dies you take its place.'; break; }
         if (T.wand) { t = (T.el === 'ice' ? 'Ice' : 'Fire') + ' wand, power ' + n + '. Step toward a monster to hit it like a sword, but it pierces: power left over carries on down that row or column into the monsters behind it. It wears down by the health it cuts through. ' + (T.el === 'ice' ? 'Survivors freeze. Ice monsters are immune, fire monsters take double. Can kill a Phoenix.' : 'Fire monsters are immune, ice monsters take double.'); break; }
         t = (T.el ? (T.el === 'ice' ? 'An ice weapon: no effect on ice monsters, double against fire ones, and a monster it hits but does not kill freezes solid. It can kill a Phoenix. ' : 'A fire weapon: no effect on fire monsters, double against ice ones. ') : '') + 'Power ' + n + '. Step toward a monster to hit it; the sword loses power equal to the damage it deals, and breaks at 0. If the monster dies you take its place.'; break;
@@ -1085,7 +1085,7 @@
       var left = DC.STORM_CHAIN - (H.hits | 0);
       t += ' Chain lightning (' + DC.chainDamage(H.lv) + ' damage) ' + (left === 1 ? 'on your next attack.' : 'in ' + left + ' attacks.');
     }
-    if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.star ? ' throws' : ' arrows') : '') + '.';
+    if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.bow ? (H.sword.star ? ', one throw' : ', one arrow') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
   function inspect(x, y) {
