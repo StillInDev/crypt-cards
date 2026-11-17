@@ -518,6 +518,8 @@
     // Power cast layers: one paints behind the hero sprite, one in front (see .cast-* in the CSS).
     var auB = document.createElement('span'); auB.className = 'au bk'; hc.insertBefore(auB, hc.firstChild);
     var auF = document.createElement('span'); auF.className = 'au fr'; hc.appendChild(auF);
+    // Poison bubbles: shown only while the hero is poisoned (see .slot.hero.poisoned in the CSS).
+    var bub = document.createElement('span'); bub.className = 'bub'; bub.setAttribute('aria-hidden', 'true'); hc.appendChild(bub);
     hc.appendChild(img('sword', 'held'));
     var wv = document.createElement('span'); wv.className = 'wv'; hc.appendChild(wv);
     heroEl = slotFor(hc);
@@ -618,6 +620,7 @@
       }
     });
     place(heroEl, H.pos);
+    heroEl.classList.toggle('poisoned', H.poison > 0);
     heroEl.querySelector('.hp b').textContent = H.hp;
     var heldEl = heroEl.querySelector('.held');
     heldEl.style.display = H.sword ? '' : 'none';
@@ -1011,10 +1014,10 @@
     var T = TYPES[c.type], n = c.v, t;
     switch (c.kind) {
       case 'gold': t = 'Worth ' + n + ' gold when you step on it.'; break;
-      case 'heal': t = 'Restores ' + n + ' health, up to your maximum.' + (T.bonusGold ? ' Also pays ' + T.bonusGold + ' gold.' : ''); break;
+      case 'heal': t = 'Restores ' + n + ' health, up to your maximum, and cures poison.' + (T.bonusGold ? ' Also pays ' + T.bonusGold + ' gold.' : ''); break;
       case 'harm':
         t = c.type === 'poison'
-          ? 'Poisons you for ' + n + ' turns. You lose 1 health each turn, but never drop below 1. '
+          ? 'Poisons you for ' + n + ' turns. You lose 1 health each turn, but never drop below 1. Any healing cures it. '
           : 'Deals ' + n + ' damage when you step on it. ';
         if (c.type !== 'poison' && S.hero.pass.trapproof) t = 'A trap, but harmless to you: the Ninja steps right over it. ';
         break;
@@ -1059,7 +1062,7 @@
   }
   function describeHero() {
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
-    if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns.';
+    if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns. Any healing cures it.';
     if (H.frost > 0) t += ' Frost for ' + H.frost + ' more moves.';
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
     if (H.pass.storm) {
@@ -1154,14 +1157,14 @@
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
     var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
-      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Overheal', '+' + DC.overheal(lv)]] : []) };
+      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Heals', DC.songHeal(lv) + ' a turn'], ['Overheal', '+' + DC.overheal(lv)]] : []) };
     if (open) {
       var on = id === heroSel;
       // Same check-mark toggle as powers. You always have a hero, so the chosen one cannot be un-ticked.
       o.equip = { label: on ? 'Chosen' : 'Choose', on: on, aria: on ? 'Chosen hero' : 'Not chosen. Tap to choose this hero',
         fn: function () { if (!on) pickHero(id); loInfo(heroInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
-      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health' + (H.pass.storm ? ', +1 chain damage.' : H.pass.song ? ', +1 overheal.' : '.'), label: 'Upgrade', cost: cost, ok: purse >= cost,
+      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health' + (H.pass.storm ? ', +1 chain damage.' : H.pass.song ? ', +1 healing a turn, +1 overheal.' : '.'), label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
         buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to Lvl. ' + (heroUpLv(id) + 1)); } } };
     } else o.up = unlockOffer('hero', id, H.name, heroInfo);
@@ -1264,7 +1267,14 @@
     var v = $(sel);
     v.addEventListener('pointerdown', function () { loGenAtDown = loGen; }, true);
     // A tap closes what was already showing. Info that appeared during this very press stays.
-    v.addEventListener('click', function (e) { if (e.target.closest('.lo-info button')) return; if (loGen === loGenAtDown) loHide(); }, true);
+    // The close waits until the tap is handled: if the tap shows new info (another tile, or a double
+    // tap that equips and redraws the screen), the open panel just swaps its text instead of closing
+    // and replaying its pop-in.
+    v.addEventListener('click', function (e) {
+      if (e.target.closest('.lo-info button')) return;
+      var gen = loGen;
+      setTimeout(function () { if (loGen === gen && gen === loGenAtDown) loHide(); }, 0);
+    }, true);
   });
 
   // Press-and-hold for a single element outside the pager (the avatar and the slots above its head).
@@ -1435,10 +1445,22 @@
     hpPlace(0, false);
   }
 
+  // A second tap on the same tile within this many ms is a double tap. Done by hand rather than with
+  // the dblclick event, which phones do not fire reliably for a double tap.
+  var DOUBLE_TAP_MS = 350, lastTap = { key: '', at: 0 };
   function hpTap(t) {
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
+    var key = kind + ':' + id, now = Date.now(), dbl = lastTap.key === key && now - lastTap.at < DOUBLE_TAP_MS;
+    lastTap = dbl ? { key: '', at: 0 } : { key: key, at: now };
     if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
+    // Double tap equips: a hero always, a power only into an empty slot (it never pushes one out).
+    if (dbl) {
+      if (kind === 'hero') { if (id !== heroSel) pickHero(id); loInfo(heroInfo(id)); return; }
+      if (powSel.indexOf(id) < 0 && powSel.length < DC.HEROES[heroSel].slots) togglePower(id);
+      loInfo(powerInfo(id));
+      return;
+    }
     // Heroes and powers both open their details on tap; the check mark there chooses or equips.
     if (kind === 'hero') { loInfo(heroInfo(id)); return; }
     // Powers are not equipped on tap: the details open, with an Equip button.

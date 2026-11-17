@@ -7,9 +7,9 @@
   const TYPES = {
     coin:      { kind: 'gold',    name: 'Coin',            lo: 1, hi: 3, bf: 0.5, tip: 'Step on it to add its value to your gold.' },
     gem:       { kind: 'gold',    name: 'Gem',             lo: 4, hi: 6, bf: 0.5, tip: 'Worth a lot of gold.' },
-    potion:    { kind: 'heal',    name: 'Potion',          lo: 2, hi: 5, bf: 0.7, tip: 'Restores health, up to your maximum.' },
+    potion:    { kind: 'heal',    name: 'Potion',          lo: 2, hi: 5, bf: 0.7, tip: 'Restores health, up to your maximum, and cures poison.' },
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
-    poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1.' },
+    poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1. Any healing cures it.' },
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
     // Monster tips say only what makes that monster different. The shared rules (it hurts for its number,
     // fire and ice monsters, shields, freezing) are not repeated on every card.
@@ -107,7 +107,7 @@
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
     rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
     stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: '8 kills charge a smite: the next attack kills outright. Every 4th attack chains lightning to the monsters next to the target, for 1 + his level in damage.' },
-    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Soothing tunes: heals 1 every 3 turns. All healing can take him over his max health, by up to 3 + his upgrades.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Soothing tunes: heals 2 + his upgrades every turn, and every coin, gem, potion and weapon on the board grows by 1 each turn. All healing can take him over his max health, by up to 3 + his upgrades.' },
     dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Scaly feet: stomps monsters with 1 health, taking no damage and not using his weapon.' },
     count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Lifesteal: heals 1 for every 3 damage his weapons deal.' },
     barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'Rage: at a quarter health or less, weapon hits have a 1 in 3 chance to crit for double damage, without wearing the weapon down any faster.' },
@@ -216,11 +216,18 @@
   const RAT_TURNS = 3;
   // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
   const STORM_KILLS = 8, STORM_CHAIN = 4;
-  // Bard: heals 1 every SONG_TURNS turns; healing can overfill max health by 3 + upgrades.
-  const SONG_TURNS = 3;
+  // Bard: heals 2 + upgrades every turn, and every turn the helpful cards on the board (not chests,
+  // whose value is hidden) grow by 1. His healing can overfill max health by 3 + upgrades.
+  function songHeal(lv) { return 2 + (lv | 0); }
+  const SONG_GROWS = { gold: 1, heal: 1, weapon: 1 };
   function overheal(lv) { return 3 + (lv | 0); }
   function healCap(H) { return H.max + (H.pass.song ? overheal(H.lv) : 0); }
   function healBy(H, amt) { const g = Math.max(0, Math.min(amt, healCap(H) - H.hp)); H.hp += g; return g; }
+  // Any healing cures poison: potions and healing powers always, passive healing (song, lifesteal)
+  // when it actually restores health.
+  function cure(H, fx, cell) {
+    if (H.poison > 0) { H.poison = 0; fx.push({ cell: cell == null ? H.pos : cell, text: 'Cured', cls: 'heal', anim: 'heal' }); }
+  }
   // Barbarian: at a quarter health or less, a weapon hit crits (double damage) 1 time in 3.
   function critMul(S) { const H = S.hero; return H.pass.rage && S.rng && H.hp > 0 && H.hp * 4 <= H.max && S.rng() < 1 / 3 ? 2 : 1; }
   // Vampire: damage dealt by weapons this step, for lifesteal.
@@ -775,7 +782,7 @@
       const g = card.v + (H.pass.gold || 0);
       H.gold += g; fx.push({ cell: tpos, text: '+' + g, cls: 'gold', anim: 'gold' });
     } else if (card.kind === 'heal') {
-      const g = healBy(H, card.v); fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' });
+      const g = healBy(H, card.v); fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx, tpos);
       if (T.bonusGold) { H.gold += T.bonusGold; fx.push({ cell: tpos, text: '+' + T.bonusGold + 'G', cls: 'gold' }); }
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
@@ -846,12 +853,16 @@
       H.drain = (H.drain | 0) + weaponDealt;
       const g = Math.min(Math.floor(H.drain / H.pass.drain), Math.max(0, H.max - H.hp));
       H.drain %= H.pass.drain;
-      if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+      if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
     }
-    // Bard: a little healing every few turns.
+    // Bard: heals every turn, and every helpful card on the board (coins, gems, potions, weapons) grows by 1.
     if (H.pass.song && H.hp > 0) {
-      H.song = (H.song | 0) + 1;
-      if (H.song >= SONG_TURNS) { H.song = 0; const g = healBy(H, 1); if (g) fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+      const g = healBy(H, songHeal(H.lv));
+      if (g) { fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
+      S.grid.forEach(function (c, p) {
+        if (!c || !SONG_GROWS[c.kind]) return;
+        c.v += 1; fx.push({ cell: p, text: '+1', cls: c.kind === 'gold' ? 'gold' : c.kind === 'heal' ? 'heal' : 'info' });
+      });
     }
 
     let tremor = null; // the square Tremor hit this turn, if any (set after the slide below)
@@ -1182,7 +1193,7 @@
     switch (pw.id) {
       case 'heal': {
         const g = healBy(H, amt);
-        fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); break;
+        fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); break;
       }
       case 'forge': {
         // Never replaces a held weapon: the sword waits until the hero's hands are empty.
@@ -1211,7 +1222,7 @@
       }
       case 'massheal': {
         const g = healBy(H, amt);
-        fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' });
+        fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx);
         S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += amt; fx.push({ cell: p, text: '+' + amt, cls: 'heal', anim: 'heal' }); } });
         break;
       }
@@ -1315,7 +1326,7 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, SONG_TURNS: SONG_TURNS, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

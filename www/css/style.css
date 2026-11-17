@@ -774,7 +774,20 @@ body {
 .test-gold { padding: 6px 8px; font-size: .6rem; }
 .tile .tlv { display: block; font-size: .72rem; color: var(--muted); text-align: center; }
 .tile.sel .tlv { color: var(--saffron); }
-.slot.poisoned .card { box-shadow: 0 -4px 0 0 #63c74d, 0 4px 0 0 #63c74d, -4px 0 0 0 #63c74d, 4px 0 0 0 #63c74d, inset 0 0 16px 3px rgba(99,199,77,.55); }
+/* Poisoned (a monster hit by a dart, or the hero): green edge and a green glow inside.
+   !important because the flat .card shadow above is !important too. */
+.slot.poisoned .card { box-shadow: 0 -4px 0 0 #63c74d, 0 4px 0 0 #63c74d, -4px 0 0 0 #63c74d, 4px 0 0 0 #63c74d, inset 0 0 16px 3px rgba(99,199,77,.55) !important; }
+/* A poisoned hero also turns a sickly green and gives off rising bubbles until it wears off. */
+.slot.hero.poisoned .card .art { filter: sepia(.6) hue-rotate(45deg) saturate(1.6) brightness(.95); }
+.card .bub { display: none; position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+.slot.hero.poisoned .card .bub { display: block; }
+.card .bub::before, .card .bub::after { content: ''; position: absolute; bottom: 14%; width: max(6px, calc(var(--cs) * .09)); aspect-ratio: 1;
+  background: #a8f06b; box-shadow: 0 0 0 2px #193c3e, calc(var(--cs) * .09) calc(var(--cs) * .16) 0 -1px #63c74d;
+  animation: psnup 1.5s steps(6) infinite; }
+.card .bub::before { left: 14%; }
+.card .bub::after { left: 68%; animation-delay: -.75s; }
+@keyframes psnup { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(calc(var(--cs) * -.55)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .card .bub::before, .card .bub::after { animation: none; opacity: .9; } }
 .home-loadout { cursor: pointer; }
 /* Keep the purse clear of Done: nothing on the right shrinks, and the money sits further left. */
 .top-r > * { flex-shrink: 0; }
