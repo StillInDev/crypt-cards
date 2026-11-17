@@ -1344,6 +1344,7 @@
     // and replaying its pop-in.
     v.addEventListener('click', function (e) {
       if (e.target.closest('.lo-info button')) return;
+      if (e.target.closest('#hp-pager .tile')) return; // a tile tap opens, swaps or (double tap) closes the details itself
       var gen = loGen;
       setTimeout(function () { if (loGen === gen && gen === loGenAtDown) loHide(); }, 0);
     }, true);
@@ -1519,24 +1520,30 @@
 
   // A second tap on the same tile within this many ms is a double tap. Done by hand rather than with
   // the dblclick event, which phones do not fire reliably for a double tap.
-  var DOUBLE_TAP_MS = 350, lastTap = { key: '', at: 0 };
+  // A single tap opens the details, but only once the double-tap window has passed, so a double tap
+  // never flashes the details open: it just equips or unequips.
+  var DOUBLE_TAP_MS = 350, lastTap = { key: '', at: 0 }, tapTimer = null;
   function hpTap(t) {
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
+    var info = function () { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); };
+    if (!open) { clearTimeout(tapTimer); lastTap = { key: '', at: 0 }; info(); return; } // locked: nothing to equip
     var key = kind + ':' + id, now = Date.now(), dbl = lastTap.key === key && now - lastTap.at < DOUBLE_TAP_MS;
-    lastTap = dbl ? { key: '', at: 0 } : { key: key, at: now };
-    if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
-    // Double tap equips: a hero always, a power only into an empty slot (it never pushes one out).
-    if (dbl) {
-      if (kind === 'hero') { if (id !== heroSel) pickHero(id); loInfo(heroInfo(id)); return; }
-      if (powSel.indexOf(id) < 0 && powSel.length < DC.HEROES[heroSel].slots) togglePower(id);
-      loInfo(powerInfo(id));
+    clearTimeout(tapTimer);
+    if (!dbl) {
+      lastTap = { key: key, at: now };
+      tapTimer = setTimeout(function () { lastTap = { key: '', at: 0 }; info(); }, DOUBLE_TAP_MS);
       return;
     }
-    // Heroes and powers both open their details on tap; the check mark there chooses or equips.
-    if (kind === 'hero') { loInfo(heroInfo(id)); return; }
-    // Powers are not equipped on tap: the details open, with an Equip button.
-    loInfo(powerInfo(id));
+    lastTap = { key: '', at: 0 };
+    loHide();
+    // Double tap toggles: a hero is chosen (you always have one, so it cannot be un-chosen);
+    // a power is unequipped if equipped, or equipped into an empty slot (it never pushes one out).
+    if (kind === 'hero') { if (id !== heroSel) pickHero(id); return; }
+    var P = DC.POWERS[id];
+    if (powSel.indexOf(id) >= 0) { togglePower(id); toast(P.name + ' unequipped'); }
+    else if (powSel.length < DC.HEROES[heroSel].slots) { togglePower(id); toast(P.name + ' equipped'); }
+    else toast('All power slots are full. Double-tap an equipped power to free one.');
   }
   function pickHero(id) {
     heroSel = id; fixSelection(); saveSelection(); refreshLoadoutScreen();
