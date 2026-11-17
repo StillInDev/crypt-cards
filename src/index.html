@@ -64,7 +64,7 @@
     <button class="btn quiet" id="b-restart" type="button">Restart</button>
   </div>
   <div class="hud">
-    <div class="stat"><div class="k">Health</div><div class="v"><span id="h-hp">0</span><span class="status" id="h-status"></span></div><div class="hpbar"><i id="h-bar"></i></div><div class="chg" id="h-chg" hidden></div></div>
+    <div class="stat"><div class="k">Health</div><div class="v"><span id="h-hp">0</span><span class="status" id="h-status"></span></div><div class="hpbar"><i id="h-bar"></i></div></div>
     <div class="stat gold"><div class="k">Gold</div><div class="v" id="h-gold">0</div></div>
     <div class="stat best"><div class="k">Best</div><div class="v" id="h-best">0</div></div>
   </div>
@@ -147,6 +147,16 @@
       <button class="btn go" id="o-again" type="button">Try again</button>
       <button class="btn" id="o-next" type="button">Next level</button>
       <button class="btn quiet" id="o-menu" type="button">Levels</button>
+    </div>
+  </div>
+</div>
+<div class="over" id="leave" role="alertdialog" aria-modal="true" aria-labelledby="l-title" aria-describedby="l-note">
+  <div class="sheet">
+    <h2 id="l-title">Leave this run?</h2>
+    <div class="note" id="l-note"></div>
+    <div class="row">
+      <button class="btn go" id="l-stay" type="button">Keep playing</button>
+      <button class="btn quiet" id="l-go" type="button">Leave and lose it</button>
     </div>
   </div>
 </div>

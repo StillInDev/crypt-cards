@@ -1,5 +1,7 @@
 # Request: Whetstone (power)
 
+**Delivered** 2026-11-17 as `art/sheets/14_Power_Whetstone.png` (a plain sharpening stone), now in the game. This brief stays for any redraw.
+
 - **Sprite id:** `p_whetstone` (deliver `p_whetstone.png`)
 - **Kind:** power icon
 - **Read first:** `art/README.md` (format and style rules)

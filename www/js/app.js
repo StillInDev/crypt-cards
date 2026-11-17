@@ -3,6 +3,7 @@
   var DC = window.DC, TYPES = DC.TYPES, SPR = window.SPR || {};
   // A salamander's dropped tail has no art of its own yet: it borrows the salamander's (drawn small, see .tail).
   if (!SPR.tail) SPR.tail = SPR.salamander;
+  if (!SPR.orb) SPR.orb = SPR.p_teleport;
   function img(type, cls) {
     var i = document.createElement('img');
     i.src = SPR[type] || ''; i.alt = ''; i.draggable = false;
@@ -40,22 +41,38 @@
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 12 } }
   };
-  // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based),
-  // spread out so new things keep turning up the whole way down. Every other room just opens the way on.
+  // Every area has the same 12 rooms and two routes down to the boss:
+  //   easy (left):  Sewers 75 -> Fungus Caves 80 -> Frozen Cavern 90 -> Armory 100. Plain doors, no unlocks.
+  //   hard (right): Barracks 100 -> Mine 115 -> Ember Halls 130 -> Vampire Crypt 140. Tougher cards, and these
+  //                 rooms hold the unlocks, so heroes and powers cost more to earn.
+  //   between them: Catacombs 100 (a door) and Bone Library 110 (an unlock), joining the two routes.
+  // req is the gold that reveals a room's reward. Each hero and power is the reward of one room in one area
+  // (reward/more, area is 1-based): five in the first area, four in each of the others, spread over the rows.
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake',    area: 2 } },
-    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal', area: 1 } },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe',   area: 1 } },
-    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst',    area: 3 } },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero',  id: 'sorcerer', area: 1 } },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward',     area: 2 } },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero',  id: 'icemage',  area: 2 } },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport', area: 4 } },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire',     area: 3 } },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero',  id: 'rogue',    area: 4 } },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder',  area: 5 } },
-    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice',     area: 5 } }
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 50 },
+    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 75 },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 100, hard: true, reward: { kind: 'power', id: 'scythe', area: 1 },
+      more: [{ kind: 'hero', id: 'barbarian', area: 2 }, { kind: 'hero', id: 'rogue', area: 3 }, { kind: 'power', id: 'quake', area: 4 }, { kind: 'power', id: 'laststand', area: 5 }] },
+    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 80 },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 100 },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 115, hard: true, reward: { kind: 'power', id: 'whetstone', area: 1 },
+      more: [{ kind: 'power', id: 'magnet', area: 2 }, { kind: 'power', id: 'ward', area: 3 }, { kind: 'power', id: 'hourglass', area: 4 }, { kind: 'hero', id: 'icemage', area: 5 }] },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 90 },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 110, reward: { kind: 'hero', id: 'sorcerer', area: 1 },
+      more: [{ kind: 'hero', id: 'stormmage', area: 2 }, { kind: 'power', id: 'teleport', area: 3 }, { kind: 'hero', id: 'bard', area: 4 }, { kind: 'power', id: 'thunder', area: 5 }] },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 130, hard: true, reward: { kind: 'power', id: 'fire', area: 1 },
+      more: [{ kind: 'hero', id: 'dragonkin', area: 2 }, { kind: 'power', id: 'burst', area: 3 }] },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 100 },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 140, hard: true, reward: { kind: 'hero', id: 'count', area: 1 },
+      more: [{ kind: 'power', id: 'massheal', area: 4 }, { kind: 'power', id: 'ice', area: 5 }] },
+    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 150 }
   ];
+  // Where each unlock was before the routes above (room index across all areas), so a save that had cleared
+  // those rooms keeps what it unlocked. See keepOldUnlocks.
+  var OLD_UNLOCKS = { 1: 'power:massheal', 2: 'power:scythe', 4: 'hero:sorcerer', 5: 'power:whetstone', 12: 'power:quake',
+    17: 'power:ward', 18: 'hero:icemage', 19: 'hero:stormmage', 24: 'hero:bard', 26: 'hero:barbarian', 27: 'power:burst',
+    32: 'power:fire', 34: 'hero:count', 42: 'power:hourglass', 43: 'power:teleport', 44: 'hero:dragonkin', 45: 'hero:rogue',
+    52: 'power:laststand', 53: 'power:magnet', 58: 'power:thunder', 59: 'power:ice' };
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
   // The dungeon is split into areas, picked with the tabs above the map. An area opens once the last room
   // (the boss room) of the area before it is cleared: the boss drops the special key to the next area.
@@ -141,7 +158,7 @@
     var isTrap = function (k) { return TYPES[k].kind === 'harm' || TYPES[k].kind === 'dtrap'; };
     var M = 0, Tr = 0, P = 0;
     for (k in w) { if (!w[k]) continue; if (TYPES[k].kind === 'monster') M += w[k]; else if (isTrap(k)) Tr += w[k]; else P += w[k]; }
-    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least spike traps
+    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least arrow traps
     var unit = P / (1 - mS - tS);
     for (k in w) {
       if (!w[k]) continue;
@@ -155,11 +172,12 @@
     AREAS.forEach(function (A, a) {
       var base = a * ROOMS.length;
       ROOMS.forEach(function (R) {
-        var diff = 1 + R.row * 2;
+        var diff = 1 + R.row * 2 + (R.hard ? 1 : 0); // the hard route's cards are a step tougher
         var L = DC.nextLevel(null, diff);
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
-        L.reward = R.reward.area === a + 1 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
+        var rw = (R.reward ? [R.reward] : []).concat(R.more || []).filter(function (x) { return x.area === a + 1; })[0];
+        L.reward = rw ? { kind: rw.kind, id: rw.id } : { kind: 'door' };
         var last = AREAS.length * 6 - 1; // 6 rows per area
         L.weights = themedWeights(R.theme, diff, (a * 6 + R.row) / last);
         L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
@@ -197,6 +215,7 @@
     if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) {
       try { levels = snapshot.levels.map(sanitize); hasAreas = snapshot.levels.some(function (L) { return L.area != null; }); } catch (e) { /* keep */ }
     }
+    var builtIn = !levels;
     if (!levels) levels = defaultLevels();
     else if (!hasAreas) levels = addAreas(levels);
     // Saved levels from before the newer cards existed get the new cards added, so they still show up.
@@ -217,13 +236,23 @@
     try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
     try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
+    if (builtIn) keepOldUnlocks(); // custom (edited or imported) rooms keep their own rewards
     fixSelection();
+  }
+  // Once per save: the rewards moved to new rooms (the easy and hard routes), so anything a cleared room had
+  // already unlocked under the old layout is kept, as if it had been bought.
+  function keepOldUnlocks() {
+    if (store.get('cc_rw') === '2') return;
+    var changed = false;
+    for (var i in OLD_UNLOCKS) if (cleared[i] && !owned[OLD_UNLOCKS[i]]) { owned[OLD_UNLOCKS[i]] = 1; changed = true; }
+    if (changed) savePurse();
+    store.set('cc_rw', '2');
   }
   function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
   function heroHp(id) { return DC.HERO_BASE_HP + DC.HEROES[id].hp + DC.heroHpBonus(heroUpLv(id)); }
   function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); store.set('cc_owned', JSON.stringify(owned)); }
-  // A run's gold goes into the purse once, when the run ends or you walk away from it.
+  // A run's gold goes into the purse once, when the run ends (the hero falls).
   function bankRun() {
     if (!S || S.banked) return 0;
     S.banked = true;
@@ -231,6 +260,22 @@
     if (g > 0) { purse += g; savePurse(); }
     return g;
   }
+  // Walking away from a run that is still going forfeits it: its gold is not banked and its score is not
+  // kept. Rewards already claimed in the run stay unlocked.
+  function forfeitRun() { if (S) S.banked = true; }
+  // A run still in progress with something to lose.
+  function runAtStake() { return !!(S && !S.over && !S.banked && current === 'play' && (S.hero.gold | 0) > 0); }
+  // Asks before leaving a run in progress; then runs go() if the player still wants to leave.
+  var leaveGo = null;
+  function guardLeave(go) {
+    if (!runAtStake()) { go(); return; }
+    leaveGo = go;
+    $('#l-note').textContent = 'You will lose the ' + S.hero.gold + ' gold from this run, and it will not count toward your best. ' +
+      'A run only keeps its gold when it ends.';
+    $('#leave').classList.add('on');
+    $('#l-stay').focus();
+  }
+  function closeLeave() { $('#leave').classList.remove('on'); leaveGo = null; }
   function buyUpgrade(id) {
     var lv = upLv(id), cost = DC.upgradeCost(lv);
     if (cost == null || purse < cost || !powerOpen(id)) return false;
@@ -322,7 +367,7 @@
   var views = { home: $('#v-home'), menu: $('#v-menu'), play: $('#v-play'), edit: $('#v-edit'), hero: $('#v-hero') };
   var current = 'home';
   function show(name, page) {
-    if (current === 'play' && name !== 'play') bankRun();
+    if (current === 'play' && name !== 'play') forfeitRun(); // a finished run is already banked
     current = name;
     loHide();
     for (var k in views) views[k].classList.toggle('on', k === name);
@@ -338,8 +383,10 @@
   window.__cryptBack = function () {
     var ov = $('#over');
     if (ov && ov.classList.contains('on')) { ov.classList.remove('on'); return true; }
+    if ($('#leave').classList.contains('on')) { closeLeave(); return true; } // back again: stay in the run
     if (current === 'home') return false;
-    show(current === 'play' || current === 'edit' ? 'menu' : 'home');
+    if (current === 'play') { guardLeave(function () { show('menu'); }); return true; }
+    show(current === 'edit' ? 'menu' : 'home');
     return true;
   };
 
@@ -463,7 +510,7 @@
         var d = document.createElement('div');
         d.className = 'it';
         d.innerHTML = '<div><b></b> <span class="m"></span></div>';
-        d.insertBefore(img(k), d.firstChild);
+        d.insertBefore(img(typeIcon(k)), d.firstChild);
         d.querySelector('b').textContent = TYPES[k].name + '.';
         d.querySelector('.m').textContent = TYPES[k].tip;
         lg.appendChild(d);
@@ -482,6 +529,11 @@
     s.appendChild(inner);
     return s;
   }
+  // The sprite in the middle of a card. Fire and ice arrow traps share one block; their arrowheads
+  // (one per side they fire at) are drawn around it, see .heads.
+  function cardArt(c) { return c.kind === 'reward' ? rewardSprite(c.rw) : c.kind === 'dtrap' ? 'trapblock' : c.type; }
+  // A card type's icon in lists (the card guide, the room editor). The plain arrow trap has no sprite of its own.
+  function typeIcon(k) { return k === 'trap' ? 'trapblock' : k; }
   function cardEl(c) {
     var card = document.createElement('div');
     card.className = 'card k-' + c.kind;
@@ -490,14 +542,11 @@
       card.innerHTML = '<span class="chip"></span>';
     } else {
       card.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="dm"><b></b></span><span class="val"></span><span class="shd"><svg class="ic" viewBox="0 0 7 8" shape-rendering="crispEdges"><path fill="#41a6f6" d="M0 0h7v4H6v2H5v1H4v1H3V7H2V6H1V4H0z"/><path fill="#b3d4ff" d="M1 1h2v3H1z"/><path fill="#1d5fa8" d="M4 1h2v3H4z"/></svg></span><span class="chip"></span>';
-      card.insertBefore(img(c.kind === 'reward' ? rewardSprite(c.rw) : c.type, 'art'), card.firstChild);
+      card.insertBefore(img(cardArt(c), 'art'), card.firstChild);
       if (c.kind === 'reward') card.appendChild(img('bars', 'bars'));
       if (c.kind === 'dtrap') {
-        // Arrows on the trap's sides. With a trap_arrow sprite (pointing up) it is drawn and turned for each side;
-        // until that art exists, plain triangles are drawn.
-        var arrowArt = window.SPR && window.SPR.trap_arrow;
-        var hs = document.createElement('span'); hs.className = 'heads ' + (TYPES[c.type].el || 'spike') + (arrowArt ? ' spr' : '');
-        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; if (arrowArt) i.appendChild(img('trap_arrow')); hs.appendChild(i); });
+        var hs = document.createElement('span'); hs.className = 'heads ' + (TYPES[c.type].el || 'plain');
+        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; i.appendChild(img('traphead')); hs.appendChild(i); });
         card.appendChild(hs);
       }
       if (c.kind === 'bomb') { var fz = document.createElement('span'); fz.className = 'fz'; card.appendChild(fz); }
@@ -516,7 +565,7 @@
   }
 
   function startLevel(i) {
-    bankRun();
+    forfeitRun(); // the previous run, if it never ended
     cur = i;
     menuArea = areaOf(i); store.set('cc_area', String(menuArea));
     fixSelection();
@@ -542,6 +591,12 @@
     var bub = document.createElement('span'); bub.className = 'bub'; bub.setAttribute('aria-hidden', 'true'); hc.appendChild(bub);
     hc.appendChild(img('sword', 'held'));
     var wv = document.createElement('span'); wv.className = 'wv'; hc.appendChild(wv);
+    // Lightning Wizard: the smite charge bar along the bottom of the card, one notch per kill.
+    if (DC.HEROES[heroSel].pass.storm) {
+      var chg = document.createElement('span'); chg.className = 'chg'; chg.setAttribute('aria-hidden', 'true');
+      for (var ci = 0; ci < DC.STORM_KILLS; ci++) chg.appendChild(document.createElement('i'));
+      hc.appendChild(chg);
+    }
     heroEl = slotFor(hc);
     heroEl.classList.add('hero');
     board.appendChild(heroEl);
@@ -599,7 +654,7 @@
       val.textContent = t;
     }
     el.classList.toggle('webbed', hidden);
-    var art = el.querySelector('.art'), want = SPR[hidden ? 'web' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type];
+    var art = el.querySelector('.art'), want = SPR[hidden ? 'web' : cardArt(c)];
     if (want && art.getAttribute('src') !== want) art.src = want;
     var shd = el.querySelector('.shd');
     var had = el._sh; el._sh = !!c.sh;
@@ -646,8 +701,14 @@
     heldEl.style.display = H.sword ? '' : 'none';
     if (H.sword) heldEl.src = SPR[H.sword.type || 'sword'] || '';
     var wvEl = heroEl.querySelector('.wv');
-    wvEl.style.display = H.sword ? '' : 'none';
+    wvEl.style.display = H.sword && !H.sword.orb ? '' : 'none';
     if (H.sword) wvEl.textContent = H.sword.c > 1 ? H.sword.v + '×' + H.sword.c : H.sword.v;
+    var chgEl = heroEl.querySelector('.chg');
+    if (chgEl) {
+      var kills = Math.min(DC.STORM_KILLS, H.kills | 0);
+      Array.prototype.forEach.call(chgEl.children, function (n, k) { n.classList.toggle('on', k < kills); });
+      chgEl.classList.toggle('full', kills >= DC.STORM_KILLS);
+    }
     heroEl.classList.toggle('thorns', !!H.pass.thorns && H.hp * 2 <= H.max);
     heroEl.classList.toggle('glow', !!(S.glow && S.glow.cell === H.pos));
     if (H.hp < lastHp) {
@@ -721,29 +782,7 @@
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
     if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
-    renderCharge(H);
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
-  }
-
-  // Lightning Wizard charge meter under the health bar: a segment fills for every kill and the full
-  // bar glows when the smite is ready. The small pips beside it count attacks to the next chain bolt.
-  function renderCharge(H) {
-    var el = $('#h-chg');
-    el.hidden = !H.pass.storm;
-    if (!H.pass.storm) { el.innerHTML = ''; return; }
-    var k = Math.min(DC.STORM_KILLS, H.kills | 0), full = k >= DC.STORM_KILLS, hits = H.hits | 0;
-    if (el.children.length !== 2) {
-      el.innerHTML = '<span class="cm"></span><span class="cc"></span>';
-      for (var i = 0; i < DC.STORM_KILLS; i++) el.firstChild.appendChild(document.createElement('i'));
-      for (var j = 0; j < DC.STORM_CHAIN; j++) el.lastChild.appendChild(document.createElement('i'));
-    }
-    [].forEach.call(el.firstChild.children, function (seg, i) { seg.classList.toggle('on', i < k); });
-    [].forEach.call(el.lastChild.children, function (pip, i) { pip.classList.toggle('on', i < hits); });
-    el.classList.toggle('full', full);
-    el.classList.toggle('next', hits === DC.STORM_CHAIN - 1);
-    el.setAttribute('aria-label', (full ? 'Smite ready' : 'Smite charge ' + k + ' of ' + DC.STORM_KILLS + ' kills') +
-      '. Chain lightning ' + (hits === DC.STORM_CHAIN - 1 ? 'on the next attack' : 'in ' + (DC.STORM_CHAIN - hits) + ' attacks') + '.');
-    el.title = el.getAttribute('aria-label');
   }
 
   var HINT = 'Swipe or tap a card next to your hero. Press and hold any card for details. Tap the weapon box at the bottom right to sell it.';
@@ -795,7 +834,7 @@
     var r = DC.usePower(S, i, target);
     if (!r) {
       // Why a ready power did nothing.
-      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready' };
+      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', teleport: 'You already have an orb' };
       var pid = S.hero.powers[i] && S.hero.powers[i].id;
       if (why[pid]) toast(why[pid]);
       return;
@@ -964,14 +1003,15 @@
         if (tc && tc.kind === 'monster') tEl = els.get(tc.uid);
       }
     }
-    var r = sell === 'bow' ? DC.shootBow(S, aim) : sell ? DC.sellItem(S, sell) : DC.move(S, dir);
+    var r = sell === 'bow' ? DC.shootBow(S, aim) : sell === 'orb' ? DC.throwOrb(S, aim) : sell ? DC.sellItem(S, sell) : DC.move(S, dir);
     if (!r) {
       board.classList.remove('shake'); void board.offsetWidth; board.classList.add('shake');
       return;
     }
     busy = true; setTimeout(function () { busy = false; }, 110);
     floaters(r.fx);
-    if (r.attack && r.attack.bow) { shoot('dart', fromCell, aim, r.attack.type === 'ninjastar' ? '#c0cbdc' : '#ffd76a'); flash(heroEl.querySelector('.held'), 'swing', 320); }
+    if (r.attack && r.attack.orb) { shoot('dart', fromCell, aim, '#d874c0'); castLook('teleport'); }
+    else if (r.attack && r.attack.bow) { shoot('dart', fromCell, aim, r.attack.type === 'ninjastar' ? '#c0cbdc' : '#ffd76a'); flash(heroEl.querySelector('.held'), 'swing', 320); }
     else if (r.attack && r.attack.beam) playBeam(fromCell, dir, r.attack.el);
     else if (r.attack && r.attack.sweep) playSweep(dir, r.attack.sweep.cells, heroEl);
     else if (r.attack && tEl) playAttack(dir, tEl, tCell, r.attack.type || weapon, r.attack.immune);
@@ -979,7 +1019,6 @@
     if (r.thorns && r.thorns.length) setTimeout(function () { if (S) playThorns(r.thorns); }, 60);
     if (r.tremor != null) castLook('quake'); // passive Tremor went off as the hero stepped away
     if (r.stand) { castLook('laststand'); toast('Last Stand saved you!'); }
-    if (S.hero.gold > (best[cur] || 0)) { best[cur] = S.hero.gold; saveBest(); }
     if (r.eaten && r.eaten.kind === 'reward') claimReward(cur, r.eaten.rw);
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
     render();
@@ -1015,6 +1054,7 @@
   function showOver() {
     var L = levels[cur], g = S.hero.gold;
     var prevBest = (best[cur] || 0);
+    if (g > prevBest) { best[cur] = g; saveBest(); } // only a finished run sets a best
     $('#o-score').textContent = g;
     var kidsOf = childrenOf(cur), open = [], note = '';
     $('#o-sub').textContent = 'gold on ' + L.name;
@@ -1090,7 +1130,7 @@
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]);
         var sides = ['top', 'right', 'bottom', 'left'].filter(function (x, d) { return c.h[d]; });
-        t = 'Spike trap with ' + n4 + (n4 === 1 ? ' arrow' : ' arrows') + ' (' + sides.join(', ') + '). Step onto it from a side with an arrow and its spikes hurt you for ' + n + '; from any other side it is safe. The arrows turn clockwise every turn. It never hurts the cards around it.';
+        t = 'Arrow trap with ' + n4 + (n4 === 1 ? ' arrowhead' : ' arrowheads') + ' (' + sides.join(', ') + '). Step onto it from a side with an arrowhead and it hurts you for ' + n + '; from any other side it is safe. The arrowheads turn clockwise every turn. It never hurts the cards around it.';
         if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }
@@ -1109,7 +1149,7 @@
       case 'reward': t = 'A locked reward. Step on it to unlock ' + rewardName(c.rw) + ' and clear this room.'; break;
       default: t = T.tip;
     }
-    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
+    return { sprite: c.type === 'blank' ? 'coin' : cardArt(c), title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
   }
   function describeHero() {
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
@@ -1118,10 +1158,10 @@
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
     if (H.pass.storm) {
       t += (H.kills | 0) >= DC.STORM_KILLS ? ' Smite is charged: your next attack kills outright.' : ' Smite charge: ' + (H.kills | 0) + ' of ' + DC.STORM_KILLS + ' kills.';
-      var left = DC.STORM_CHAIN - (H.hits | 0);
-      t += ' Chain lightning (' + DC.chainDamage(H.lv) + ' damage) ' + (left === 1 ? 'on your next attack.' : 'in ' + left + ' attacks.');
+      t += ' Chain lightning: ' + DC.chainDamage(H.lv) + ' damage.';
     }
-    if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.bow ? (H.sword.star ? ', one throw' : ', one arrow') : '') + '.';
+    if (H.sword && H.sword.orb) t += ' Holding a Teleport orb: tap any card to swap places with it.';
+    else if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.bow ? (H.sword.star ? ', one throw' : ', one arrow') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
   function inspect(x, y) {
@@ -1166,6 +1206,8 @@
     if (cx >= 0 && cy >= 0 && cx < L.w && cy < L.h) {
       var bp = cy * L.w + cx, bc = S.grid[bp];
       var sw = S.hero.sword;
+      // Holding a Teleport orb: any tap on a card throws it (swipe or use the keys to step).
+      if (sw && sw.orb) { if (DC.orbTarget(S, bp)) doMove(null, 'orb', bp); return; }
       if (sw && sw.bow && bc && bc.kind === 'monster' && !bc.frozen && bc.type !== 'webspider') {
         var inLine = cx === S.hero.pos % L.w || cy === ((S.hero.pos / L.w) | 0);
         if (!sw.star || inLine) { doMove(null, 'bow', bp); return; }
@@ -1179,14 +1221,17 @@
   board.addEventListener('pointercancel', function () { clearTimeout(holdTimer); down = null; hideInfoSoon(); });
   document.addEventListener('keydown', function (e) {
     if (current !== 'play') return;
+    if ($('#leave').classList.contains('on')) { if (e.key === 'Escape') closeLeave(); return; } // the leave prompt is open
     if (e.key >= '1' && e.key <= '3') { slotClick(Number(e.key) - 1); return; }
     var m = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3 };
     if (e.key in m && !e.metaKey && !e.ctrlKey) { e.preventDefault(); doMove(m[e.key]); }
   });
   window.addEventListener('resize', layoutBoard);
 
-  $('#b-back').addEventListener('click', function () { show('menu'); });
-  $('#b-restart').addEventListener('click', function () { startLevel(cur); });
+  $('#b-back').addEventListener('click', function () { guardLeave(function () { show('menu'); }); });
+  $('#b-restart').addEventListener('click', function () { guardLeave(function () { startLevel(cur); }); });
+  $('#l-stay').addEventListener('click', closeLeave);
+  $('#l-go').addEventListener('click', function () { var go = leaveGo; closeLeave(); if (go) go(); });
   $('#o-again').addEventListener('click', function () { startLevel(cur); });
   $('#o-next').addEventListener('click', function () { if (nextPick != null) startLevel(nextPick); });
   $('#o-menu').addEventListener('click', function () { $('#over').classList.remove('on'); show('menu'); });
@@ -1207,7 +1252,7 @@
   // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
-    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
+    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id), title: H.name, tag: '',
       level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Heals', DC.songHeal(lv) + ' a turn'], ['Overheal', '+' + DC.overheal(lv)]] : []) };
     if (open) {
       var on = id === heroSel;
@@ -1252,8 +1297,8 @@
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
-    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
-      level: lv, ability: P.desc || powerTip(id), stats: powerStats(id, lv) };
+    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id), title: P.name, tag: '',
+      level: lv, ability: P.desc || powerTip(id).replace(/ Right now:.*$/, ''), stats: powerStats(id, lv) }; // the stats already show the number
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
       o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
@@ -1269,7 +1314,7 @@
   // A locked hero or power can be bought with gold instead of clearing its room.
   function unlockOffer(kind, id, name, info) {
     var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
-    return { text: rewardRoom(kind, id) < 0 ? '' : 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
+    return { text: '', label: 'Unlock', cost: cost, ok: purse >= cost,
       short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
       buy: function () { if (buyUnlock(kind, id)) { refreshLoadoutScreen(); loInfo(info(id)); toast(name + ' unlocked!'); } } };
   }
@@ -1288,8 +1333,8 @@
     function line(tag, cls, text) { if (!text) return; var e = document.createElement(tag); e.className = cls; e.textContent = text; d.appendChild(e); }
     line('span', 'li-lock', o.lock);
     line('b', 'li-name', o.title);
-    line('span', 'li-tag', o.tag);
     line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
+    line('span', 'li-tag', o.tag);
     if (o.stats && o.stats.length) {
       var st = document.createElement('dl'); st.className = 'li-stats';
       o.stats.forEach(function (kv) {
@@ -1758,7 +1803,7 @@
     TYPE_ORDER.forEach(function (k) {
       var lab = document.createElement('label');
       lab.setAttribute('for', 'w-' + k);
-      var em = img(k);
+      var em = img(typeIcon(k));
       var nm = document.createElement('span'); nm.style.cssText = 'font-size:.78rem'; nm.textContent = TYPES[k].name + (total ? ' ' + Math.round(100 * (L.weights[k] || 0) / total) + '%' : '');
       var inp = document.createElement('input');
       inp.id = 'w-' + k; inp.type = 'number'; inp.min = 0; inp.max = 999; inp.inputMode = 'numeric';
@@ -1823,7 +1868,6 @@
   });
 
   // Closing the app mid-run still banks that run's gold.
-  window.addEventListener('pagehide', function () { if (current === 'play') bankRun(); });
 
   // ---- Boot -----------------------------------------------------------------
   function start(data) {

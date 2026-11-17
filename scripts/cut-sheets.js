@@ -22,7 +22,15 @@ const SHEETS = {
   '06_Elemental_Weapons.png': { cols: 5, ids: ['elecbow', null, 'firesword', null, 'firewand', null, 'icesword', null, 'icewand', 'painblade'] }, // nulls: removed sprites (old arrows, fire and ice traps)
   '07_Tools_and_Items.png': { cols: 3, ids: ['ninjastar', 'poison', 'potion', 'scythe', 'sword', 'windblade', 'p_dart', 'p_forge', 'p_shield'] },
   '08_Power_Effects.png': { cols: 3, ids: ['p_burst', 'p_fire', 'p_heal', 'p_ice', 'p_massheal', 'p_quake', 'p_scythe', 'p_teleport', 'p_thunder'] },
-  '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] }
+  '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] },
+  // Arrow traps (fire and ice): the block, and one arrowhead drawn pointing up that the game turns to each side.
+  '10_Trap_Block.png': { cols: 1, ids: ['trapblock'] },
+  '11_Trap_Head.png': { cols: 1, ids: ['traphead'] },
+  // Power icons delivered one at a time.
+  '12_Power_Magnet.png': { cols: 1, ids: ['p_magnet'] },
+  '13_Power_Hourglass.png': { cols: 1, ids: ['p_hourglass'] },
+  '14_Power_Whetstone.png': { cols: 1, ids: ['p_whetstone'] },
+  '15_Power_Last_Stand.png': { cols: 1, ids: ['p_laststand'] }
 };
 // Sprites to turn while cutting (degrees anticlockwise), for art drawn at an angle on its sheet.
 const ROTATE = {};

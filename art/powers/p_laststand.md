@@ -1,5 +1,7 @@
 # Request: Last Stand (power)
 
+**Delivered** 2026-11-17 as `art/sheets/15_Power_Last_Stand.png` (delivered as "sturdy": a golden powered-up fighter), now in the game. This brief stays for any redraw.
+
 - **Sprite id:** `p_laststand` (deliver `p_laststand.png`)
 - **Kind:** power icon
 - **Read first:** `art/README.md` (format and style rules)
