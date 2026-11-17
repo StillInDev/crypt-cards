@@ -13,6 +13,9 @@ scripts/        patch-android.js  (portrait lock, version numbers, target-API ch
 .github/        workflow that builds the signed .aab in the cloud
 ```
 
+## Just want it on your phone? (test APK)
+Every push to `main` (or a `ccr-*` / `claude/*` branch) runs **Build test APK** in GitHub Actions. When it finishes, open the repo's **Releases -> Crypt Cards test APK** on your phone (signed in to GitHub), tap `crypt-cards-test.apk`, and allow installs from your browser when Android asks. You can also start it by hand: Actions -> Build test APK -> Run workflow. It is debug-signed, so before installing a Play Store copy later, uninstall the test one.
+
 ## Before anything: change the app id
 `capacitor.config.json` -> `appId` is currently `com.yourname.cryptcards`. Make it your own reverse-domain id, for example `com.janedoe.cryptcards`. **It can never change after the app is on Play.** Do this before the first build.
 
