@@ -342,12 +342,17 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 /* ---- Directional traps ---- */
 .k-dtrap { --face: #e2cfc2; --vc: #5a2f3a; }
 .card .heads { position: absolute; inset: 0; pointer-events: none; }
-.card .hd { position: absolute; width: 0; height: 0; opacity: 0; }
+/* Arrow traps: the block sits in the middle, and an arrowhead is attached to each side it fires at.
+   One arrowhead sprite, drawn pointing up, is turned to face each side. The element shows as a coloured outline. */
+.card .hd { position: absolute; width: 35%; height: 35%; opacity: 0; display: grid; place-items: center; }
+.card .hd img { width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(1px 0 0 var(--hc)) drop-shadow(-1px 0 0 var(--hc)) drop-shadow(0 1px 0 var(--hc)) drop-shadow(0 -1px 0 var(--hc)); }
 .card .hd.on { opacity: 1; }
-.card .hd.n { left: 50%; top: 2px; margin-left: calc(var(--cs) * -.09); border-left: calc(var(--cs) * .09) solid transparent; border-right: calc(var(--cs) * .09) solid transparent; border-bottom: calc(var(--cs) * .16) solid var(--hc); }
-.card .hd.s { left: 50%; bottom: 2px; margin-left: calc(var(--cs) * -.09); border-left: calc(var(--cs) * .09) solid transparent; border-right: calc(var(--cs) * .09) solid transparent; border-top: calc(var(--cs) * .16) solid var(--hc); }
-.card .hd.w { top: 50%; left: 2px; margin-top: calc(var(--cs) * -.09); border-top: calc(var(--cs) * .09) solid transparent; border-bottom: calc(var(--cs) * .09) solid transparent; border-right: calc(var(--cs) * .16) solid var(--hc); }
-.card .hd.e { top: 50%; right: 2px; margin-top: calc(var(--cs) * -.09); border-top: calc(var(--cs) * .09) solid transparent; border-bottom: calc(var(--cs) * .09) solid transparent; border-left: calc(var(--cs) * .16) solid var(--hc); }
+.card .hd.n { left: 50%; top: -2%; transform: translateX(-50%); }
+.card .hd.s { left: 50%; bottom: -2%; transform: translateX(-50%) rotate(180deg); }
+.card .hd.e { top: 50%; right: -2%; transform: translateY(-50%) rotate(90deg); }
+.card .hd.w { top: 50%; left: -2%; transform: translateY(-50%) rotate(-90deg); }
+.card .heads { --hc: #c0cbdc; z-index: 3; }
 .card .heads.fire { --hc: #ff5a1f; }
 .card .heads.ice { --hc: #2ce8f5; }
 
@@ -557,6 +562,8 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 /* sprites are 18x18 now (1px margin), so boxes sized for 16px art grow by 18/16 to keep the same look */
 .card .art { width: 63%; height: 63%; }
 .slot.hero .card .art { width: 52%; height: 52%; }
+/* Arrow trap block: smaller and centred, so the arrowheads on its sides fit inside the card. */
+.k-dtrap .art { width: 46%; height: 46%; margin-top: 0; }
 .card .held { width: 52%; }
 
 /* ---- football map and themed rooms ---- */

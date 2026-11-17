@@ -22,7 +22,10 @@ const SHEETS = {
   '06_Elemental_Weapons.png': { cols: 5, ids: ['elecbow', 'firearrow', 'firesword', 'firetrap', 'firewand', 'icearrow', 'icesword', 'icetrap', 'icewand', 'painblade'] },
   '07_Tools_and_Items.png': { cols: 3, ids: ['ninjastar', 'poison', 'potion', 'scythe', 'sword', 'windblade', 'p_dart', 'p_forge', 'p_shield'] },
   '08_Power_Effects.png': { cols: 3, ids: ['p_burst', 'p_fire', 'p_heal', 'p_ice', 'p_massheal', 'p_quake', 'p_scythe', 'p_teleport', 'p_thunder'] },
-  '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] }
+  '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] },
+  // Arrow traps (fire and ice): the block, and one arrowhead drawn pointing up that the game turns to each side.
+  '10_Trap_Block.png': { cols: 1, ids: ['trapblock'] },
+  '11_Trap_Head.png': { cols: 1, ids: ['traphead'] }
 };
 // The game rotates arrow sprites itself and expects them pointing straight up. The sheet draws them
 // pointing up-right, so they are turned 45 degrees anticlockwise.

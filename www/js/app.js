@@ -485,6 +485,9 @@
     s.appendChild(inner);
     return s;
   }
+  // The sprite in the middle of a card. Fire and ice arrow traps share one block; their arrowheads
+  // (one per side they fire at) are drawn around it, see .heads.
+  function cardArt(c) { return c.kind === 'reward' ? rewardSprite(c.rw) : c.kind === 'dtrap' ? 'trapblock' : c.type; }
   function cardEl(c) {
     var card = document.createElement('div');
     card.className = 'card k-' + c.kind;
@@ -493,11 +496,11 @@
       card.innerHTML = '<span class="chip"></span>';
     } else {
       card.innerHTML = '<span class="hp"><svg class="ic" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#e43b44" d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/><path fill="#ff8a8f" d="M1 1h1v1H1z"/></svg><b></b></span><span class="dm"><b></b></span><span class="val"></span><span class="shd"><svg class="ic" viewBox="0 0 7 8" shape-rendering="crispEdges"><path fill="#41a6f6" d="M0 0h7v4H6v2H5v1H4v1H3V7H2V6H1V4H0z"/><path fill="#b3d4ff" d="M1 1h2v3H1z"/><path fill="#1d5fa8" d="M4 1h2v3H4z"/></svg></span><span class="chip"></span>';
-      card.insertBefore(img(c.kind === 'reward' ? rewardSprite(c.rw) : c.type, 'art'), card.firstChild);
+      card.insertBefore(img(cardArt(c), 'art'), card.firstChild);
       if (c.kind === 'reward') card.appendChild(img('bars', 'bars'));
       if (c.kind === 'dtrap') {
         var hs = document.createElement('span'); hs.className = 'heads ' + TYPES[c.type].el;
-        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; hs.appendChild(i); });
+        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; i.appendChild(img('traphead')); hs.appendChild(i); });
         card.appendChild(hs);
       }
       if (c.kind === 'bomb') { var fz = document.createElement('span'); fz.className = 'fz'; card.appendChild(fz); }
@@ -599,7 +602,7 @@
       val.textContent = t;
     }
     el.classList.toggle('webbed', hidden);
-    var art = el.querySelector('.art'), want = SPR[hidden ? 'web' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type];
+    var art = el.querySelector('.art'), want = SPR[hidden ? 'web' : cardArt(c)];
     if (want && art.getAttribute('src') !== want) art.src = want;
     var shd = el.querySelector('.shd');
     var had = el._sh; el._sh = !!c.sh;
@@ -1086,7 +1089,7 @@
       case 'reward': t = 'A locked reward. Step on it to unlock ' + rewardName(c.rw) + ' and clear this room.'; break;
       default: t = T.tip;
     }
-    return { sprite: c.type === 'blank' ? 'coin' : c.kind === 'reward' ? rewardSprite(c.rw) : c.type, title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
+    return { sprite: c.type === 'blank' ? 'coin' : cardArt(c), title: T.name + (c.kind === 'empty' || c.kind === 'reward' || T.tomb ? '' : ' ' + n), text: t };
   }
   function describeHero() {
     var H = S.hero, D = DC.HEROES[H.id], t = D.desc + ' Health ' + H.hp + ' of ' + H.max + '.';
