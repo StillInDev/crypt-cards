@@ -1380,7 +1380,7 @@
   function renderHero() {
     fixSelection();
     var slots = DC.HEROES[heroSel].slots;
-    $('#hp-sub').textContent = 'Clear rooms or spend gold to get new heroes and powers.';
+    $('#hp-sub').textContent = 'Clear rooms or buy new heroes and powers.';
 
     // Loadout: powers above the head, then the hero.
     fillLoadout('hp', function (pid) { powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero(); },
