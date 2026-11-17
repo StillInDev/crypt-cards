@@ -13,7 +13,7 @@
     trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
     // Monster tips say only what makes that monster different. The shared rules (it hurts for its number,
     // fire and ice monsters, shields, freezing) are not repeated on every card.
-    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Breeds: if it stays put for 3 turns, it turns a neighbouring card into another rat just as strong.' },
+    rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Breeds: if it stays put for 3 turns, it bites a neighbouring card (even another rat) for its number. An empty square, or a card it destroys, becomes another rat just as strong. When rats bite the same card, only the biggest bite lands.' },
     bat:       { kind: 'monster', name: 'Bat',             lo: 2, hi: 4, bf: 1,   frail: true, tip: 'Weakness, paper wings: any hit at all kills it.' },
     skeleton:  { kind: 'monster', name: 'Skeleton',        lo: 3, hi: 6, bf: 1,   brittle: true, tip: 'Weakness, brittle bones: weapons hit it for double.' },
     ogre:      { kind: 'monster', name: 'Ogre',            lo: 5, hi: 9, bf: 1,   thick: 1, tip: 'Thick skull: a weapon that hits it wears down 1 extra.' },
@@ -100,21 +100,26 @@
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
   const HEROES = {
-    knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 2, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Sturdy. Swords you pick up are 1 stronger.' },
-    sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Frail, but powers start ready and recharge 30% faster. Carries three powers.' },
+    knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 3, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Sturdy. Swords you pick up are 1 stronger.' },
+    sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Frail, but powers start ready and recharge 30% faster.' },
     // Shown as the Yeti; the id stays 'icemage' so saved picks and the Frozen Cavern reward keep working.
-    icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 2, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
+    icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 3, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
-    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 2, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
-    cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 2, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
+    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
+    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: '8 kills charge a smite: the next attack kills outright. Every 4th attack chains lightning to the monsters next to the target, for 1 + his level in damage.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Soothing tunes: heals 1 every 3 turns. All healing can take him over his max health, by up to 3 + his upgrades.' },
+    dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Scaly feet: stomps monsters with 1 health, taking no damage and not using his weapon.' },
+    count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Lifesteal: heals 1 for every 3 damage his weapons deal.' },
+    barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'Rage: at a quarter health or less, weapon hits have a 1 in 3 chance to crit for double damage, without wearing the weapon down any faster.' },
+    cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 3, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
   };
 
   // ---- Powers ---------------------------------------------------------------
   // cd: turns to recharge. target: what a tap must hit (null = acts at once).
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
-    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword of power 10. It replaces the one you hold.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and dies if that is enough.' },
+    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and is poisoned: it loses 1 health a turn for 3 turns.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
@@ -129,12 +134,13 @@
   // ---- Power upgrades (bought with banked gold between runs) ----------------
   // Each power has levels 0..POWER_MAX_LV. amt: [base, gain per level] for its main number;
   // cdCut: turns of recharge removed per level. {n} in the text is the current amount.
-  const POWER_MAX_LV = 3;
-  const UPGRADE_COST = [150, 450, 1200]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
+  const POWER_MAX_LV = 4;
+  const DART_POISON = 3; // turns of poison a dart leaves in the monster it hits (1 damage a turn)
+  const UPGRADE_COST = [150, 450, 1200, 3000]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
-    forge:    { amt: [10, 3], text: 'Conjure a sword of power {n}. It replaces the one you hold.', what: '+3 sword power' },
-    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and dies if that is enough.', what: '+2 damage' },
+    forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
+    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and is poisoned: it loses 1 health a turn for 3 turns.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
     massheal: { amt: [2, 1],  text: 'Heal {n}, and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
@@ -146,12 +152,18 @@
     ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.', what: '+1 shielded turn' }
   };
   function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
-  function powerAmount(id, lv) { const u = UPGRADES[id]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
+  function powerAmount(id, lv) { const u = UPGRADES[id]; if (u && u.bonus) return u.bonus[clampLv(lv)]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
+  // What the next upgrade of a power adds, for the upgrade button.
+  function upgradeWhat(id, lv) { const w = UPGRADES[id] && UPGRADES[id].what; return Array.isArray(w) ? w[clampLv(lv)] : w; }
+  // Forge: a sword as strong as the hero's max health, plus the upgrade bonus.
+  function forgePower(S, lv) { return S.hero.max + powerAmount('forge', lv); }
   function powerCd(id, lv) { const u = UPGRADES[id]; return Math.max(1, POWERS[id].cd - (u && u.cdCut ? u.cdCut * clampLv(lv) : 0)); }
   function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
 
   // Hero upgrades: each level adds HERO_UP_HP max health.
-  const HERO_UPGRADE_COST = [100, 250, 500, 1000, 2000, 4000, 8000];
+  const HERO_UPGRADE_COST = [100, 250, 500, 1000];
+  // Gold to unlock a hero or power straight away instead of finding it in its room.
+  const HERO_BUY_COST = 1000, POWER_BUY_COST = 500;
   const HERO_MAX_LV = HERO_UPGRADE_COST.length;
   const HERO_UP_HP = 2;
   function heroLv(lv) { return Math.max(0, Math.min(HERO_MAX_LV, lv | 0)); }
@@ -201,6 +213,19 @@
     return c;
   }
 
+  const RAT_TURNS = 3;
+  // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
+  const STORM_KILLS = 8, STORM_CHAIN = 4;
+  // Bard: heals 1 every SONG_TURNS turns; healing can overfill max health by 3 + upgrades.
+  const SONG_TURNS = 3;
+  function overheal(lv) { return 3 + (lv | 0); }
+  function healCap(H) { return H.max + (H.pass.song ? overheal(H.lv) : 0); }
+  function healBy(H, amt) { const g = Math.max(0, Math.min(amt, healCap(H) - H.hp)); H.hp += g; return g; }
+  // Barbarian: at a quarter health or less, a weapon hit crits (double damage) 1 time in 3.
+  function critMul(S) { const H = S.hero; return H.pass.rage && S.rng && H.hp > 0 && H.hp * 4 <= H.max && S.rng() < 1 / 3 ? 2 : 1; }
+  // Vampire: damage dealt by weapons this step, for lifesteal.
+  let weaponDealt = 0;
+  function chainDamage(lv) { return 2 + (lv | 0); } // 1 + the level shown (Lvl. 1 at no upgrades) // still turns before a rat strikes
   function blankCard(S) { return { uid: ++S.uid, type: 'blank', kind: 'empty', v: 0 }; }
 
   // Helpful cards can't flood the board: once one kind of them (all weapons, all potions, all coins and
@@ -273,7 +298,8 @@
         id: hid,
         pos: Math.floor(level.h / 2) * level.w + Math.floor(level.w / 2),
         hp: maxHp, max: maxHp, gold: 0, turn: 0,
-        sword: null, poison: 0, frost: 0, ward: 0, pass: pass,
+        sword: null, forge: 0, poison: 0, frost: 0, ward: 0, pass: pass,
+        lv: heroLv(opts.heroLevel), kills: 0, hits: 0, drain: 0, song: 0,
         powers: ids.map(function (id) {
           const lv = clampLv((opts.upgrades || {})[id]);
           if (POWERS[id].passive) return { id: id, max: 0, cd: 0, lv: lv };
@@ -292,11 +318,12 @@
     // Copy without the rng so a preview never advances the real game.
     return {
       level: S.level, rng: null, uid: S.uid, over: S.over, powerLevel: S.powerLevel,
-      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, mx: c.mx, ph: c.ph }; }),
+      grid: S.grid.map(function (c) { return c && { uid: c.uid, type: c.type, kind: c.kind, v: c.v, t: c.t, h: Array.isArray(c.h) ? c.h.slice() : c.h, frozen: c.frozen, sh: c.sh, rw: c.rw, psn: c.psn, mx: c.mx, ph: c.ph }; }),
       resist: S.resist,
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
-        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass,
+        frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
+        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
@@ -396,6 +423,7 @@
     if (T.immortal) nv = lethal ? 0 : Math.max(1, nv); // only a lethal blow can finish it
     const killed = nv <= 0;
     const dealt = m.v - Math.max(nv, 0);
+    if (byWeapon) weaponDealt += dealt;
     m.v = Math.max(nv, 0);
     const out = { dealt: dealt, killed: killed, mult: mult, eff: eff, immune: false };
     if (!killed && dealt > 0 && T.tail) {
@@ -435,6 +463,7 @@
     if (T.thick && (res.dealt > 0 || res.stone)) cost += T.thick;
     return cost;
   }
+  // A Barbarian crit deals double, but wearOf caps the wear at the weapon's power: the same as a normal hit.
   // A weapon in your hands hit monster m at p. Scorpions sting back; a minotaur that survives breaks it.
   // Returns true when the weapon broke.
   function weaponHitBack(S, m, p, res, fx) {
@@ -611,11 +640,16 @@
     const fx = [];
     let swap = false, attacked = false, attack = null;
     begin(S);
+    weaponDealt = 0;
+    const swing = sell === 'bow' || (!sell && card.kind === 'monster' && !card.frozen && card.type !== 'webspider' && H.sword && !H.sword.bow);
+    const crit = swing ? critMul(S) : 1;
+    if (crit > 1) fx.push({ cell: sell === 'bow' ? aim : tpos, text: 'Crit!', cls: 'hurt', anim: 'spark' });
+    let struck = 0; // a melee attack on a monster this turn: 1 hit, 2 killed (counted for the Lightning Wizard)
 
     if (sell === 'bow') {
       // Shoot: the target takes full power, and the shock jumps to touching monsters, 1 weaker each jump.
       attacked = true;
-      const seen = { [aim]: H.sword.v }, order = [aim], hits = [];
+      const seen = { [aim]: H.sword.v * crit }, order = [aim], hits = [];
       for (let qi = 0; qi < order.length && !H.sword.star; qi++) {
         const p = order[qi], d = seen[p];
         if (d <= 1) continue;
@@ -655,6 +689,21 @@
     } else if (card.kind === 'monster' && T.phase && card.ph) {
       // A faded ghost: you pass right through it and swap places. Nothing hits, nothing hurts.
       swap = true; fx.push({ cell: tpos, text: 'Passes through', cls: 'info', anim: 'immune' });
+    } else if (card.kind === 'monster' && H.pass.stomp && card.v <= 1 && !(T.immortal)) {
+      // Dragonborn: a 1-health monster is simply stomped. No damage, and the weapon is not used.
+      fx.push({ cell: tpos, text: 'Stomp', cls: 'info', anim: 'puff' });
+      if (T.pays) { H.gold += card.v; fx.push({ cell: tpos, text: '+' + card.v + 'G', cls: 'gold', anim: 'gold' }); }
+      noteDeath(card, tpos);
+      struck = 2;
+    } else if (card.kind === 'monster' && H.pass.storm && (H.kills | 0) >= STORM_KILLS && !(H.sword && H.sword.bow)) {
+      // Smite: the charged attack kills any monster outright and does not wear the weapon down.
+      const v0 = card.v;
+      card.v = 0; H.kills = 0; noteDeath(card, tpos);
+      attack = { dmg: v0, killed: true, el: null, type: 'smite', immune: false };
+      fx.push({ cell: tpos, text: '', cls: 'info', anim: 'bolt' });
+      fx.push({ cell: tpos, text: 'Smite', cls: 'info', anim: 'puff' });
+      if (T.pays) { H.gold += v0; fx.push({ cell: tpos, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
+      struck = 3;
     } else if (card.kind === 'monster' && H.sword && H.sword.wand) {
       // A wand hits like a sword, but pierces: whatever power is left after a monster carries on down
       // the row or column into the next one, until the power runs out or the beam reaches the edge.
@@ -665,7 +714,7 @@
         const p = cy * w + cx, m = S.grid[p];
         beam.push(p);
         if (m && m.kind === 'monster' && !m.frozen && m.type !== 'webspider') {
-          const v0 = m.v, res = hurtMonster(m, power, wel, wel === 'ice', true);
+          const v0 = m.v, res = hurtMonster(m, power * (first ? crit : 1), wel, wel === 'ice', true);
           attack.hits++;
           power -= wearOf(m, res, power);
           resultFx(S, m, p, res, v0, fx, wel);
@@ -678,6 +727,7 @@
         cx += DIRS[dir][0]; cy += DIRS[dir][1];
       }
       attack.beam.cells = beam;
+      struck = attack.killed ? 2 : 1;
       H.sword.v = Math.max(0, power);
       if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Wand spent', cls: 'info', anim: 'break' }); }
       attacked = !attack.killed;
@@ -694,13 +744,14 @@
       cells.forEach(function (p, idx) {
         const m = S.grid[p];
         if (!m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') return;
-        const v0 = m.v, res = hurtMonster(m, H.sword.v, null, false, true);
+        const v0 = m.v, res = hurtMonster(m, H.sword.v * crit, null, false, true);
         cost = Math.max(cost, wearOf(m, res, H.sword.v));
         if (idx === 0) { attack.dmg = res.dealt; attack.killed = res.killed; }
         resultFx(S, m, p, res, v0, fx);
         if (res.killed && idx !== 0) S.grid[p] = null;
         if (weaponHitBack(S, m, p, res, fx)) { gored = true; fx.push({ cell: p, text: 'Gored', cls: 'hurt', anim: 'break' }); }
       });
+      struck = attack.killed ? 2 : 1;
       H.sword.v -= cost;
       if (gored) H.sword = null;
       else if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Scythe broke', cls: 'info', anim: 'break' }); }
@@ -708,7 +759,7 @@
     } else if (card.kind === 'monster' && H.sword && !H.sword.bow) {
       // Armed: hit the monster instead of walking into it. If it dies, take its place.
       const wel = H.sword.el || null, v0 = card.v;
-      const res = hurtMonster(card, H.sword.v, wel, wel === 'ice', true);
+      const res = hurtMonster(card, H.sword.v * crit, wel, wel === 'ice', true);
       H.sword.v -= wearOf(card, res, H.sword.v); // the blade wears down by the power it spends
       attack = { dmg: res.dealt, killed: res.killed, el: wel, type: H.sword.type || 'sword', immune: res.immune };
       resultFx(S, card, tpos, res, v0, fx);
@@ -716,6 +767,7 @@
       if (weaponHitBack(S, card, tpos, res, fx)) { H.sword = null; fx.push({ cell: from, text: 'Gored', cls: 'hurt', anim: 'break' }); }
       else if (H.sword.v <= 0) { H.sword = null; fx.push({ cell: from, text: 'Sword broke', cls: 'info', anim: 'break' }); }
       attacked = !res.killed;
+      if (!res.immune) struck = res.killed ? 2 : 1;
     } else if (card.type === 'tomb') {
       // Bare-handed (or holding a bow): you bump into the tomb. Nothing breaks, the turn is spent.
       attacked = true; fx.push({ cell: tpos, text: 'Bump', cls: 'info' });
@@ -723,8 +775,7 @@
       const g = card.v + (H.pass.gold || 0);
       H.gold += g; fx.push({ cell: tpos, text: '+' + g, cls: 'gold', anim: 'gold' });
     } else if (card.kind === 'heal') {
-      const g = Math.min(card.v, H.max - H.hp);
-      H.hp += g; fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' });
+      const g = healBy(H, card.v); fx.push({ cell: tpos, text: '+' + g, cls: 'heal', anim: 'heal' });
       if (T.bonusGold) { H.gold += T.bonusGold; fx.push({ cell: tpos, text: '+' + T.bonusGold + 'G', cls: 'gold' }); }
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
@@ -739,6 +790,7 @@
       }
     } else if (card.kind === 'monster') {
       let lost = 0;
+      struck = 2; // bare-handed you take the hit, and the monster is gone
       if (H.frost > 0) fx.push({ cell: tpos, text: 'Frozen', cls: 'info' });
       else if (T.el && H.ward > 0) fx.push({ cell: tpos, text: 'Shielded', cls: 'info', anim: 'immune' });
       else {
@@ -766,6 +818,41 @@
       H.pos = tpos;
     }
     H.turn++;
+
+    // Lightning Wizard: kills charge the smite, and every 4th attack chains lightning to the
+    // monsters next to the target.
+    if (H.pass.storm && struck) {
+      if (struck === 2) H.kills = Math.min(STORM_KILLS, (H.kills | 0) + 1);
+      H.hits = (H.hits | 0) + 1;
+      if (H.hits >= STORM_CHAIN) {
+        H.hits = 0;
+        const zap = chainDamage(H.lv);
+        for (const ap of neighbours4(S, tpos)) {
+          const m = S.grid[ap];
+          if (ap === H.pos || !m || m.kind !== 'monster' || m.frozen || m.type === 'webspider') continue;
+          const v0 = m.v, res = hurtMonster(m, zap, null, false);
+          fx.push({ cell: ap, text: '', cls: 'info', anim: 'bolt' });
+          if (res.killed) {
+            fx.push({ cell: ap, text: 'Slain', cls: 'info', anim: 'puff' });
+            if (TYPES[m.type].pays) { H.gold += v0; fx.push({ cell: ap, text: '+' + v0 + 'G', cls: 'gold', anim: 'gold' }); }
+            S.grid[ap] = null;
+          } else if (res.dealt) fx.push({ cell: ap, text: '−' + res.dealt, cls: 'info', hit: m.uid });
+        }
+      }
+    }
+
+    // Vampire: weapon damage this step heals 1 per 3, the rest carries over.
+    if (H.pass.drain && weaponDealt > 0 && H.hp > 0) {
+      H.drain = (H.drain | 0) + weaponDealt;
+      const g = Math.min(Math.floor(H.drain / H.pass.drain), Math.max(0, H.max - H.hp));
+      H.drain %= H.pass.drain;
+      if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+    }
+    // Bard: a little healing every few turns.
+    if (H.pass.song && H.hp > 0) {
+      H.song = (H.song | 0) + 1;
+      if (H.song >= SONG_TURNS) { H.song = 0; const g = healBy(H, 1); if (g) fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); }
+    }
 
     let tremor = null; // the square Tremor hit this turn, if any (set after the slide below)
 
@@ -871,24 +958,55 @@
       }
     }
 
-    // Rats (passive): checked after the cards have slid. A rat that stays in the same square
-    // for 3 turns turns a random neighbouring card (never the hero or the room's reward,
-    // and not another rat) into a new rat just as strong. Moving resets the count.
+    // Poisoned monsters (from the poison dart) lose 1 health a turn until the poison wears off.
     if (S.rng && H.hp > 0) {
-      const born = [];
+      for (let p = 0; p < S.grid.length; p++) {
+        const m = S.grid[p];
+        if (!m || m.kind !== 'monster' || !(m.psn > 0)) continue;
+        m.psn--;
+        const res = hurtMonster(m, 1, null, false);
+        if (res.killed) { S.grid[p] = blankCard(S); fx.push({ cell: p, text: 'Slain', cls: 'info', anim: 'puff' }); }
+        else if (res.dealt) fx.push({ cell: p, text: '−1', cls: 'hurt', anim: 'poison', hit: m.uid });
+      }
+    }
+
+    // Rats (passive): checked after the cards have slid. A rat that stays in the same square
+    // for 3 turns bites a random neighbouring card (anything but the hero and the room's reward,
+    // other rats included). An empty square is simply taken over by a new rat. Otherwise the card
+    // takes damage equal to the rat's number, and if that destroys it, a new rat just as strong
+    // takes its place. All rats choose first and then bite together: if several pick the same
+    // square, only the biggest bite lands. Moving resets the count.
+    if (S.rng && H.hp > 0) {
+      const bites = {}; // target square -> strongest rat biting it
       for (let p = 0; p < S.grid.length; p++) {
         const r = S.grid[p];
-        if (!r || TYPES[r.type].ability !== 'breed' || born.indexOf(p) >= 0) continue;
+        if (!r || TYPES[r.type].ability !== 'breed') continue;
         if (r.rp !== p) { r.rp = p; r.t = 0; continue; }
         r.t = (r.t || 0) + 1;
-        if (r.t < 3) continue;
-        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && c.kind !== 'reward' && c.type !== 'rat'; });
-        if (!options.length) continue; // boxed in: it stays ready and breeds as soon as there is room
+        if (r.t < RAT_TURNS) continue;
+        const options = neighbours4(S, p).filter(function (ap) { const c = S.grid[ap]; return c && ap !== H.pos && c.kind !== 'reward'; });
+        if (!options.length) continue; // boxed in: it stays ready and strikes as soon as there is a target
         r.t = 0;
         const ap = options[Math.floor(S.rng() * options.length)];
+        if (!bites[ap] || r.v > bites[ap]) bites[ap] = r.v;
+      }
+      for (const key in bites) {
+        const ap = +key, dmg = bites[key], c = S.grid[ap];
+        let killed;
+        if (c.kind === 'empty') killed = true;
+        else if (c.kind === 'monster') {
+          const res = hurtMonster(c, dmg, null, false);
+          killed = res.killed;
+          if (!killed) fx.push({ cell: ap, text: res.absorbed ? 'Blocked' : '−' + res.dealt, cls: 'hurt', hit: c.uid });
+        } else {
+          const dealt = Math.min(c.v, dmg);
+          c.v -= dealt; killed = c.v <= 0;
+          if (!killed) fx.push({ cell: ap, text: '−' + dealt, cls: 'hurt', hit: c.uid });
+        }
+        if (!killed) continue;
         const kid = makeCard(S, 'rat');
-        kid.v = r.v; kid.rp = ap; kid.t = 0;
-        S.grid[ap] = kid; born.push(ap);
+        kid.v = dmg; kid.rp = ap; kid.t = 0; kid.sh = 0;
+        S.grid[ap] = kid;
         fx.push({ cell: ap, text: 'Rat!', cls: 'hurt', anim: 'puff' });
       }
     }
@@ -976,6 +1094,12 @@
     // Growing blades still lying on the board.
     bladeGrowth(S, blades0, hits, fx);
 
+    // A forged sword that was waiting arrives once the hero's hands are empty.
+    if (H.forge && !H.sword && H.hp > 0) {
+      H.sword = { v: H.forge, type: 'sword', el: null }; H.forge = 0;
+      fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' });
+    }
+
     return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
   }
 
@@ -1041,6 +1165,7 @@
     const def = POWERS[pw.id];
     if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
+    if (pw.id === 'forge' && H.forge) return null; // a forged sword is already waiting
     if (pw.id === 'dart') {
       // The dart picks its own victim: any monster on the board, at random.
       const foes = [];
@@ -1056,13 +1181,22 @@
 
     switch (pw.id) {
       case 'heal': {
-        const g = Math.min(amt, H.max - H.hp); H.hp += g;
+        const g = healBy(H, amt);
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); break;
       }
-      case 'forge':
-        H.sword = { v: amt, type: 'sword', el: null };
-        fx.push({ cell: H.pos, text: 'Sword ' + amt, cls: 'info', anim: 'gold' }); break;
-      case 'dart': hitMonster(S, target, amt, holes, fx); extra = { dart: target }; break;
+      case 'forge': {
+        // Never replaces a held weapon: the sword waits until the hero's hands are empty.
+        const v = forgePower(S, pw.lv);
+        if (H.sword) { H.forge = v; fx.push({ cell: H.pos, text: 'Forging…', cls: 'info', anim: 'gold' }); }
+        else { H.sword = { v: v, type: 'sword', el: null }; fx.push({ cell: H.pos, text: 'Sword ' + v, cls: 'info', anim: 'gold' }); }
+        break;
+      }
+      case 'dart': {
+        hitMonster(S, target, amt, holes, fx); extra = { dart: target };
+        const m = S.grid[target];
+        if (m && m.kind === 'monster') { m.psn = (m.psn | 0) + DART_POISON; fx.push({ cell: target, text: 'Poison', cls: 'hurt', anim: 'poison' }); }
+        break;
+      }
       case 'fire': if (S.grid[target].kind === 'monster') noteDeath(S.grid[target], target); S.grid[target] = null; holes.push(target); fx.push({ cell: target, text: 'Burn', cls: 'hurt', anim: 'fire' }); break;
       case 'scythe': {
         const x = H.pos % w, y = (H.pos / w) | 0;
@@ -1076,7 +1210,7 @@
         break;
       }
       case 'massheal': {
-        const g = Math.min(amt, H.max - H.hp); H.hp += g;
+        const g = healBy(H, amt);
         fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' });
         S.grid.forEach(function (c, p) { if (c && c.kind === 'heal') { c.v += amt; fx.push({ cell: p, text: '+' + amt, cls: 'heal', anim: 'heal' }); } });
         break;
@@ -1180,8 +1314,8 @@
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, quakeDamage: quakeDamage,
-    POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost,
-    HERO_MAX_LV: HERO_MAX_LV, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
+    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, SONG_TURNS: SONG_TURNS, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

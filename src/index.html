@@ -18,7 +18,7 @@
       <button class="avatar" id="home-avatar" type="button" aria-label="Your hero"></button>
       <div class="hname" id="home-name"></div>
       <div class="hstat" id="home-stat"></div>
-      <p class="home-tip">Tap your hero or a power to change them.</p>
+      <p class="home-tip">Tap here to change your hero and powers.</p>
       <div class="lo-info" id="home-info" role="status" aria-live="polite"></div>
     </div>
     <button class="btn go playbtn" id="b-play" type="button">Play</button>
@@ -106,12 +106,14 @@
 <section class="view" id="v-hero" aria-label="Hero and powers">
   <div class="wrap">
     <div class="top">
-      <div><h2>Hero &amp; powers</h2><p class="sub" id="hp-sub"></p></div>
+      <div><h2>Hero &amp; powers</h2></div>
       <div class="top-r">
+        <button class="btn quiet test-gold" id="e-gold" type="button" title="Testing only">+5000</button>
         <span class="purse" id="hp-purse" title="Gold banked from your runs. Spend it on power upgrades."></span>
         <button class="btn" id="hp-done" type="button">Done</button>
       </div>
     </div>
+    <p class="sub hp-sub" id="hp-sub"></p>
     <div class="loadout" aria-label="Your loadout">
       <div class="equip" id="hp-equip" aria-label="Equipped powers"></div>
       <button class="avatar" id="hp-avatar" type="button" aria-label="Your hero"></button>
@@ -131,7 +133,7 @@
       <div class="page" id="hp-heroes" role="tabpanel" aria-labelledby="hp-tab-0"></div>
       <div class="page" id="hp-powers" role="tabpanel" aria-labelledby="hp-tab-1"></div>
     </div>
-    <p class="pg-hint">Swipe to switch. Tap to pick. Press and hold for details, or to upgrade a hero or power with gold.</p>
+    <p class="pg-hint">Swipe to switch. Tap a hero or power for details, to choose it and to upgrade it.</p>
   </div>
 </section>
 

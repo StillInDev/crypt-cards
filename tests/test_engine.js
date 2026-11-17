@@ -8,11 +8,20 @@ let n=0; const ok=(name)=>console.log('ok',++n,name);
 // heal
 let S=blankGame({hero:'knight',powers:['heal']}); S.hero.hp=3; ready(S); let r=DC.usePower(S,0); assert(S.hero.hp===8); assert(S.hero.powers[0].cd===S.hero.powers[0].max); assert(!DC.usePower(S,0)); ok('heal + cooldown');
 // shield
-S=blankGame({powers:['forge']}); ready(S); S.hero.sword={v:2}; DC.usePower(S,0); assert(S.hero.sword.v===10); ok('forge replaces held sword');
+S=blankGame({powers:['forge']}); ready(S); DC.usePower(S,0); assert(S.hero.sword.v===S.hero.max); ok('forge makes a sword as strong as max health');
+S=blankGame({powers:['forge']}); ready(S); S.hero.sword={v:2,type:'sword',el:null}; DC.usePower(S,0); assert(S.hero.sword.v===2&&S.hero.forge===S.hero.max); ok('forge never replaces a held weapon');
+ready(S); assert(!DC.usePower(S,0)); ok('forge cannot stack while a sword waits');
+DC.sellItem(S,'sword'); assert(S.hero.sword&&S.hero.sword.v===S.hero.max&&!S.hero.forge); ok('waiting sword arrives once the hands are empty');
 // dart: random monster, no aiming
 S=blankGame({powers:['dart']}); ready(S); assert(!DC.usePower(S,0)); assert(S.hero.powers[0].cd===0); ok('dart needs a monster and keeps its charge');
 S=blankGame({powers:['dart']}); S.grid[1]=C('rat',3); ready(S); r=DC.usePower(S,0,7); assert(r.target===1); assert(S.grid[1].type!=='rat'); ok('dart ignores tap, kills only rat');
 S=blankGame({powers:['dart']}); S.grid[1]=C('ogre',9); ready(S); DC.usePower(S,0); assert(S.grid[1].type==='ogre'&&S.grid[1].v===5); ok('dart wounds ogre');
+{ const og=S.grid[1]; assert.strictEqual(og.psn,3,'dart poisons for 3 turns');
+  const wait=()=>{ S.hero.sword={v:1,type:'sword',el:null}; DC.sellItem(S,'sword'); };
+  wait(); assert.strictEqual(og.v,4); wait(); wait(); assert.strictEqual(og.v,2); assert.strictEqual(og.psn,0); wait(); assert.strictEqual(og.v,2,'poison wears off'); }
+ok('dart poison: 1 damage a turn for 3 turns');
+S=blankGame({powers:['dart']}); S.grid[1]=C('ogre',5); ready(S); DC.usePower(S,0); { const og=S.grid[1]; S.hero.sword={v:1,type:'sword',el:null}; DC.sellItem(S,'sword'); assert(S.grid.indexOf(og)<0,'poison can finish a monster'); }
+ok('dart poison can kill');
 { const seen=new Set(); for(let k=0;k<40;k++){ S=blankGame({powers:['dart']}); S.rng=(()=>{let s=k;return()=>((s=(s*9301+49297)%233280)/233280);})(); S.grid[0]=C('ogre',9); S.grid[2]=C('ogre',9); ready(S); seen.add(DC.usePower(S,0).target); } assert(seen.has(0)&&seen.has(2)); ok('dart spreads across monsters'); }
 // fire
 S=blankGame({powers:['fire']}); S.grid[1]=C('ogre',9); ready(S); const old=S.grid[1].uid; DC.usePower(S,0,1); assert(S.grid[1].uid!==old); assert(!DC.usePower(S,0,4)); ok('fire (and cooldown block)');
@@ -55,7 +64,7 @@ for(const hid of hids) for(let g=0;g<150;g++){
     const d=Math.floor(rng()*4); DC.move(S,d); t++;
     for(let k=0;k<S.grid.length;k++){ if(k!==S.hero.pos&&!S.grid[k]) throw new Error('hole left in grid'); }
     if(S.grid[S.hero.pos]) throw new Error('card under hero');
-    if(S.hero.hp>S.hero.max) throw new Error('hp over max');
+    if(S.hero.hp>DC.healCap(S.hero)) throw new Error('hp over max');
   }
   games++;
 }

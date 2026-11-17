@@ -168,7 +168,8 @@
 
   var levels, best = {}, cleared = {}, unlockAll = false, heroSel = 'knight', powSel = ['heal'];
   // purse: gold banked from finished runs, spent on upgrades. ups: { powerId: level }, hups: { heroId: level }.
-  var purse = 0, ups = {}, hups = {};
+  // owned: heroes and powers bought with gold, { 'hero:id': 1, 'power:id': 1 }.
+  var purse = 0, ups = {}, hups = {}, owned = {};
   function loadAll(snapshot) {
     levels = null;
     var hasAreas = false;
@@ -196,12 +197,13 @@
     purse = snapshot && snapshot.purse != null ? snapshot.purse : clampInt(store.get('cc_purse'), 0, 1e9, 0);
     try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
+    try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
     fixSelection();
   }
   function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
   function heroHp(id) { return DC.HERO_BASE_HP + DC.HEROES[id].hp + DC.heroHpBonus(heroUpLv(id)); }
-  function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); }
+  function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); store.set('cc_owned', JSON.stringify(owned)); }
   // A run's gold goes into the purse once, when the run ends or you walk away from it.
   function bankRun() {
     if (!S || S.banked) return 0;
@@ -214,6 +216,12 @@
     var lv = upLv(id), cost = DC.upgradeCost(lv);
     if (cost == null || purse < cost || !powerOpen(id)) return false;
     purse -= cost; ups[id] = lv + 1; savePurse();
+    return true;
+  }
+  function buyUnlock(kind, id) {
+    var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
+    if (purse < cost || (kind === 'hero' ? heroOpen(id) : powerOpen(id))) return false;
+    purse -= cost; owned[kind + ':' + id] = 1; savePurse();
     return true;
   }
   function buyHeroUpgrade(id) {
@@ -235,12 +243,12 @@
     return -1;
   }
   function heroOpen(id) {
-    if (unlockAll || START_HEROES.indexOf(id) >= 0) return true;
+    if (unlockAll || START_HEROES.indexOf(id) >= 0 || owned['hero:' + id]) return true;
     var r = rewardRoom('hero', id);
     return r < 0 ? false : !!cleared[r];
   }
   function powerOpen(id) {
-    if (unlockAll || START_POWERS.indexOf(id) >= 0) return true;
+    if (unlockAll || START_POWERS.indexOf(id) >= 0 || owned['power:' + id]) return true;
     var r = rewardRoom('power', id);
     return r < 0 ? false : !!cleared[r];
   }
@@ -589,6 +597,7 @@
         el._h = hk;
       }
       el.classList.toggle('frozen', !!c.frozen);
+      el.classList.toggle('poisoned', c.kind === 'monster' && c.psn > 0);
       el.classList.toggle('faded', !!(c.ph && TYPES[c.type].phase)); // a ghost on its untouchable turn
       el.classList.toggle('tail', c.type === 'tail');
       el.classList.toggle('glow', !!(S.glow && S.glow.cell === pos)); // a dead fire imp's square
@@ -652,7 +661,7 @@
     // HUD
     $('#h-hp').textContent = H.hp + ' / ' + H.max;
     var bar = $('#h-bar');
-    bar.style.width = (100 * H.hp / H.max) + '%';
+    bar.style.width = Math.min(100, 100 * H.hp / H.max) + '%';
     bar.classList.toggle('low', H.hp / H.max <= 0.35);
     var gEl = $('#h-gold');
     gEl.innerHTML = '';
@@ -685,6 +694,13 @@
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
     if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
+    if (H.pass.storm) {
+      // Lightning Wizard: kills toward the smite, or Smite once charged.
+      var sm = (H.kills | 0) >= DC.STORM_KILLS;
+      stEl.appendChild(img('p_thunder'));
+      // A trailing ⚡ means the next attack also chains lightning.
+      stEl.appendChild(document.createTextNode((sm ? 'Smite' : (H.kills | 0) + '/' + DC.STORM_KILLS) + ((H.hits | 0) === DC.STORM_CHAIN - 1 ? '⚡' : '')));
+    }
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
   }
 
@@ -704,7 +720,7 @@
       b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : ready ? 'READY' : pw.cd + ' turns';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
       var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
@@ -729,6 +745,7 @@
     if (!pw) return;
     if (DC.POWERS[pw.id].passive) { toast(DC.POWERS[pw.id].name + ' is always on'); return; }
     if (pw.cd > 0) { toast(DC.POWERS[pw.id].name + ' needs ' + pw.cd + ' more turns'); return; }
+    if (pw.id === 'forge' && S.hero.forge) { toast('Your forged sword arrives when your hands are empty'); return; }
     if (DC.POWERS[pw.id].target) { targeting = targeting === i ? null : i; render(); return; }
     firePower(i);
   }
@@ -1007,6 +1024,7 @@
         if (T.loot && c.hitT != null && S.hero.turn - c.hitT <= 2) t += ' Lying low: you hit it recently.';
         if (S.resist > 0) t += ' Protected by a wraith\'s last breath this turn.';
         if (c.type === 'webspider' && S.hero.sword) t = 'Hiding in its web while you hold a weapon: harmless. Walk through it.';
+        if (c.psn > 0) t += ' Poisoned: loses 1 health a turn for ' + c.psn + ' more turn' + (c.psn === 1 ? '' : 's') + '.';
         if (c.frozen) t += ' Frozen.';
         if (c.sh) t += ' Shielded.';
         break;
@@ -1040,6 +1058,11 @@
     if (H.poison > 0) t += ' Poisoned for ' + H.poison + ' more turns.';
     if (H.frost > 0) t += ' Frost for ' + H.frost + ' more moves.';
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
+    if (H.pass.storm) {
+      t += (H.kills | 0) >= DC.STORM_KILLS ? ' Smite is charged: your next attack kills outright.' : ' Smite charge: ' + (H.kills | 0) + ' of ' + DC.STORM_KILLS + ' kills.';
+      var left = DC.STORM_CHAIN - (H.hits | 0);
+      t += ' Chain lightning (' + DC.chainDamage(H.lv) + ' damage) ' + (left === 1 ? 'on your next attack.' : 'in ' + left + ' attacks.');
+    }
     if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.star ? ' throws' : ' arrows') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
@@ -1117,7 +1140,7 @@
   function lockText(kind, id) {
     var r = rewardRoom(kind, id);
     // Room names repeat from area to area, so name the area too.
-    return r < 0 ? 'Not in any room' : 'Clear the ' + levels[r].name + ' in ' + AREAS[areaOf(r)].name;
+    return r < 0 ? 'Buy with gold' : 'Clear the ' + levels[r].name + ' in ' + AREAS[areaOf(r)].name;
   }
   // ---- Hero and power select ------------------------------------------------
   // Top: the chosen hero with its equipped powers floating above its head.
@@ -1126,27 +1149,51 @@
   // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
-    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: open && id === heroSel ? 'Chosen' : '',
-      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, desc: 'Carries ' + H.slots + ' powers. Health ' + heroHp(id) + '.' };
+    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
+      level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Overheal', '+' + DC.overheal(lv)]] : []) };
     if (open) {
+      var on = id === heroSel;
+      // Same check-mark toggle as powers. You always have a hero, so the chosen one cannot be un-ticked.
+      o.equip = { label: on ? 'Chosen' : 'Choose', on: on, aria: on ? 'Chosen hero' : 'Not chosen. Tap to choose this hero',
+        fn: function () { if (!on) pickHero(id); loInfo(heroInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
-      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+      else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health' + (H.pass.storm ? ', +1 chain damage.' : H.pass.song ? ', +1 overheal.' : '.'), label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
-        buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to level ' + heroUpLv(id)); } } };
-    }
+        buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to Lvl. ' + (heroUpLv(id) + 1)); } } };
+    } else o.up = unlockOffer('hero', id, H.name, heroInfo);
     return o;
+  }
+  // The numbers shown at the top of a power's details: its recharge and, where it has one, its power.
+  function powerStats(id, lv) {
+    var P = DC.POWERS[id], U = DC.UPGRADES[id] || {}, s = [];
+    if (!P.passive) s.push(['Recharge', DC.powerCd(id, lv) + ' turns']);
+    if (id === 'forge') { var b = DC.powerAmount(id, lv); s.push(['Power', 'Max health' + (b ? ' +' + b : '')]); }
+    else if (id === 'quake') s.push(['Power', String(DC.quakeDamage(powerLevel(), lv))]);
+    else if (U.amt) s.push(['Power', String(DC.powerAmount(id, lv))]);
+    return s;
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
-    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: open && powSel.indexOf(id) >= 0 ? 'Equipped' : '',
-      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : 'Recharges in ' + DC.powerCd(id, lv) + ' turns.' };
+    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
+      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : '', stats: powerStats(id, lv) };
     if (open) {
+      var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
+      o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
+        note: !on && powSel.length >= slots ? 'Replaces ' + DC.POWERS[powSel[0]].name + '.' : '',
+        fn: function () { togglePower(id); loInfo(powerInfo(id)); } };
       if (cost == null) o.up = { text: 'Fully upgraded.' };
-      else o.up = { text: 'Next level: ' + U.what + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
+      else o.up = { text: 'Next level: ' + DC.upgradeWhat(id, lv) + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
-        buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to level ' + upLv(id)); } } };
-    }
+        buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to Lvl. ' + (upLv(id) + 1)); } } };
+    } else o.up = unlockOffer('power', id, P.name, powerInfo);
     return o;
+  }
+  // A locked hero or power can be bought with gold instead of clearing its room.
+  function unlockOffer(kind, id, name, info) {
+    var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
+    return { text: rewardRoom(kind, id) < 0 ? '' : 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
+      short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
+      buy: function () { if (buyUnlock(kind, id)) { refreshLoadoutScreen(); loInfo(info(id)); toast(name + ' unlocked!'); } } };
   }
   function refreshLoadoutScreen() { if (current === 'hero') renderHero(); else if (current === 'home') renderHome(); }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
@@ -1164,9 +1211,30 @@
     line('span', 'li-lock', o.lock);
     line('b', 'li-name', o.title);
     line('span', 'li-tag', o.tag);
-    if (o.level != null) d.appendChild(pips(o.level, 'li-lv', o.max));
+    line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
+    if (o.stats && o.stats.length) {
+      var st = document.createElement('dl'); st.className = 'li-stats';
+      o.stats.forEach(function (kv) {
+        var dt = document.createElement('dt'); dt.textContent = kv[0];
+        var dd = document.createElement('dd'); dd.textContent = kv[1];
+        st.appendChild(dt); st.appendChild(dd);
+      });
+      d.appendChild(st);
+    }
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
+    var row = document.createElement('div'); row.className = 'li-btns';
+    if (o.equip) {
+      // Equip toggle in the top-right corner: a check mark, green when equipped, grey when not.
+      var eb = document.createElement('button');
+      eb.type = 'button'; eb.className = 'li-check' + (o.equip.on ? ' on' : '');
+      eb.setAttribute('aria-pressed', o.equip.on);
+      eb.setAttribute('aria-label', o.equip.aria || (o.equip.on ? 'Equipped. Tap to unequip' : 'Not equipped. Tap to equip'));
+      eb.title = o.equip.label;
+      eb.innerHTML = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
+      eb.addEventListener('click', o.equip.fn);
+      el.appendChild(eb);
+    }
     if (o.up) {
       line('p', 'li-up', o.up.text);
       if (o.up.buy) {
@@ -1177,10 +1245,12 @@
         bb.appendChild(document.createTextNode(o.up.cost));
         bb.setAttribute('aria-label', o.up.label + ' for ' + o.up.cost + ' gold');
         bb.addEventListener('click', o.up.buy);
-        d.appendChild(bb);
-        line('p', 'li-short', o.up.short);
+        row.appendChild(bb);
       }
     }
+    if (row.children.length) d.appendChild(row);
+    if (o.equip) line('p', 'li-short', o.equip.note);
+    if (o.up) line('p', 'li-short', o.up.short);
     el.appendChild(d);
     el.classList.add('on');
     loGen++;
@@ -1190,7 +1260,7 @@
     var v = $(sel);
     v.addEventListener('pointerdown', function () { loGenAtDown = loGen; }, true);
     // A tap closes what was already showing. Info that appeared during this very press stays.
-    v.addEventListener('click', function () { if (loGen === loGenAtDown) loHide(); }, true);
+    v.addEventListener('click', function (e) { if (e.target.closest('.lo-info button')) return; if (loGen === loGenAtDown) loHide(); }, true);
   });
 
   // Press-and-hold for a single element outside the pager (the avatar and the slots above its head).
@@ -1230,7 +1300,7 @@
 
   // Level pips on a tile, plus a ▲ badge when the next level is affordable.
   function upgradeMarks(t, lv, cost, max) {
-    t.appendChild(pips(lv, max > 4 ? 'many' : '', max));
+    var lt = document.createElement('span'); lt.className = 'tlv'; lt.textContent = 'Lvl. ' + (lv + 1); t.appendChild(lt);
     t.setAttribute('aria-label', t.getAttribute('aria-label') + ', level ' + lv);
     if (cost != null && purse >= cost) {
       var up = document.createElement('span'); up.className = 'upb'; up.textContent = '▲'; up.title = 'Upgrade ready: press and hold';
@@ -1325,8 +1395,8 @@
 
   function renderHero() {
     fixSelection();
-    var ms = maxScore(), slots = DC.HEROES[heroSel].slots;
-    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers. Your best single run is ' + ms + ' gold.';
+    var slots = DC.HEROES[heroSel].slots;
+    $('#hp-sub').textContent = 'Clear rooms or buy new heroes and powers.';
 
     // Loadout: powers above the head, then the hero.
     fillLoadout('hp', function (pid) { powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero(); },
@@ -1365,16 +1435,20 @@
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
     if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
-    if (kind === 'hero') {
-      if (heroSel === id) return;
-      heroSel = id; fixSelection(); saveSelection(); renderHero();
-      var av = $('#hp-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
-      return;
-    }
+    // Heroes and powers both open their details on tap; the check mark there chooses or equips.
+    if (kind === 'hero') { loInfo(heroInfo(id)); return; }
+    // Powers are not equipped on tap: the details open, with an Equip button.
+    loInfo(powerInfo(id));
+  }
+  function pickHero(id) {
+    heroSel = id; fixSelection(); saveSelection(); refreshLoadoutScreen();
+    var av = $('#' + (current === 'home' ? 'home' : 'hp') + '-avatar'); av.classList.remove('swap'); void av.offsetWidth; av.classList.add('swap');
+  }
+  function togglePower(id) {
     var slots = DC.HEROES[heroSel].slots, at = powSel.indexOf(id);
     if (at >= 0) powSel.splice(at, 1);
     else { powSel.push(id); if (powSel.length > slots) powSel.shift(); hpPop = id; }
-    saveSelection(); renderHero();
+    saveSelection(); refreshLoadoutScreen();
   }
 
   // Pager. Only two pages, so "the other page" always sits on whichever side you drag toward: a seamless loop.
@@ -1471,6 +1545,15 @@
   });
   holdable($('#hp-avatar'), function () { return heroInfo(heroSel); }, function () { if (hpPage !== 0) hpGo(-1); });
   holdable($('#home-avatar'), function () { return heroInfo(heroSel); }, function () { show('hero', 0); });
+  // The whole loadout box on the home screen opens Hero & powers. The hero and power slots keep
+  // their own tap and press-and-hold; a tap that only closes an open details panel does nothing else.
+  var homeLo = $('.home-loadout'), homeInfoWasOpen = false, homeGen = -1;
+  homeLo.addEventListener('pointerdown', function () { homeInfoWasOpen = $('#home-info').classList.contains('on'); homeGen = loGen; }, true);
+  homeLo.addEventListener('click', function (e) {
+    // Skip if details were open (this tap closes them) or opened during this press (a press-and-hold).
+    if (homeInfoWasOpen || homeGen !== loGen || e.target.closest('button, .lo-info')) return;
+    show('hero', 0);
+  });
   document.addEventListener('keydown', function (e) {
     if (current !== 'hero' || e.metaKey || e.ctrlKey) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); hpGo(-1); }
@@ -1608,6 +1691,7 @@
     best = {}; saveBest(); cleared = {}; saveCleared();
     commit(); renderEditor(); setMsg('Deleted. Progress was reset because room numbers shifted.');
   });
+  $('#e-gold').addEventListener('click', function () { purse += 5000; savePurse(); refreshLoadoutScreen(); toast('Added 5000 gold for testing'); }); // testing only
   $('#e-all').addEventListener('change', function (e) { unlockAll = e.target.checked; store.set('cc_all', unlockAll ? '1' : '0'); });
   $('#e-apply').addEventListener('click', function () {
     try { levels = parseLevels($('#e-json').value); saveLevels(); ed = 0; renderEditor(); setMsg('Loaded ' + levels.length + ' levels.'); }
@@ -1633,7 +1717,7 @@
     show('home');
   }
   if (window.claude && window.claude.hot) {
-    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, hero: heroSel, pows: powSel, purse: purse, ups: ups, hups: hups }; });
+    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, owned: owned, hero: heroSel, pows: powSel, purse: purse, ups: ups, hups: hups }; });
     if (window.claude.hot.ready) window.claude.hot.ready(start); else start(window.claude.hot.data || {});
   } else start({});
 })();

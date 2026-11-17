@@ -21,7 +21,8 @@ const SHEETS = {
   '05_Dungeon_Hazards.png': { cols: 3, ids: ['gargoyle', 'goldskull', 'wolf', 'webspider', 'bomb', 'bars', 'tomb', 'trap', 'web'] },
   '06_Elemental_Weapons.png': { cols: 5, ids: ['elecbow', 'firearrow', 'firesword', 'firetrap', 'firewand', 'icearrow', 'icesword', 'icetrap', 'icewand', 'painblade'] },
   '07_Tools_and_Items.png': { cols: 3, ids: ['ninjastar', 'poison', 'potion', 'scythe', 'sword', 'windblade', 'p_dart', 'p_forge', 'p_shield'] },
-  '08_Power_Effects.png': { cols: 3, ids: ['p_burst', 'p_fire', 'p_heal', 'p_ice', 'p_massheal', 'p_quake', 'p_scythe', 'p_teleport', 'p_thunder'] }
+  '08_Power_Effects.png': { cols: 3, ids: ['p_burst', 'p_fire', 'p_heal', 'p_ice', 'p_massheal', 'p_quake', 'p_scythe', 'p_teleport', 'p_thunder'] },
+  '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] }
 };
 // The game rotates arrow sprites itself and expects them pointing straight up. The sheet draws them
 // pointing up-right, so they are turned 45 degrees anticlockwise.
