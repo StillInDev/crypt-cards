@@ -89,7 +89,7 @@ If the request asks for options, send each one as `<sprite id>-1.png`, `<sprite 
 
 ## All requests
 
-One request per delivered sprite (79 here; the five newest heroes on `09_New_Heroes.png` have none yet), then the requests still open.
+One request per delivered sprite (83 here; the five newest heroes on `09_New_Heroes.png` have none yet), then the requests still open.
 
 **Players (5):** [Knight](players/knight.md), [Sorcerer](players/sorcerer.md), [Yeti](players/yeti.md), [Ninja](players/rogue.md), [Cactus](players/cactus.md)
 
@@ -97,14 +97,15 @@ One request per delivered sprite (79 here; the five newest heroes on `09_New_Her
 
 **Board items (6):** [Gem](items/gem.md), [Coin](items/coin.md), [Potion](items/potion.md), [Poison](items/poison.md), [Bomb](items/bomb.md), [Chest](items/chest.md)
 
-**Traps (7):** [Spike trap](traps/trap.md), [Fire trap](traps/firetrap.md), [Ice trap](traps/icetrap.md), [Fire arrow](traps/firearrow.md), [Ice arrow](traps/icearrow.md), [Arrow trap block](traps/trapblock.md), [Arrow trap head](traps/traphead.md)
+**Traps (7):** [Spike trap, retired](traps/trap.md), [Fire trap](traps/firetrap.md), [Ice trap](traps/icetrap.md), [Fire arrow](traps/firearrow.md), [Ice arrow](traps/icearrow.md), [Arrow trap block](traps/trapblock.md), [Arrow trap head](traps/traphead.md)
 
-On the board, fire and ice traps now show the shared block with an arrowhead on each side they fire at;
-the `firetrap` and `icetrap` sprites remain as their icons in the card guide and the room editor's card list.
+On the board, arrow, fire and ice traps all show the shared block with an arrowhead on each side they fire at.
+The spike trap is gone: its id `trap` is now the plain arrow trap. The `firetrap` and `icetrap` sprites remain as
+their icons in the card guide and the room editor's card list.
 
 **Weapons (10):** [Sword](weapons/sword.md), [Fire sword](weapons/firesword.md), [Ice sword](weapons/icesword.md), [Fire wand](weapons/firewand.md), [Ice wand](weapons/icewand.md), [Scythe](weapons/scythe.md), [Electric bow](weapons/elecbow.md), [Ninja star](weapons/ninjastar.md), [Wind blade](weapons/windblade.md), [Blade of pain](weapons/painblade.md)
 
-**Powers (12):** [Healing (power)](powers/p_heal.md), [Mass healing (power)](powers/p_massheal.md), [Fire touch (power)](powers/p_fire.md), [Frost (power)](powers/p_ice.md), [Thunder (power)](powers/p_thunder.md), [Scythe (power)](powers/p_scythe.md), [Teleport orb (power)](powers/p_teleport.md), [Poison dart (power)](powers/p_dart.md), [Potion burst (power)](powers/p_burst.md), [Forge (power)](powers/p_forge.md), [Tremor (power)](powers/p_quake.md), [Shield (power)](powers/p_shield.md)
+**Powers (16):** [Magnet (power)](powers/p_magnet.md), [Hourglass (power)](powers/p_hourglass.md), [Whetstone (power)](powers/p_whetstone.md), [Last Stand (power)](powers/p_laststand.md), [Healing (power)](powers/p_heal.md), [Mass healing (power)](powers/p_massheal.md), [Fire touch (power)](powers/p_fire.md), [Frost (power)](powers/p_ice.md), [Thunder (power)](powers/p_thunder.md), [Scythe (power)](powers/p_scythe.md), [Teleport orb (power)](powers/p_teleport.md), [Poison dart (power)](powers/p_dart.md), [Potion burst (power)](powers/p_burst.md), [Forge (power)](powers/p_forge.md), [Tremor (power)](powers/p_quake.md), [Shield (power)](powers/p_shield.md)
 
 **Interface (3):** [Spider web](interface/web.md), [Lock bars](interface/bars.md), [Key](interface/key.md)
 
@@ -119,7 +120,5 @@ These are open: nothing has been drawn for them yet. Suggested order:
 5. [Area icons and the boss keys](interface/areas.md): a picture for each area tab, and the special key
 6. [Room floors](backgrounds/room-floors.md): one floor per room theme, behind the play screen
 7. [Dungeon map backdrops](backgrounds/map.md): one backdrop per area, behind the map
-8. New power icons, in the game now with borrowed icons: [Magnet](powers/p_magnet.md), [Hourglass](powers/p_hourglass.md),
-   [Whetstone](powers/p_whetstone.md), [Last Stand](powers/p_laststand.md)
 
 The old 18 × 18 sprites (and an unused ghoul) are in git history before the sheets landed.

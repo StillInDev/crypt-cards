@@ -1,23 +1,11 @@
-# Request: Spike trap
+# Retired: Spike trap
 
-- **Sprite id:** `trap` (deliver `trap.png`)
+- **Sprite id:** `trap` (still on `art/sheets/05_Dungeon_Hazards.png`, but no longer shown in the game)
 - **Kind:** trap (object)
-- **Read first:** `art/README.md` (format and style rules)
-- **References:** `src/img/sprites/traps/trap.png` (current version), `src/img/sprites/monsters/tomb.png` (object style)
 
-## Where it appears
+The spike trap has been replaced by the plain **Arrow trap**, a directional trap like the fire and ice traps but
+without an element. The card keeps the id `trap` (so rooms and saved levels carry over), but it is drawn with the
+shared block ([trapblock.md](trapblock.md)) and grey arrowheads ([traphead.md](traphead.md)), and the card guide
+and room editor show the block as its icon.
 
-A **Spike trap** card. It appears in: Cellar, Sewers, Barracks, Catacombs, Mine, Vampire Crypt, Throne Room. In play: Hurts you when you step on it.
-
-## What it must look like
-
-- The **Spike trap**: a row of grey steel spikes (`#c0cbdc` / `#8b9bb4`) on a dark base.
-- Optional: a red tip on one spike.
-
-## Do not
-
-- Do not add a background or a frame: only the icon, on transparency.
-
-## Deliver
-
-`trap.png` (at least 256 × 256, transparent; see `art/README.md`). Optionally up to three variants as `trap-1.png`, `trap-2.png`, `trap-3.png`.
+Nothing needs drawing for this id. To change how arrow traps look, redraw the block or the arrowhead.

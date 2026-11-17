@@ -10,7 +10,8 @@
     potion:    { kind: 'heal',    name: 'Potion',          lo: 2, hi: 5, bf: 0.7, tip: 'Restores health, up to your maximum, and cures poison.' },
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1. Any healing cures it.' },
-    trap:      { kind: 'harm',    name: 'Spike trap',      lo: 2, hi: 5, bf: 1,   tip: 'Hurts you when you step on it.' },
+    // The plain arrow trap (it was a spike trap): directional like the fire and ice traps, but with no element.
+    trap:      { kind: 'dtrap',   name: 'Arrow trap',      lo: 1, hi: 3, bf: 0.5, tip: 'Shoots every card its arrowheads point at, then turns clockwise each turn. Stepping on it hurts too.' },
     // Monster tips say only what makes that monster different. The shared rules (it hurts for its number,
     // fire and ice monsters, shields, freezing) are not repeated on every card.
     rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Breeds: if it stays put for 3 turns, it bites a neighbouring card (even another rat) for its number. An empty square, or a card it destroys, becomes another rat just as strong. When rats bite the same card, only the biggest bite lands.' },
@@ -131,11 +132,10 @@
     quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. A monster that slides into the square you just left takes damage.' },
     burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Explode a potion: monsters next to it take its number in damage.' },
     ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'Fire and ice can\'t hurt you for your next 4 turns.' },
-    // Placeholder sprites until their own icons are drawn (art/powers/p_magnet.md and the rest).
-    magnet:   { name: 'Magnet',       sprite: 'coin',       cd: 16, target: null,      unlock: 100, tip: 'Pull every coin and gem on the board into your purse.' },
-    hourglass: { name: 'Hourglass',   sprite: 'p_teleport', cd: 20, target: null,      unlock: 110, tip: 'Halve the time left on your other powers.' },
-    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 10, target: null,      unlock: 120, tip: 'Your weapon gains 2 power.' },
-    laststand: { name: 'Last Stand',  sprite: 'goldskull',  cd: 0,  target: null,      unlock: 130, passive: true, tip: 'Always on. Once per room, a killing hit leaves you at 1 health instead.' }
+    magnet:   { name: 'Magnet',       sprite: 'p_magnet',   cd: 16, target: null,      unlock: 100, tip: 'Pull every coin and gem on the board into your purse.' },
+    hourglass: { name: 'Hourglass',   sprite: 'p_hourglass', cd: 20, target: null,     unlock: 110, tip: 'Halve the time left on your other powers.' },
+    whetstone: { name: 'Whetstone',   sprite: 'p_whetstone', cd: 10, target: null,     unlock: 120, tip: 'Your weapon gains 2 power.' },
+    laststand: { name: 'Last Stand',  sprite: 'p_laststand', cd: 0, target: null,      unlock: 130, passive: true, tip: 'Always on. Once per room, a killing hit leaves you at 1 health instead.' }
   };
 
   // ---- Power upgrades (bought with banked gold between runs) ----------------
@@ -1062,10 +1062,10 @@
           const ax = px + DIRS[d][0], ay = py + DIRS[d][1];
           if (ax < 0 || ay < 0 || ax >= w || ay >= h) continue;
           const ap = ay * w + ax;
-          fx.push({ cell: ap, text: '', cls: 'info', anim: TYPES[tr.type].el });
+          fx.push({ cell: ap, text: '', cls: 'info', anim: TYPES[tr.type].el || 'arrow' });
           if (ap === H.pos) {
             if (H.pass.trapproof) { fx.push({ cell: ap, text: 'Dodged', cls: 'info', anim: 'immune' }); continue; }
-            if (H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; }
+            if (TYPES[tr.type].el && H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; } // Shield stops fire and ice only
             const lost = hurtHero(S, tr.v, true);
             fx.push({ cell: ap, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
             continue;

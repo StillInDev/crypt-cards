@@ -25,7 +25,12 @@ const SHEETS = {
   '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] },
   // Arrow traps (fire and ice): the block, and one arrowhead drawn pointing up that the game turns to each side.
   '10_Trap_Block.png': { cols: 1, ids: ['trapblock'] },
-  '11_Trap_Head.png': { cols: 1, ids: ['traphead'] }
+  '11_Trap_Head.png': { cols: 1, ids: ['traphead'] },
+  // Power icons delivered one at a time.
+  '12_Power_Magnet.png': { cols: 1, ids: ['p_magnet'] },
+  '13_Power_Hourglass.png': { cols: 1, ids: ['p_hourglass'] },
+  '14_Power_Whetstone.png': { cols: 1, ids: ['p_whetstone'] },
+  '15_Power_Last_Stand.png': { cols: 1, ids: ['p_laststand'] }
 };
 // The game rotates arrow sprites itself and expects them pointing straight up. The sheet draws them
 // pointing up-right, so they are turned 45 degrees anticlockwise.
