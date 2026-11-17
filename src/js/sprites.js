@@ -73,6 +73,8 @@ window.SPR = {
   "sword": "img/sprites/weapons/sword.png",
   "tomb": "img/sprites/monsters/tomb.png",
   "trap": "img/sprites/traps/trap.png",
+  "trapblock": "img/sprites/traps/trapblock.png",
+  "traphead": "img/sprites/traps/traphead.png",
   "troll": "img/sprites/monsters/troll.png",
   "vampire": "img/sprites/monsters/vampire.png",
   "web": "img/sprites/interface/web.png",

@@ -89,7 +89,7 @@ If the request asks for options, send each one as `<sprite id>-1.png`, `<sprite 
 
 ## All requests
 
-One request per sprite in the game (77 in all, all delivered on the sheets), then the requests still open.
+One request per delivered sprite (79 here; the five newest heroes on `09_New_Heroes.png` have none yet), then the requests still open.
 
 **Players (5):** [Knight](players/knight.md), [Sorcerer](players/sorcerer.md), [Yeti](players/yeti.md), [Ninja](players/rogue.md), [Cactus](players/cactus.md)
 
@@ -97,7 +97,10 @@ One request per sprite in the game (77 in all, all delivered on the sheets), the
 
 **Board items (6):** [Gem](items/gem.md), [Coin](items/coin.md), [Potion](items/potion.md), [Poison](items/poison.md), [Bomb](items/bomb.md), [Chest](items/chest.md)
 
-**Traps (5):** [Spike trap](traps/trap.md), [Fire trap](traps/firetrap.md), [Ice trap](traps/icetrap.md), [Fire arrow](traps/firearrow.md), [Ice arrow](traps/icearrow.md)
+**Traps (7):** [Spike trap](traps/trap.md), [Fire trap](traps/firetrap.md), [Ice trap](traps/icetrap.md), [Fire arrow](traps/firearrow.md), [Ice arrow](traps/icearrow.md), [Arrow trap block](traps/trapblock.md), [Arrow trap head](traps/traphead.md)
+
+On the board, fire and ice traps now show the shared block with an arrowhead on each side they fire at;
+the `firetrap` and `icetrap` sprites remain as their icons in the card guide and the room editor's card list.
 
 **Weapons (10):** [Sword](weapons/sword.md), [Fire sword](weapons/firesword.md), [Ice sword](weapons/icesword.md), [Fire wand](weapons/firewand.md), [Ice wand](weapons/icewand.md), [Scythe](weapons/scythe.md), [Electric bow](weapons/elecbow.md), [Ninja star](weapons/ninjastar.md), [Wind blade](weapons/windblade.md), [Blade of pain](weapons/painblade.md)
 
