@@ -111,7 +111,7 @@ These are open: nothing has been drawn for them yet. Suggested order:
 
 1. [Board and interface frames](interface/board-and-ui.md): card frames, panels, power buttons, map and buttons
 2. [Tremor ground crack](animations/tremor-crack.md): fixes the effect players read as a train track
-3. [Power cast effects](animations/power-casts.md): one effect per power, on the hero's card
+3. [Power cast effects](animations/power-casts.md): one effect per power (all 16), on the hero's card
 4. [Hit, pickup and projectile effects](animations/hit-effects.md): slashes, gold, smoke, explosions, darts
 5. [Area icons and the boss keys](interface/areas.md): a picture for each area tab, and the special key
 6. [Room floors](backgrounds/room-floors.md): one floor per room theme, behind the play screen
