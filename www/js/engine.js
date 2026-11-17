@@ -116,19 +116,21 @@
 
   // ---- Powers ---------------------------------------------------------------
   // cd: turns to recharge. target: what a tap must hit (null = acts at once).
+  // desc: what the power does, shown in its details (the numbers are in the stats above it).
+  // tip: the in-game text, with numbers. disabled: kept in the engine (and its tests) but the app leaves it out.
   const POWERS = {
-    heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
-    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and is poisoned: it loses 1 health a turn for 3 turns.' },
-    fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
-    scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
-    massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
-    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Lightning strikes 3 random monsters on the board for 3 damage each.' },
-    ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
-    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
-    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
-    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
-    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
+    heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  desc: 'Restores health equal to its power.', tip: 'Restore 5 health.' },
+    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, desc: 'Conjures a sword with its power. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.', tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, desc: 'Flies at a random monster and hits it for its power. The monster is also poisoned: it loses 1 health a turn for 3 turns.', tip: 'Flies at a random monster. It takes 4 damage and is poisoned: it loses 1 health a turn for 3 turns.' },
+    fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, desc: 'Tap any card to burn it away. A new card takes its place.', tip: 'Tap any card to burn it away. A new card takes its place.' },
+    scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, desc: 'Cuts down every monster, trap and poison in the 8 cards around you.', tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
+    massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, desc: 'Heals you by its power, and makes every potion on the board that much stronger.', tip: 'Heal 2, and make every potion on the board 2 stronger.' },
+    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, desc: 'Lightning strikes 3 random monsters, each for its power in damage.', tip: 'Lightning strikes 3 random monsters on the board for 3 damage each.' },
+    ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, disabled: true, desc: 'Monsters deal no damage to you for as many moves as its power.', tip: 'Monsters deal no damage for your next 3 moves.' },
+    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, desc: 'Tap any card. You jump there without using it, and it vanishes.', tip: 'Tap any card. You jump there without using it, and it vanishes.' },
+    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, desc: 'Every time you step, a monster that slides into the square you left is hit for its power.', tip: 'Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
+    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, desc: 'Tap a potion. It explodes and hits the monsters next to it for the potion\'s number.', tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
+    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, desc: 'Fire and ice can\'t hurt you for as many turns as its power: elemental traps, trap heads and fire or ice monsters deal no damage.', tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' }
   };
 
   // ---- Power upgrades (bought with banked gold between runs) ----------------

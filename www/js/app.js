@@ -93,7 +93,7 @@
   }
   function cleanReward(r) {
     if (r && r.kind === 'hero' && DC.HEROES[r.id]) return { kind: 'hero', id: r.id };
-    if (r && r.kind === 'power' && DC.POWERS[r.id]) return { kind: 'power', id: r.id };
+    if (r && r.kind === 'power' && DC.POWERS[r.id] && !DC.POWERS[r.id].disabled) return { kind: 'power', id: r.id }; // a disabled power's room just opens the way on
     return { kind: 'door' };
   }
   function sanitize(L, i) {
@@ -257,7 +257,7 @@
   function fixSelection() {
     if (!DC.HEROES[heroSel] || !heroOpen(heroSel)) heroSel = 'knight';
     var slots = DC.HEROES[heroSel].slots;
-    powSel = (Array.isArray(powSel) ? powSel : []).filter(function (p, i, a) { return DC.POWERS[p] && powerOpen(p) && a.indexOf(p) === i; }).slice(0, slots);
+    powSel = (Array.isArray(powSel) ? powSel : []).filter(function (p, i, a) { return DC.POWERS[p] && !DC.POWERS[p].disabled && powerOpen(p) && a.indexOf(p) === i; }).slice(0, slots);
     if (!powSel.length && powerOpen('heal')) powSel = ['heal'];
   }
   function saveSelection() { store.set('cc_hero', heroSel); store.set('cc_pows', JSON.stringify(powSel)); }
@@ -1186,18 +1186,32 @@
     return o;
   }
   // The numbers shown at the top of a power's details: its recharge and, where it has one, its power.
+  // Each stat is [label, value, how it is worked out]; the last part shows on hover or tap.
+  // A passive power shows a single "Always on" line where the recharge would be.
   function powerStats(id, lv) {
     var P = DC.POWERS[id], U = DC.UPGRADES[id] || {}, s = [];
-    if (!P.passive) s.push(['Recharge', DC.powerCd(id, lv) + ' turns']);
-    if (id === 'forge') { var b = DC.powerAmount(id, lv); s.push(['Power', 'Max health' + (b ? ' +' + b : '')]); }
-    else if (id === 'quake') s.push(['Power', String(DC.quakeDamage(powerLevel(), lv))]);
-    else if (U.amt) s.push(['Power', String(DC.powerAmount(id, lv))]);
+    var ups = lv + (lv === 1 ? ' upgrade' : ' upgrades');
+    if (P.passive) s.push(['Always on']);
+    else {
+      var cd = DC.powerCd(id, lv);
+      s.push(['Recharge', cd + ' turns', U.cdCut ? P.cd + ' base − ' + U.cdCut + ' × ' + ups + ' = ' + cd + ' turns' : cd + ' turns at every level']);
+    }
+    if (id === 'forge') {
+      var b = DC.powerAmount(id, lv), mh = heroHp(heroSel);
+      s.push(['Power', 'Max health' + (b ? ' +' + b : ''), DC.HEROES[heroSel].name + '\'s max health ' + mh + ' + upgrade bonus ' + b + ' = ' + (mh + b)]);
+    } else if (id === 'quake') {
+      var plv = powerLevel(), base = Math.min(12, 3 + plv), qa = DC.powerAmount(id, lv), q = DC.quakeDamage(plv, lv);
+      s.push(['Power', String(q), '3 + ' + plv + ' (1 per 25 of your best score' + (base === 12 ? ', capped at 12' : '') + ') + ' + qa + ' from ' + ups + ' = ' + q]);
+    } else if (U.amt) {
+      var n = DC.powerAmount(id, lv);
+      s.push(['Power', String(n), U.amt[0] + ' base + ' + U.amt[1] + ' × ' + ups + ' = ' + n]);
+    }
     return s;
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
     var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
-      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : '', stats: powerStats(id, lv) };
+      level: lv, ability: P.desc || powerTip(id), stats: powerStats(id, lv) };
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
       o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
@@ -1238,7 +1252,17 @@
       var st = document.createElement('dl'); st.className = 'li-stats';
       o.stats.forEach(function (kv) {
         var dt = document.createElement('dt'); dt.textContent = kv[0];
-        var dd = document.createElement('dd'); dd.textContent = kv[1];
+        if (kv.length === 1) { dt.className = 'solo'; st.appendChild(dt); return; } // e.g. "Always on"
+        var dd = document.createElement('dd');
+        if (kv[2]) {
+          // Hover (or tap, on touch) the value to see how it is worked out.
+          var cb = document.createElement('button');
+          cb.type = 'button'; cb.className = 'li-calc'; cb.textContent = kv[1];
+          cb.setAttribute('aria-label', kv[0] + ' ' + kv[1] + '. ' + kv[2]);
+          var eq = document.createElement('span'); eq.className = 'li-eq'; eq.textContent = kv[2];
+          cb.addEventListener('click', function () { dd.classList.toggle('open'); });
+          dd.appendChild(cb); dd.appendChild(eq);
+        } else dd.textContent = kv[1];
         st.appendChild(dt); st.appendChild(dd);
       });
       d.appendChild(st);
@@ -1447,7 +1471,7 @@
     // Page 2: powers.
     var pl = $('#hp-powers');
     pl.innerHTML = '';
-    Object.keys(DC.POWERS).sort(byOpen(powerOpen)).forEach(function (id) {
+    Object.keys(DC.POWERS).filter(function (id) { return !DC.POWERS[id].disabled; }).sort(byOpen(powerOpen)).forEach(function (id) {
       var P = DC.POWERS[id], open = powerOpen(id);
       var t = tile('power', id, P.sprite, P.name, open, powSel.indexOf(id) >= 0);
       if (open) upgradeMarks(t, upLv(id), DC.upgradeCost(upLv(id)), DC.POWER_MAX_LV);
@@ -1669,7 +1693,7 @@
     function opt(v, t, on) { var o = document.createElement('option'); o.value = v; o.textContent = t; if (on) o.selected = true; rs.appendChild(o); }
     opt('door:', 'Just open the next rooms', L.reward.kind === 'door');
     Object.keys(DC.HEROES).forEach(function (k) { opt('hero:' + k, 'Hero: ' + DC.HEROES[k].name, L.reward.kind === 'hero' && L.reward.id === k); });
-    Object.keys(DC.POWERS).forEach(function (k) { opt('power:' + k, 'Power: ' + DC.POWERS[k].name, L.reward.kind === 'power' && L.reward.id === k); });
+    Object.keys(DC.POWERS).filter(function (k) { return !DC.POWERS[k].disabled; }).forEach(function (k) { opt('power:' + k, 'Power: ' + DC.POWERS[k].name, L.reward.kind === 'power' && L.reward.id === k); });
     rs.addEventListener('change', function () { var p = rs.value.split(':'); L.reward = { kind: p[0], id: p[1] || null }; commit(); renderEditor(); });
     rl.appendChild(rs); fields.appendChild(rl);
     f.appendChild(fields);
