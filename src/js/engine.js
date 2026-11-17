@@ -174,7 +174,7 @@
   // Hero upgrades: each level adds HERO_UP_HP max health.
   const HERO_UPGRADE_COST = [100, 250, 500, 1000];
   // Gold to unlock a hero or power straight away instead of finding it in its room.
-  const HERO_BUY_COST = 1000, POWER_BUY_COST = 500;
+  const HERO_BUY_COST = 1500, POWER_BUY_COST = 750;
   const HERO_MAX_LV = HERO_UPGRADE_COST.length;
   const HERO_UP_HP = 2;
   function heroLv(lv) { return Math.max(0, Math.min(HERO_MAX_LV, lv | 0)); }
