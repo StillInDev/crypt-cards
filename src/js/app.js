@@ -123,7 +123,10 @@
     };
   }
   // Every room gets its own monsters and items: start from the depth's generic odds, drop all monsters, then apply the theme.
-  function themedWeights(themeKey, diffId) {
+  // depth: 0 for the first room of the dungeon, 1 for the last. The theme only picks WHICH monsters and traps show up;
+  // how many is set here, a share of the deck that rises the deeper you go.
+  var MONSTER_SHARE = [0.40, 0.55], TRAP_SHARE = [0.10, 0.16];
+  function themedWeights(themeKey, diffId, depth) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
     var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
@@ -132,6 +135,19 @@
     }
     var tw = THEMES[themeKey].w;
     for (var t in tw) if (TYPES[t]) w[t] = TYPES[t].kind === 'weapon' ? tw[t] * DC.WEAPON_RATE : tw[t];
+    var d = Math.max(0, Math.min(1, depth || 0));
+    var mS = MONSTER_SHARE[0] + (MONSTER_SHARE[1] - MONSTER_SHARE[0]) * d;
+    var tS = TRAP_SHARE[0] + (TRAP_SHARE[1] - TRAP_SHARE[0]) * d;
+    var isTrap = function (k) { return TYPES[k].kind === 'harm' || TYPES[k].kind === 'dtrap'; };
+    var M = 0, Tr = 0, P = 0;
+    for (k in w) { if (!w[k]) continue; if (TYPES[k].kind === 'monster') M += w[k]; else if (isTrap(k)) Tr += w[k]; else P += w[k]; }
+    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least spike traps
+    var unit = P / (1 - mS - tS);
+    for (k in w) {
+      if (!w[k]) continue;
+      if (M && TYPES[k].kind === 'monster') w[k] = Math.round(w[k] * unit * mS / M * 10) / 10;
+      else if (isTrap(k)) w[k] = Math.round(w[k] * unit * tS / Tr * 10) / 10;
+    }
     return w;
   }
   function defaultLevels() {
@@ -144,7 +160,8 @@
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
         L.reward = R.reward.area === a + 1 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
-        L.weights = themedWeights(R.theme, diff);
+        var last = AREAS.length * 6 - 1; // 6 rows per area
+        L.weights = themedWeights(R.theme, diff, (a * 6 + R.row) / last);
         L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
         out.push(sanitize(L, out.length));
       });
