@@ -9,8 +9,8 @@
 ## Where it appears
 
 The **Spike trap** card, the only trap in the game. It appears in most rooms. In play it has 1 to 4 arrows on
-its sides showing which neighbouring squares its spikes stab. Every turn it turns clockwise, then hits whatever
-its arrows point at (the hero or a monster) for its number. Stepping on it hurts too.
+its sides, and they turn clockwise every turn. It only hurts the hero who steps onto it from a side that has an
+arrow; from any other side it is safe. It never hits the cards around it.
 
 The game builds the different trap variations itself: it draws this base once and adds a `trap_arrow` on each
 side that has one. So this sprite is only the base.

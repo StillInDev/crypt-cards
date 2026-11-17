@@ -10,8 +10,9 @@
     potion:    { kind: 'heal',    name: 'Potion',          lo: 2, hi: 5, bf: 0.7, tip: 'Restores health, up to your maximum, and cures poison.' },
     chest:     { kind: 'chest',   name: 'Chest',           lo: 0, hi: 0, bf: 0,   tip: 'Step toward it to open it. You stay where you are and the turn is spent, and an item appears in its place for you to pick up.' },
     poison:    { kind: 'harm',    name: 'Poison',          lo: 1, hi: 4, bf: 1,   tip: 'Poisons you. You lose 1 health every turn for as many turns as its number, but it can never take you below 1. Any healing cures it.' },
-    // The one trap: a square base with 1 to 4 arrows. Every turn it turns clockwise and its spikes stab whatever the arrows point at.
-    trap:      { kind: 'dtrap',   name: 'Spike trap',      lo: 1, hi: 4, bf: 1,   tip: 'Its arrows show where its spikes stab. Every turn it turns clockwise, then hits whatever its arrows point at, you or a monster, for its number. Stepping on it hurts too.' },
+    // The one trap: a square base with 1 to 4 arrows that turn clockwise every turn. It only hurts you if you step onto it
+    // from a side that has an arrow (the arrow points back at you). It never hits the squares around it.
+    trap:      { kind: 'dtrap',   name: 'Spike trap',      lo: 1, hi: 4, bf: 1,   tip: 'Its arrows turn clockwise every turn. Step onto it from a side with an arrow and its spikes hurt you for its number; from any other side it is safe.' },
     // Monster tips say only what makes that monster different. The shared rules (it hurts for its number,
     // fire and ice monsters, shields, freezing) are not repeated on every card.
     rat:       { kind: 'monster', name: 'Rat',             lo: 1, hi: 3, bf: 1,   ability: 'breed', tip: 'Breeds: if it stays put for 3 turns, it bites a neighbouring card (even another rat) for its number. An empty square, or a card it destroys, becomes another rat just as strong. When rats bite the same card, only the biggest bite lands.' },
@@ -808,6 +809,9 @@
     } else if (card.kind === 'harm' || card.kind === 'dtrap') {
       if (card.type === 'poison') {
         H.poison += card.v; fx.push({ cell: tpos, text: 'Poison ' + card.v, cls: 'hurt', anim: 'poison' });
+      } else if (card.kind === 'dtrap' && !card.h[(dir + 2) % 4]) {
+        // Spike trap: only an arrow on the side you step in from (pointing back at you) hurts. Any other way in is safe.
+        fx.push({ cell: tpos, text: 'Safe', cls: 'info' });
       } else if (H.pass.trapproof) {
         fx.push({ cell: tpos, text: 'Dodged', cls: 'info', anim: 'immune' }); // the Ninja steps over traps
       } else if (T.el && H.ward > 0) {
@@ -1043,36 +1047,12 @@
       }
     }
 
-    // Directional traps turn clockwise, then hit whatever their heads point at.
+    // Spike traps turn their arrows a quarter clockwise every turn. They never hit the squares around them.
     if (S.rng && H.hp > 0) {
       for (let p = 0; p < S.grid.length; p++) {
         const tr = S.grid[p];
-        if (!tr || tr.kind !== 'dtrap') continue;
-        tr.h = [tr.h[3], tr.h[0], tr.h[1], tr.h[2]];
-        const px = p % w, py = (p / w) | 0;
-        for (let d = 0; d < 4; d++) {
-          if (!tr.h[d]) continue;
-          const ax = px + DIRS[d][0], ay = py + DIRS[d][1];
-          if (ax < 0 || ay < 0 || ax >= w || ay >= h) continue;
-          const ap = ay * w + ax;
-          const tel = TYPES[tr.type].el || null; // spike traps have no element
-          fx.push({ cell: ap, text: '', cls: 'info', anim: tel || 'slash' });
-          if (ap === H.pos) {
-            if (H.pass.trapproof) { fx.push({ cell: ap, text: 'Dodged', cls: 'info', anim: 'immune' }); continue; }
-            if (tel && H.ward > 0) { fx.push({ cell: ap, text: 'Shielded', cls: 'info', anim: 'immune' }); continue; }
-            const lost = hurtHero(S, tr.v, true);
-            fx.push({ cell: ap, text: lost > 0 ? '−' + lost : 'Blocked', cls: lost > 0 ? 'hurt' : 'info' });
-            continue;
-          }
-          const m = S.grid[ap];
-          if (!m || m.kind !== 'monster') continue;
-          const res = hurtMonster(m, tr.v, tel, false);
-          if (res.immune) { fx.push({ cell: ap, text: 'Immune', cls: 'info', anim: 'immune' }); continue; }
-          if (res.killed) { S.grid[ap] = blankCard(S); fx.push({ cell: ap, text: 'Slain', cls: 'info', anim: 'puff' }); }
-          else fx.push({ cell: ap, text: '−' + res.dealt, cls: 'info', hit: m.uid });
-        }
+        if (tr && tr.kind === 'dtrap') tr.h = [tr.h[3], tr.h[0], tr.h[1], tr.h[2]];
       }
-      if (H.hp <= 0) { S.over = true; H.hp = 0; }
     }
 
     // Bone wall: skeletons that touch in a chain of SKELETON_CHAIN or more each gain a quarter of their

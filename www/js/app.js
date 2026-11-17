@@ -1080,7 +1080,8 @@
       }
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]);
-        t = 'Spike trap with ' + n4 + (n4 === 1 ? ' arrow' : ' arrows') + ', ' + n + ' damage each. Every turn it turns clockwise, then its spikes stab whatever the arrows point at: you, or a monster. Stepping on it costs ' + n + '.';
+        var sides = ['top', 'right', 'bottom', 'left'].filter(function (x, d) { return c.h[d]; });
+        t = 'Spike trap with ' + n4 + (n4 === 1 ? ' arrow' : ' arrows') + ' (' + sides.join(', ') + '). Step onto it from a side with an arrow and its spikes hurt you for ' + n + '; from any other side it is safe. The arrows turn clockwise every turn. It never hurts the cards around it.';
         if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }

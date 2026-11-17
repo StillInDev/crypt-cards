@@ -1,60 +1,48 @@
-const DC=require('../src/js/engine.js'),assert=require('assert');
-function mk(){const L={id:1,w:3,h:3,heroHP:20,ramp:12,cap:4,weights:{coin:1}};const S=DC.newGame(L,5,{});return S;}
-// place a spike trap with head east at (0,0); after rotation head points south (0,1)... heads [N,E,S,W]
-function setup(el,heads){
-  const S=mk(); S.grid=S.grid.map(()=>({uid:++S.uid,type:'coin',kind:'gold',v:1}));
-  S.hero.pos=8; S.grid[8]=null; S.hero.hp=S.hero.max=20;
-  S.grid[0]={uid:++S.uid,type:el+'trap',kind:'dtrap',v:2,h:heads};
-  return S;
+// Spike trap: arrows turn clockwise each turn; it only hurts you if you step onto it from a side with an arrow.
+// It never hits the cards around it. Heads are [top, right, bottom, left].
+const DC = require('../src/js/engine.js'), assert = require('assert');
+function mk() {
+  const S = DC.newGame({ id: 1, w: 3, h: 3, heroHP: 20, ramp: 12, cap: 4, weights: { coin: 1 } }, 5, {});
+  S.grid = S.grid.map(() => ({ uid: ++S.uid, type: 'coin', kind: 'gold', v: 1 }));
+  S.hero.hp = S.hero.max = 20; return S;
 }
-// trap at 0, head N (index0) -> after rotation E -> hits cell 1
-let S=setup('',[1,0,0,0]);
-S.grid[1]={uid:++S.uid,type:'rat',kind:'monster',v:9};
-S.hero.pos=8;
-let r=DC.move(S,0); // hero up
-assert(r); const trap=S.grid.find(c=>c&&c.kind==='dtrap');
-assert.deepStrictEqual(trap.h,[0,1,0,0],'rotated clockwise');
-console.log('rotate ok');
-// a spike trap has no element: every monster takes its number, fire and ice ones too
-let g3;
-for(const t of ['rat','imp','icespider']){
-  S=setup('',[0,1,0,0]); S.grid[3]={uid:++S.uid,type:t,kind:'monster',v:9}; g3=S.grid[3]; DC.move(S,0);
-  assert.strictEqual(g3.v,7,t+' takes 2 from the spikes');
-}
-// kill -> blank
-S=setup('',[0,1,0,0]); S.grid[3]={uid:++S.uid,type:'rat',kind:'monster',v:2}; DC.move(S,0);
-assert(S.grid.some(c=>c&&c.kind==='empty'),'blank left');
-// hero hurt: trap at 6? hero ends adjacent
-S=setup('',[1,0,0,0]); S.grid[5]=S.grid[0]; S.grid[0]={uid:++S.uid,type:'coin',kind:'gold',v:1};
-S.grid[5].h=[1,0,0,0]; // rotates to E -> out of grid; use W-> head [0,0,1,0]->W hits cell 4
-S.grid[5].h=[0,0,1,0]; S.hero.pos=4; S.grid[4]=null; S.grid[8]={uid:++S.uid,type:'coin',kind:'gold',v:1};
-const hp0=S.hero.hp; DC.move(S,2); // hero moves down to 7; hmm
-console.log('hero hp',hp0,'->',S.hero.hp);
-// fuzz
-for(let seed=1;seed<400;seed++){
-  const L=DC.nextLevel(null,6);const S=DC.newGame(L,seed,{});
-  for(let i=0;i<80&&!S.over;i++){ const ds=[0,1,2,3].filter(d=>DC.preview(S,d)); if(!ds.length)break; DC.move(S,ds[(seed+i)%ds.length]);
-    S.grid.forEach(c=>{ if(c&&c.kind==='dtrap'){assert(c.h.length===4&&c.h.some(x=>x),'heads')} }); assert(S.hero.hp<=S.hero.max); }
-}
-console.log('dtrap tests passed');
-{
- const S=mk(); S.grid=S.grid.map(()=>({uid:++S.uid,type:'coin',kind:'gold',v:1}));
- S.hero.pos=6; S.grid[6]=null; S.hero.hp=S.hero.max=20;
- S.grid[4]={uid:++S.uid,type:'trap',kind:'dtrap',v:3,h:[0,1,0,0]};
- DC.move(S,1); assert.strictEqual(S.hero.pos,7); assert.strictEqual(S.hero.hp,17,'hero hit for 3');
- const S2=mk(); S2.grid=S2.grid.map(()=>({uid:++S2.uid,type:'coin',kind:'gold',v:1}));
- S2.hero.pos=6; S2.grid[6]=null; S2.hero.hp=S2.hero.max=20;
- S2.grid[4]={uid:++S2.uid,type:'trap',kind:'dtrap',v:3,h:[0,1,0,0]};
- DC.move(S2,1); assert.strictEqual(S2.hero.hp,17);
- console.log('hero trap hits ok');
-}
+const trap = (S, h, v) => ({ uid: ++S.uid, type: 'trap', kind: 'dtrap', v: v || 3, h: h });
 
-// Shield blocks fire and ice monsters only: spike trap arrows still stab.
-{
- const S=mk(); S.grid=S.grid.map(()=>({uid:++S.uid,type:'coin',kind:'gold',v:1}));
- S.hero.pos=6; S.grid[6]=null; S.hero.hp=S.hero.max=20; S.hero.ward=3;
- S.grid[4]={uid:++S.uid,type:'trap',kind:'dtrap',v:3,h:[0,1,0,0]};
- DC.move(S,1); assert.strictEqual(S.hero.hp,17,'shield does not stop spikes');
- assert(!DC.TYPES.firetrap&&!DC.TYPES.icetrap,'elemental traps removed'); assert.strictEqual(DC.TYPES.trap.kind,'dtrap');
- console.log('spike trap is the only trap');
+// Arrows turn a quarter clockwise every turn.
+let S = mk(); S.hero.pos = 8; S.grid[8] = null; const t0 = trap(S, [1, 0, 0, 0]); S.grid[0] = t0;
+DC.move(S, 0);
+assert.deepStrictEqual(t0.h, [0, 1, 0, 0], 'rotated clockwise');
+
+// It never hits the cards around it: a rat its arrow points at is untouched, and so is the hero beside it.
+S = mk(); S.hero.pos = 6; S.grid[6] = null;
+const t1 = trap(S, [0, 1, 0, 0]); S.grid[4] = t1; const rat = { uid: ++S.uid, type: 'rat', kind: 'monster', v: 9, t: 0 }; S.grid[5] = rat;
+DC.move(S, 1); // hero 6 -> 7, right below the trap; it turns to point down at the hero
+assert.strictEqual(rat.v, 9, 'monsters are never stabbed'); assert.strictEqual(S.hero.hp, 20, 'standing next to it is safe');
+
+// Stepping onto it: hurts only from a side with an arrow. Hero at 7 (below the trap at 4) moves up (dir 0),
+// entering from the bottom side (index 2).
+for (const [h, hurt] of [[[0, 0, 1, 0], true], [[1, 0, 0, 0], false], [[0, 1, 0, 1], false], [[1, 1, 1, 1], true]]) {
+  S = mk(); S.hero.pos = 7; S.grid[7] = null; S.grid[4] = trap(S, h.slice(), 3);
+  assert.strictEqual(DC.preview(S, 0).dHp, hurt ? -3 : 0, 'preview agrees for ' + h);
+  DC.move(S, 0);
+  assert.strictEqual(S.hero.pos, 4, 'you step onto it');
+  assert.strictEqual(S.hero.hp, hurt ? 17 : 20, (hurt ? 'hurt' : 'safe') + ' entering from below with arrows ' + h);
 }
+// The side counts from where you come: from the left (moving right, dir 1) only a left arrow (index 3) hurts.
+S = mk(); S.hero.pos = 3; S.grid[3] = null; S.grid[4] = trap(S, [0, 0, 0, 1], 2); DC.move(S, 1); assert.strictEqual(S.hero.hp, 18);
+S = mk(); S.hero.pos = 3; S.grid[3] = null; S.grid[4] = trap(S, [0, 1, 0, 0], 2); DC.move(S, 1); assert.strictEqual(S.hero.hp, 20);
+
+// Only the spike trap is left, and Shield does not stop it.
+S = mk(); S.hero.pos = 7; S.grid[7] = null; S.hero.ward = 3; S.grid[4] = trap(S, [0, 0, 1, 0], 3); DC.move(S, 0);
+assert.strictEqual(S.hero.hp, 17, 'shield does not stop spikes');
+assert(!DC.TYPES.firetrap && !DC.TYPES.icetrap, 'elemental traps removed'); assert.strictEqual(DC.TYPES.trap.kind, 'dtrap');
+
+// Fuzz: traps always keep 1 to 4 arrows.
+for (let seed = 1; seed < 200; seed++) {
+  const L = DC.nextLevel(null, 6); const G = DC.newGame(L, seed, {});
+  for (let i = 0; i < 60 && !G.over; i++) {
+    const ds = [0, 1, 2, 3].filter(d => DC.preview(G, d)); if (!ds.length) break; DC.move(G, ds[(seed + i) % ds.length]);
+    G.grid.forEach(c => { if (c && c.kind === 'dtrap') assert(c.h.length === 4 && c.h.some(x => x), 'heads'); });
+  }
+}
+console.log('spike trap tests passed');

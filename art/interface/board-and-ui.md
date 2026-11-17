@@ -99,7 +99,7 @@ Small badges drawn on cards (currently tiny code-drawn shapes, would be nicer as
 | Shield | `ui_shield.png` | 7×8 | Top left of a monster that carries a shield (it blocks the first hit). Today blue |
 | Bomb fuse badge | `ui_fuse.png`, `ui_fuse_lit.png` | 9-slice, about 8×8 | Small dark box, top left of a bomb card, holding its countdown number. `_lit` is the last turn (today red, flashing) |
 | Weapon power badge | `ui_wv.png` | 9-slice, about 8×8 | Small dark box with a grey `#c0cbdc` ring, top right of the hero card, holding the held weapon's power |
-| Spike trap arrows | see `art/traps/trap_arrow.md` | pointing **up** | The arrows on the sides of a spike trap card that show where it stabs. Now its own sprite request (`trap_arrow`). The game places and rotates them |
+| Spike trap arrows | see `art/traps/trap_arrow.md` | pointing **up** | The arrows on the sides of a spike trap card that show which sides hurt to step in from. Now its own sprite request (`trap_arrow`). The game places and rotates them |
 
 ## 3. HUD panels
 

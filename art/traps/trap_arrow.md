@@ -8,7 +8,7 @@
 ## Where it appears
 
 On the sides of the **Spike trap** card. Each trap has 1 to 4 of these arrows, one per side, showing which
-neighbouring squares its spikes stab. The game places and turns this one sprite for each side (up, right, down,
+sides are dangerous: stepping onto the trap from a side with an arrow gets you hurt. The game places and turns this one sprite for each side (up, right, down,
 left) and turns them all a quarter clockwise every turn, so different traps are made from the same two pieces.
 
 ## What it must look like
