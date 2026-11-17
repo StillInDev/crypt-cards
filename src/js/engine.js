@@ -993,7 +993,7 @@
         const res = hurtMonster(m, quakeDamage(S.powerLevel, qp.lv), null, false);
         if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
-        fx.push({ cell: mp, text: '', cls: 'info', anim: 'quake' });
+        fx.push({ cell: mp, text: '', cls: 'info', anim: 'spike', dir: dir }); // a stone spike bursts up, shaped by the way you moved
       }
     }
 

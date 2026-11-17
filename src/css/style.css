@@ -512,6 +512,17 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 @keyframes beamy { 0% { transform: scaleY(0); opacity: 1; } 45% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
 
 /* Tremor */
+/* Tremor spike: grows through 6 frames from the bottom of the square, holds, then fades. */
+.fx-spike { --c: transparent; }
+.fx-spike::before, .fx-spike::after { display: none; }
+.fx-spike { background: none; }
+.fx-spike i { position: absolute; bottom: 3%; background-repeat: no-repeat; background-size: 600% 100%; background-position: 0 0; image-rendering: auto;
+  animation: spike-grow .26s steps(5, jump-none) forwards, spike-fade .18s ease-in .32s forwards; }
+.fx-spike.side i { left: 4%; width: 92%; aspect-ratio: 152 / 96; background-image: url(../img/fx/tremor_side.png); }
+.fx-spike.side.flip i { transform: scaleX(-1); }
+.fx-spike.up i { left: 50%; height: 70%; aspect-ratio: 82 / 96; transform: translateX(-50%); background-image: url(../img/fx/tremor_up.png); }
+@keyframes spike-grow { from { background-position: 0 0; } to { background-position: 100% 0; } }
+@keyframes spike-fade { to { opacity: 0; } }
 .fx-quake { --c: #c28a54; }
 .fx-quake::before { box-shadow: -30px 14px 0 #733e39, 30px 14px 0 #733e39, -18px 22px 0 var(--c), 18px 22px 0 var(--c), 0 24px 0 #733e39, -34px 0 0 var(--c), 34px 0 0 var(--c), 0 -14px 0 #ead4aa; width: 9px; height: 9px; animation: rise2 .5s steps(6) forwards; }
 .fx-quake::after { content: ''; position: absolute; left: 6%; right: 6%; top: 40%; height: 20%; background: repeating-linear-gradient(90deg, #181425 0 6px, transparent 6px 12px); animation: flare2 .5s steps(5) forwards; }

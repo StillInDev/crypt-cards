@@ -856,6 +856,7 @@
       if (!f.anim) return;
       var key = f.anim + ':' + f.cell;
       if (done[key]) return; done[key] = 1;
+      if (f.anim === 'spike') { playSpike(f.cell, f.dir); return; }
       burst('fx-' + f.anim, f.cell);
       if (f.anim === 'boom') flash(board, 'shake', 300);
       if (f.anim === 'blast') { var c = S.grid[f.cell]; if (c) flash(els.get(c.uid), 'strike', 380); }
@@ -866,6 +867,14 @@
     var L = S.level;
     return { x: ((cell % L.w) + 0.5) / L.w * 100, y: (((cell / L.w) | 0) + 0.5) / L.h * 100 };
   }
+  // Tremor: a stone spike bursts up from the bottom of the square the hero left. Moving left or right it is the
+  // side spike (moving left it points right, as drawn; moving right it is mirrored); moving up or down it is
+  // the upright spike. Frames are in src/img/fx/tremor_side.png and tremor_up.png.
+  function playSpike(cell, dir) {
+    var side = dir === 1 || dir === 3;
+    burst('fx-spike ' + (side ? 'side' : 'up') + (dir === 1 ? ' flip' : ''), cell, function (el) { el.appendChild(document.createElement('i')); });
+  }
+  ['side', 'up'].forEach(function (n) { new Image().src = 'img/fx/tremor_' + n + '.png'; }); // no blank first frame
   function burst(cls, cell, extra) {
     var c = cellCentre(cell), el = document.createElement('div');
     el.className = 'fx ' + cls;

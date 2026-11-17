@@ -1,5 +1,11 @@
 # Request: Tremor ground crack
 
+> **Update:** the hit effect (`fx_quake_hit` below) is now done with delivered art: a stone spike that grows out
+> of the bottom of the hit square. Sources are `art/animations/src/tremor_spike_side.webp` (used for left/right
+> moves: as drawn when moving left, mirrored when moving right) and `tremor_spike_up.webp` (up/down moves), 3 x 2
+> grids of 6 growth frames. `python3 scripts/cut-tremor.py` turns them into `src/img/fx/tremor_side.png` and
+> `tremor_up.png`. Only `fx_quake_feet` (the crack under the hero) is still open.
+
 - **Sprite ids:** `fx_quake_hit` and `fx_quake_feet` (deliver `fx_quake_hit.png` and `fx_quake_feet.png`)
 - **Kind:** animation (a short effect, several frames in one strip)
 - **Read first:** `art/README.md` (format and style rules). This request **changes the size and framing rules**: see below.
