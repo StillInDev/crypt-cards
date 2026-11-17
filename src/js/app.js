@@ -165,7 +165,8 @@
 
   var levels, best = {}, cleared = {}, unlockAll = false, heroSel = 'knight', powSel = ['heal'];
   // purse: gold banked from finished runs, spent on upgrades. ups: { powerId: level }, hups: { heroId: level }.
-  var purse = 0, ups = {}, hups = {};
+  // owned: heroes and powers bought with gold, { 'hero:id': 1, 'power:id': 1 }.
+  var purse = 0, ups = {}, hups = {}, owned = {};
   function loadAll(snapshot) {
     levels = null;
     var hasAreas = false;
@@ -193,12 +194,13 @@
     purse = snapshot && snapshot.purse != null ? snapshot.purse : clampInt(store.get('cc_purse'), 0, 1e9, 0);
     try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
+    try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
     fixSelection();
   }
   function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
   function heroHp(id) { return DC.HERO_BASE_HP + DC.HEROES[id].hp + DC.heroHpBonus(heroUpLv(id)); }
-  function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); }
+  function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); store.set('cc_owned', JSON.stringify(owned)); }
   // A run's gold goes into the purse once, when the run ends or you walk away from it.
   function bankRun() {
     if (!S || S.banked) return 0;
@@ -211,6 +213,12 @@
     var lv = upLv(id), cost = DC.upgradeCost(lv);
     if (cost == null || purse < cost || !powerOpen(id)) return false;
     purse -= cost; ups[id] = lv + 1; savePurse();
+    return true;
+  }
+  function buyUnlock(kind, id) {
+    var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
+    if (purse < cost || (kind === 'hero' ? heroOpen(id) : powerOpen(id))) return false;
+    purse -= cost; owned[kind + ':' + id] = 1; savePurse();
     return true;
   }
   function buyHeroUpgrade(id) {
@@ -232,12 +240,12 @@
     return -1;
   }
   function heroOpen(id) {
-    if (unlockAll || START_HEROES.indexOf(id) >= 0) return true;
+    if (unlockAll || START_HEROES.indexOf(id) >= 0 || owned['hero:' + id]) return true;
     var r = rewardRoom('hero', id);
     return r < 0 ? false : !!cleared[r];
   }
   function powerOpen(id) {
-    if (unlockAll || START_POWERS.indexOf(id) >= 0) return true;
+    if (unlockAll || START_POWERS.indexOf(id) >= 0 || owned['power:' + id]) return true;
     var r = rewardRoom('power', id);
     return r < 0 ? false : !!cleared[r];
   }
@@ -1136,7 +1144,7 @@
       else o.up = { text: 'Next level: +' + DC.HERO_UP_HP + ' max health.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
         buy: function () { if (buyHeroUpgrade(id)) { refreshLoadoutScreen(); loInfo(heroInfo(id)); toast(H.name + ' upgraded to Lvl. ' + (heroUpLv(id) + 1)); } } };
-    }
+    } else o.up = unlockOffer('hero', id, H.name, heroInfo);
     return o;
   }
   // The numbers shown at the top of a power's details: its recharge and, where it has one, its power.
@@ -1161,8 +1169,15 @@
       else o.up = { text: 'Next level: ' + DC.upgradeWhat(id, lv) + '.', label: 'Upgrade', cost: cost, ok: purse >= cost,
         short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
         buy: function () { if (buyUpgrade(id)) { refreshLoadoutScreen(); loInfo(powerInfo(id)); toast(P.name + ' upgraded to Lvl. ' + (upLv(id) + 1)); } } };
-    }
+    } else o.up = unlockOffer('power', id, P.name, powerInfo);
     return o;
+  }
+  // A locked hero or power can be bought with gold instead of clearing its room.
+  function unlockOffer(kind, id, name, info) {
+    var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
+    return { text: 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
+      short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
+      buy: function () { if (buyUnlock(kind, id)) { refreshLoadoutScreen(); loInfo(info(id)); toast(name + ' unlocked!'); } } };
   }
   function refreshLoadoutScreen() { if (current === 'hero') renderHero(); else if (current === 'home') renderHome(); }
   function byOpen(isOpen) { return function (p, q) { return (isOpen(q) ? 1 : 0) - (isOpen(p) ? 1 : 0); }; }
@@ -1365,7 +1380,7 @@
   function renderHero() {
     fixSelection();
     var slots = DC.HEROES[heroSel].slots;
-    $('#hp-sub').textContent = 'Clear rooms to find new heroes and powers.';
+    $('#hp-sub').textContent = 'Clear rooms or spend gold to get new heroes and powers.';
 
     // Loadout: powers above the head, then the hero.
     fillLoadout('hp', function (pid) { powSel.splice(powSel.indexOf(pid), 1); saveSelection(); renderHero(); },
@@ -1686,7 +1701,7 @@
     show('home');
   }
   if (window.claude && window.claude.hot) {
-    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, hero: heroSel, pows: powSel, purse: purse, ups: ups, hups: hups }; });
+    window.claude.hot.snapshot(function () { return { levels: levels, best: best, cleared: cleared, unlockAll: unlockAll, owned: owned, hero: heroSel, pows: powSel, purse: purse, ups: ups, hups: hups }; });
     if (window.claude.hot.ready) window.claude.hot.ready(start); else start(window.claude.hot.data || {});
   } else start({});
 })();
