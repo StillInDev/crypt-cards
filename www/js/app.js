@@ -701,14 +701,29 @@
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
     if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
-    if (H.pass.storm) {
-      // Lightning Wizard: kills toward the smite, or Smite once charged.
-      var sm = (H.kills | 0) >= DC.STORM_KILLS;
-      stEl.appendChild(img('p_thunder'));
-      // A trailing ⚡ means the next attack also chains lightning.
-      stEl.appendChild(document.createTextNode((sm ? 'Smite' : (H.kills | 0) + '/' + DC.STORM_KILLS) + ((H.hits | 0) === DC.STORM_CHAIN - 1 ? '⚡' : '')));
-    }
+    renderCharge(H);
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
+  }
+
+  // Lightning Wizard charge meter under the health bar: a segment fills for every kill and the full
+  // bar glows when the smite is ready. The small pips beside it count attacks to the next chain bolt.
+  function renderCharge(H) {
+    var el = $('#h-chg');
+    el.hidden = !H.pass.storm;
+    if (!H.pass.storm) { el.innerHTML = ''; return; }
+    var k = Math.min(DC.STORM_KILLS, H.kills | 0), full = k >= DC.STORM_KILLS, hits = H.hits | 0;
+    if (el.children.length !== 2) {
+      el.innerHTML = '<span class="cm"></span><span class="cc"></span>';
+      for (var i = 0; i < DC.STORM_KILLS; i++) el.firstChild.appendChild(document.createElement('i'));
+      for (var j = 0; j < DC.STORM_CHAIN; j++) el.lastChild.appendChild(document.createElement('i'));
+    }
+    [].forEach.call(el.firstChild.children, function (seg, i) { seg.classList.toggle('on', i < k); });
+    [].forEach.call(el.lastChild.children, function (pip, i) { pip.classList.toggle('on', i < hits); });
+    el.classList.toggle('full', full);
+    el.classList.toggle('next', hits === DC.STORM_CHAIN - 1);
+    el.setAttribute('aria-label', (full ? 'Smite ready' : 'Smite charge ' + k + ' of ' + DC.STORM_KILLS + ' kills') +
+      '. Chain lightning ' + (hits === DC.STORM_CHAIN - 1 ? 'on the next attack' : 'in ' + (DC.STORM_CHAIN - hits) + ' attacks') + '.');
+    el.title = el.getAttribute('aria-label');
   }
 
   var HINT = 'Swipe or tap a card next to your hero. Press and hold any card for details. Tap the weapon box at the bottom right to sell it.';

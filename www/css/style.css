@@ -96,6 +96,17 @@ details ul { padding-left: 1.1em; margin: 12px 0 0; display: grid; gap: 8px; }
 .hpbar { height: 8px; background: #0c0a14; margin-top: 2px; }
 .hpbar i { display: block; height: 100%; width: 100%; background: var(--moss); transition: width .25s, background .25s; }
 .hpbar i.low { background: var(--blood); }
+.chg { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+.chg[hidden] { display: none; }
+.chg .cm { flex: 1; display: flex; gap: 2px; height: 7px; }
+.chg .cm i { flex: 1; background: #0c0a14; transition: background .2s; }
+.chg .cm i.on { background: #fee761; }
+.chg.full .cm i { background: #fff6a8; animation: chgGlow .5s steps(2) infinite; }
+.chg .cc { display: flex; gap: 2px; }
+.chg .cc i { width: 5px; height: 5px; background: #0c0a14; box-shadow: 0 0 0 1px #2ce8f5; }
+.chg .cc i.on { background: #2ce8f5; }
+.chg.next .cc i { animation: chgGlow .5s steps(2) infinite; }
+@keyframes chgGlow { 50% { background: #fee761; box-shadow: 0 0 6px 1px rgba(254,231,97,.8); } }
 .gold .v { color: var(--saffron); }
 .stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .board { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
