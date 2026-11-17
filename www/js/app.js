@@ -24,21 +24,21 @@
     fungus:   { bg: '#231a30', card: '#4a3560', acc: '#e07bd8', icon: 'shroom',    sub: 'Spores everywhere',
                 w: { shroom: 8, spider: 6, hive: 3, slime: 3, beetle: 3, poison: 10, potion: 18, webspider: 3 } },
     catacombs:{ bg: '#1a1a1b', card: '#45433f', acc: '#e0dac0', icon: 'skeleton',  sub: 'The restless dead',
-                w: { skeleton: 8, zombie: 6, ghost: 5, mummy: 3, wraith: 2, goldskull: 4, trap: 5, icetrap: 2 } },
+                w: { skeleton: 8, zombie: 6, ghost: 5, mummy: 3, wraith: 2, goldskull: 4, trap: 7 } },
     mine:     { bg: '#261e14', card: '#4e4230', acc: '#fee761', icon: 'gem',       sub: 'Gems and gunpowder',
-                w: { scorpion: 6, beetle: 6, goldskull: 5, golem: 3, imp: 3, gem: 14, bomb: 7, trap: 6, firetrap: 3 } },
+                w: { scorpion: 6, beetle: 6, goldskull: 5, golem: 3, imp: 3, gem: 14, bomb: 7, trap: 9 } },
     frozen:   { bg: '#0f2230', card: '#2e5469', acc: '#2ce8f5', icon: 'icespider', sub: 'Everything is frozen',
-                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, icetrap: 6, icewand: 6, icesword: 4, firesword: 3 } },
+                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, trap: 6, icewand: 6, icesword: 4, firesword: 3 } },
     library:  { bg: '#1d1730', card: '#403669', acc: '#a58bff', icon: 'lich',      sub: 'Forbidden knowledge',
                 w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, elecbow: 4, firewand: 4, icewand: 4 } },
     ember:    { bg: '#2a1410', card: '#5d2e25', acc: '#ff6a1f', icon: 'imp',       sub: 'Fire and brimstone',
-                w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, firetrap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
+                w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, trap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
     armory:   { bg: '#1a2029', card: '#4a5569', acc: '#c0cbdc', icon: 'gargoyle',  sub: 'Every weapon you can think of',
                 w: { gargoyle: 6, goblin: 4, skeleton: 5, sword: 14, firesword: 4, icesword: 4, scythe: 5, windblade: 3, painblade: 3, ninjastar: 4, elecbow: 3 } },
     vampire:  { bg: '#270f1d', card: '#5b2641', acc: '#ff5560', icon: 'vampire',   sub: 'They hunt in the dark',
                 w: { vampire: 6, bat: 8, wolf: 4, mummy: 4, banshee: 3, potion: 8, poison: 6, trap: 4 } },
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
-                w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
+                w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 12 } }
   };
   // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based),
   // spread out so new things keep turning up the whole way down. Every other room just opens the way on.
@@ -125,7 +125,7 @@
   // Every room gets its own monsters and items: start from the depth's generic odds, drop all monsters, then apply the theme.
   function themedWeights(themeKey, diffId) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
-    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
+    var CLEAR = ['bomb', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
       var T = TYPES[k];
       w[k] = (T.kind === 'monster' || CLEAR.indexOf(k) >= 0) ? 0 : (base[k] || 0);
@@ -476,8 +476,11 @@
       card.insertBefore(img(c.kind === 'reward' ? rewardSprite(c.rw) : c.type, 'art'), card.firstChild);
       if (c.kind === 'reward') card.appendChild(img('bars', 'bars'));
       if (c.kind === 'dtrap') {
-        var hs = document.createElement('span'); hs.className = 'heads ' + TYPES[c.type].el;
-        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; hs.appendChild(i); });
+        // Arrows on the trap's sides. With a trap_arrow sprite (pointing up) it is drawn and turned for each side;
+        // until that art exists, plain triangles are drawn.
+        var arrowArt = window.SPR && window.SPR.trap_arrow;
+        var hs = document.createElement('span'); hs.className = 'heads ' + (TYPES[c.type].el || 'spike') + (arrowArt ? ' spr' : '');
+        ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; if (arrowArt) i.appendChild(img('trap_arrow')); hs.appendChild(i); });
         card.appendChild(hs);
       }
       if (c.kind === 'bomb') { var fz = document.createElement('span'); fz.className = 'fz'; card.appendChild(fz); }
@@ -1052,9 +1055,8 @@
         break;
       }
       case 'dtrap': {
-        var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
-        t = (el === 'fire' ? 'Fire' : 'Ice') + ' trap with ' + n4 + (n4 === 1 ? ' head' : ' heads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its heads point at: you, and monsters. ' +
-          (el === 'fire' ? 'Fire' : 'Ice') + ' monsters are immune; ' + opp + ' monsters take ' + (n * 2) + '. Other monsters take ' + n + '. Stepping on it costs ' + n + '.';
+        var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]);
+        t = 'Spike trap with ' + n4 + (n4 === 1 ? ' arrow' : ' arrows') + ', ' + n + ' damage each. Every turn it turns clockwise, then its spikes stab whatever the arrows point at: you, or a monster. Stepping on it costs ' + n + '.';
         if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }

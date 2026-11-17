@@ -7,17 +7,17 @@ assert.strictEqual(DC.HEROES.rogue.name,'Ninja');
 assert(DC.HEROES.rogue.pass.trapproof,'Ninja has the trap-proof passive');
 
 // Stepping onto a spike trap, fire trap or ice trap: the Rogue takes nothing, the Knight does.
-for(const type of ['trap','firetrap','icetrap']){
-  const card=(S)=>type==='trap'?{uid:++S.uid,type:'trap',kind:'harm',v:4}:{uid:++S.uid,type:type,kind:'dtrap',v:4,h:[0,0,0,0]};
+for(const type of ['trap']){
+  const card=(S)=>({uid:++S.uid,type:'trap',kind:'dtrap',v:4,h:[0,0,0,0]});
   let S=mk('rogue'); S.grid[1]=card(S); DC.move(S,0); assert.strictEqual(S.hero.pos,1); assert.strictEqual(S.hero.hp,20,'rogue unhurt by '+type);
   S=mk('knight'); S.grid[1]=card(S); DC.move(S,0); assert.strictEqual(S.hero.hp,16,'knight hurt by '+type);
 }
 
 // A trap head turning onto the hero's square: trap at 0 points north, turns east, hits cell 1 where the hero lands.
-for(const el of ['fire','ice']){
-  let S=mk('rogue'); S.grid[0]={uid:++S.uid,type:el+'trap',kind:'dtrap',v:3,h:[1,0,0,0]};
+for(const el of ['spike']){
+  let S=mk('rogue'); S.grid[0]={uid:++S.uid,type:'trap',kind:'dtrap',v:3,h:[1,0,0,0]};
   DC.move(S,0); assert.strictEqual(S.hero.pos,1); assert.strictEqual(S.hero.hp,20,'rogue unhurt by '+el+' trap head');
-  S=mk('knight'); S.grid[0]={uid:++S.uid,type:el+'trap',kind:'dtrap',v:3,h:[1,0,0,0]};
+  S=mk('knight'); S.grid[0]={uid:++S.uid,type:'trap',kind:'dtrap',v:3,h:[1,0,0,0]};
   DC.move(S,0); assert.strictEqual(S.hero.hp,17,'knight hurt by '+el+' trap head');
 }
 
@@ -26,5 +26,5 @@ let S=mk('rogue'); S.grid[1]={uid:++S.uid,type:'poison',kind:'harm',v:3}; DC.mov
 S=mk('rogue'); S.grid[1]={uid:++S.uid,type:'rat',kind:'monster',v:3}; DC.move(S,0); assert.strictEqual(S.hero.hp,17,'rats still bite');
 
 // Preview agrees: no damage predicted for the Rogue stepping on a trap.
-S=mk('rogue'); S.grid[1]={uid:++S.uid,type:'trap',kind:'harm',v:4}; assert.strictEqual(DC.preview(S,0).dHp,0);
+S=mk('rogue'); S.grid[1]={uid:++S.uid,type:'trap',kind:'dtrap',v:4,h:[0,0,0,0]}; assert.strictEqual(DC.preview(S,0).dHp,0);
 console.log('rogue tests passed');

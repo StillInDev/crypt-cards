@@ -59,10 +59,7 @@
   ],
   "traps": [
     "trap",
-    "firetrap",
-    "icetrap",
-    "firearrow",
-    "icearrow"
+    "trap_arrow"
   ],
   "weapons": [
     "sword",

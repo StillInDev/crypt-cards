@@ -362,6 +362,14 @@ textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8r
 .card .hd.e { top: 50%; right: 2px; margin-top: calc(var(--cs) * -.09); border-top: calc(var(--cs) * .09) solid transparent; border-bottom: calc(var(--cs) * .09) solid transparent; border-left: calc(var(--cs) * .16) solid var(--hc); }
 .card .heads.fire { --hc: #ff5a1f; }
 .card .heads.ice { --hc: #2ce8f5; }
+.card .heads.spike { --hc: #c0cbdc; }
+/* With trap_arrow art: the sprite (drawn pointing up) is turned to face each side. */
+.card .heads.spr .hd { border: 0; width: calc(var(--cs) * .26); height: calc(var(--cs) * .26); margin: 0; }
+.card .heads.spr .hd img { width: 100%; height: 100%; display: block; }
+.card .heads.spr .hd.n { left: 50%; top: 0; transform: translateX(-50%); }
+.card .heads.spr .hd.s { left: 50%; bottom: 0; transform: translateX(-50%) rotate(180deg); }
+.card .heads.spr .hd.e { top: 50%; right: 0; transform: translateY(-50%) rotate(90deg); }
+.card .heads.spr .hd.w { top: 50%; left: 0; transform: translateY(-50%) rotate(-90deg); }
 
 /* ---- Selling held items ---- */
 .stat .v .sell { display: inline-flex; align-items: center; gap: 3px; background: #0c0a14; color: inherit; font: inherit; border: 0; padding: 2px 4px; margin-right: 4px; cursor: pointer; min-height: 28px; box-shadow: 0 0 0 2px var(--saffron); }

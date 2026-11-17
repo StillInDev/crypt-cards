@@ -17,7 +17,7 @@ the request still sets what the sprite is for and what it must not be confused w
 | `monsters/` | Everything you fight (and the tomb that spawns them) | `src/img/sprites/monsters/` |
 | `items/` | Board pickups: coin, gem, potion, poison, bomb, chest | `src/img/sprites/items/` |
 | `weapons/` | Swords, wands, bows and the other weapons | `src/img/sprites/weapons/` |
-| `traps/` | Spike, fire and ice traps and the arrow traps | `src/img/sprites/traps/` |
+| `traps/` | The spike trap: its square base and its arrow | `src/img/sprites/traps/` |
 | `powers/` | The power button icons | `src/img/sprites/powers/` |
 | `interface/` | Lock bars, key, web, and the board and UI frames | `src/img/sprites/interface/` |
 | `animations/` | Effects that play for a moment: hits, casts, cracks | not in the game yet |
@@ -69,8 +69,8 @@ Match the sheets in `art/sheets/`:
 - **Characters and monsters** are drawn as a full figure, head to feet. Flying and floating creatures
   (bats, ghosts, winged monsters) and crawling ones (slimes, spiders, insects) are drawn whole.
 - **Objects** (tombs, chests, items, weapons) sit centred. Weapons point up and to the right.
-- **Arrows** (`firearrow`, `icearrow`) are rotated by the game, so they must point exactly one way:
-  draw them pointing up-right like the sheet (the cut script turns them upright), or straight up as single files.
+- **Trap arrows** (`trap_arrow`) are placed and rotated by the game, so draw them pointing straight up.
+  The spike trap is built from two pieces: the square base (`trap`) and the arrow (`trap_arrow`).
 - **One idea per sprite.** Sets that belong together (fire and ice versions, the swords, the spiders,
   the wolves) keep matching shapes so they read as a family.
 
@@ -97,7 +97,7 @@ One request per sprite in the game (77 in all, all delivered on the sheets), the
 
 **Board items (6):** [Gem](items/gem.md), [Coin](items/coin.md), [Potion](items/potion.md), [Poison](items/poison.md), [Bomb](items/bomb.md), [Chest](items/chest.md)
 
-**Traps (5):** [Spike trap](traps/trap.md), [Fire trap](traps/firetrap.md), [Ice trap](traps/icetrap.md), [Fire arrow](traps/firearrow.md), [Ice arrow](traps/icearrow.md)
+**Traps (2):** [Spike trap base](traps/trap.md), [Spike trap arrow](traps/trap_arrow.md)
 
 **Weapons (10):** [Sword](weapons/sword.md), [Fire sword](weapons/firesword.md), [Ice sword](weapons/icesword.md), [Fire wand](weapons/firewand.md), [Ice wand](weapons/icewand.md), [Scythe](weapons/scythe.md), [Electric bow](weapons/elecbow.md), [Ninja star](weapons/ninjastar.md), [Wind blade](weapons/windblade.md), [Blade of pain](weapons/painblade.md)
 

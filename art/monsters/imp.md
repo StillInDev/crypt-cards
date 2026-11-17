@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-A **Fire imp** card. It appears in: Mine, Ember Halls (also its map icon). In play: A fire monster. Fire traps cannot hurt it, and ice traps hurt it double. The number on the card is its health.
+A **Fire imp** card. It appears in: Mine, Ember Halls (also its map icon). In play: A fire monster. Embers: when it dies, its square glows for 3 turns and whatever stands there counts 3 more. The number on the card is its health.
 
 ## What it must look like
 
