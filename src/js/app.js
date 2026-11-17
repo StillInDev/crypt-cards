@@ -123,7 +123,10 @@
     };
   }
   // Every room gets its own monsters and items: start from the depth's generic odds, drop all monsters, then apply the theme.
-  function themedWeights(themeKey, diffId) {
+  // depth: 0 for the first room of the dungeon, 1 for the last. The theme only picks WHICH monsters and traps show up;
+  // how many is set here, a share of the deck that rises the deeper you go.
+  var MONSTER_SHARE = [0.40, 0.55], TRAP_SHARE = [0.10, 0.16];
+  function themedWeights(themeKey, diffId, depth) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
     var CLEAR = ['bomb', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
@@ -132,6 +135,19 @@
     }
     var tw = THEMES[themeKey].w;
     for (var t in tw) if (TYPES[t]) w[t] = TYPES[t].kind === 'weapon' ? tw[t] * DC.WEAPON_RATE : tw[t];
+    var d = Math.max(0, Math.min(1, depth || 0));
+    var mS = MONSTER_SHARE[0] + (MONSTER_SHARE[1] - MONSTER_SHARE[0]) * d;
+    var tS = TRAP_SHARE[0] + (TRAP_SHARE[1] - TRAP_SHARE[0]) * d;
+    var isTrap = function (k) { return TYPES[k].kind === 'harm' || TYPES[k].kind === 'dtrap'; };
+    var M = 0, Tr = 0, P = 0;
+    for (k in w) { if (!w[k]) continue; if (TYPES[k].kind === 'monster') M += w[k]; else if (isTrap(k)) Tr += w[k]; else P += w[k]; }
+    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least spike traps
+    var unit = P / (1 - mS - tS);
+    for (k in w) {
+      if (!w[k]) continue;
+      if (M && TYPES[k].kind === 'monster') w[k] = Math.round(w[k] * unit * mS / M * 10) / 10;
+      else if (isTrap(k)) w[k] = Math.round(w[k] * unit * tS / Tr * 10) / 10;
+    }
     return w;
   }
   function defaultLevels() {
@@ -144,7 +160,8 @@
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
         L.reward = R.reward.area === a + 1 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
-        L.weights = themedWeights(R.theme, diff);
+        var last = AREAS.length * 6 - 1; // 6 rows per area
+        L.weights = themedWeights(R.theme, diff, (a * 6 + R.row) / last);
         L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
         out.push(sanitize(L, out.length));
       });
@@ -745,7 +762,7 @@
       b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = pw.id === 'laststand' && S.hero.stood ? 'USED' : def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
       var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
@@ -776,7 +793,13 @@
   }
   function firePower(i, target) {
     var r = DC.usePower(S, i, target);
-    if (!r) { if (S.hero.powers[i] && S.hero.powers[i].id === 'dart') toast('No monsters to hit'); return; }
+    if (!r) {
+      // Why a ready power did nothing.
+      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', whetstone: 'You are not holding a weapon' };
+      var pid = S.hero.powers[i] && S.hero.powers[i].id;
+      if (why[pid]) toast(why[pid]);
+      return;
+    }
     targeting = null;
     floaters(r.fx);
     render();
@@ -946,6 +969,7 @@
     playFx(r.fx);
     if (r.thorns && r.thorns.length) setTimeout(function () { if (S) playThorns(r.thorns); }, 60);
     if (r.tremor != null) castLook('quake'); // passive Tremor went off as the hero stepped away
+    if (r.stand) { castLook('laststand'); toast('Last Stand saved you!'); }
     if (S.hero.gold > (best[cur] || 0)) { best[cur] = S.hero.gold; saveBest(); }
     if (r.eaten && r.eaten.kind === 'reward') claimReward(cur, r.eaten.rw);
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
@@ -1204,6 +1228,12 @@
     } else if (id === 'quake') {
       var plv = powerLevel(), base = Math.min(12, 3 + plv), qa = DC.powerAmount(id, lv), q = DC.quakeDamage(plv, lv);
       s.push(['Power', String(q), '3 + ' + plv + ' (1 per 25 of your best score' + (base === 12 ? ', capped at 12' : '') + ') + ' + qa + ' from ' + ups + ' = ' + q]);
+    } else if (id === 'magnet') {
+      var mg = DC.powerAmount(id, lv);
+      if (lv) s.push(['Bonus', '+' + mg + ' gold each', '0 base + ' + U.amt[1] + ' × ' + ups + ' = +' + mg + ' gold from each coin and gem']);
+    } else if (id === 'laststand') {
+      var ls = DC.powerAmount(id, lv);
+      s.push(['Left at', ls + ' health', U.amt[0] + ' base + ' + U.amt[1] + ' × ' + ups + ' = ' + ls + ' health']);
     } else if (U.amt) {
       var n = DC.powerAmount(id, lv);
       s.push(['Power', String(n), U.amt[0] + ' base + ' + U.amt[1] + ' × ' + ups + ' = ' + n]);

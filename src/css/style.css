@@ -668,6 +668,13 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 @keyframes au-out { 0% { transform: scale(.25); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
 @keyframes au-up { 0% { transform: translateY(18em); opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-26em); opacity: 0; } }
 
+/* Magnet, Hourglass, Whetstone, Last Stand: an outline glow in their colour until they get their own cast art */
+.slot.hero.cast-magnet { --g: #fee761; }
+.slot.hero.cast-hourglass { --g: #c0cbdc; }
+.slot.hero.cast-whetstone { --g: #8b9bb4; }
+.slot.hero.cast-laststand { --g: #e43b44; }
+.cast-magnet .card .art, .cast-whetstone .card .art, .cast-hourglass .card .art, .cast-laststand .card .art { animation: c-pulse .76s steps(8); }
+
 /* Healing: lifted on a soft green glow, plus signs float up */
 .slot.hero.cast-heal { --g: #7be26b; }
 .cast-heal .card .art { animation: c-lift .76s steps(8); }

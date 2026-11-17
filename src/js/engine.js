@@ -129,7 +129,12 @@
     teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, desc: 'Tap any card. You jump there without using it, and it vanishes.', tip: 'Tap any card. You jump there without using it, and it vanishes.' },
     quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, desc: 'Every time you step, a monster that slides into the square you left is hit for its power.', tip: 'Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
     burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, desc: 'Tap a potion. It explodes and hits the monsters next to it for the potion\'s number.', tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
-    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, desc: 'Fire and ice monsters can\'t hurt you for as many turns as its power.', tip: 'For your next 4 turns, fire and ice monsters can\'t hurt you.' }
+    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, desc: 'Fire and ice monsters can\'t hurt you for as many turns as its power.', tip: 'For your next 4 turns, fire and ice monsters can\'t hurt you.' },
+    // Placeholder sprites until their own icons are drawn (art/powers/p_magnet.md and the rest).
+    magnet:   { name: 'Magnet',       sprite: 'coin',       cd: 16, target: null,      unlock: 100, desc: 'Every coin and gem on the board flies into your purse. Upgrades add bonus gold to each one.', tip: 'Every coin and gem on the board flies into your purse.' },
+    hourglass: { name: 'Hourglass',   sprite: 'p_teleport', cd: 20, target: null,      unlock: 110, desc: 'Halves the time left on your other powers.', tip: 'Halves the time left on your other powers.' },
+    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 10, target: null,      unlock: 120, desc: 'Sharpens the weapon you hold: it gains its power.', tip: 'Sharpen the weapon you hold: it gains 2 power.' },
+    laststand: { name: 'Last Stand',  sprite: 'goldskull',  cd: 0,  target: null,      unlock: 130, passive: true, desc: 'Once per room, a hit that would kill you leaves you with health equal to its power instead.', tip: 'Once per room, a hit that would kill you leaves you at 1 health instead.' }
   };
 
   // ---- Power upgrades (bought with banked gold between runs) ----------------
@@ -151,7 +156,11 @@
     teleport: { cdCut: 2, what: '2 turns faster recharge' },
     quake:    { amt: [0, 1],  what: '+1 tremor damage' },
     burst:    { cdCut: 2, what: '2 turns faster recharge' },
-    ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice monsters can\'t hurt you.', what: '+1 shielded turn' }
+    ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice monsters can\'t hurt you.', what: '+1 shielded turn' },
+    magnet:   { amt: [0, 1],  what: '+1 gold from each coin and gem' },
+    hourglass: { cdCut: 2,    what: '2 turns faster recharge' },
+    whetstone: { amt: [2, 1], text: 'Sharpen the weapon you hold: it gains {n} power.', what: '+1 power' },
+    laststand: { amt: [1, 1], text: 'Once per room, a hit that would kill you leaves you at {n} health instead.', what: '+1 health left after it saves you' }
   };
   function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
   function powerAmount(id, lv) { const u = UPGRADES[id]; if (u && u.bonus) return u.bonus[clampLv(lv)]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }
@@ -333,7 +342,7 @@
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge,
-        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song,
+        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song, stood: S.hero.stood,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
@@ -342,7 +351,16 @@
 
   function hurtHero(S, amount) {
     const H = S.hero;
-    const d = amount;
+    let d = amount;
+    // Last Stand (passive): once per room, a hit that would kill leaves the hero standing.
+    const ls = d > 0 && H.hp - d <= 0 && !H.stood && H.powers.find(function (p) { return p.id === 'laststand'; });
+    if (ls) {
+      const left = Math.max(1, Math.min(H.max, powerAmount('laststand', ls.lv)));
+      d = Math.max(0, H.hp - left);
+      H.hp = left; H.stood = true; H.standNow = true;
+      S.hurts = (S.hurts | 0) + 1;
+      return d;
+    }
     H.hp -= d;
     if (d > 0) S.hurts = (S.hurts | 0) + 1;
     return d;
@@ -1140,7 +1158,9 @@
       fx.push({ cell: H.pos, text: 'Sword ' + H.sword.v, cls: 'info', anim: 'gold' });
     }
 
-    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor };
+    let stand = false;
+    if (H.standNow) { H.standNow = false; stand = true; fx.push({ cell: H.pos, text: 'Last stand!', cls: 'heal', anim: 'immune' }); }
+    return { from: from, to: tpos, eaten: card, fx: fx, spawned: spawned, attack: attack, moved: !attacked, sold: sell || null, thorns: thornHits, tremor: tremor, stand: stand };
   }
 
   // What stepping in a direction would do, without changing the game.
@@ -1206,6 +1226,9 @@
     if (def.passive) return null; // always on; nothing to activate
     if (def.target && !validTarget(S, idx, target)) return null;
     if (pw.id === 'forge' && H.forge) return null; // a forged sword is already waiting
+    if (pw.id === 'whetstone' && !H.sword) return null; // nothing to sharpen
+    if (pw.id === 'magnet' && !S.grid.some(function (c) { return c && c.kind === 'gold'; })) return null;
+    if (pw.id === 'hourglass' && !H.powers.some(function (p) { return p !== pw && p.cd > 0; })) return null; // nothing to speed up
     if (pw.id === 'dart') {
       // The dart picks its own victim: any monster on the board, at random.
       const foes = [];
@@ -1271,6 +1294,27 @@
       case 'teleport': {
         extra = H.pos; S.grid[target] = null; H.pos = target;
         fx.push({ cell: target, text: 'Warp', cls: 'info', anim: 'swirl' }); fx.push({ cell: extra, text: '', cls: 'info', anim: 'swirl' }); break;
+      }
+      case 'magnet': {
+        // Every coin and gem pays out as if you had stepped on it, plus the upgrade bonus, and leaves the board.
+        S.grid.forEach(function (c, p) {
+          if (!c || c.kind !== 'gold') return;
+          const g = c.v + (H.pass.gold || 0) + amt;
+          H.gold += g; S.grid[p] = null; holes.push(p);
+          fx.push({ cell: p, text: '+' + g, cls: 'gold', anim: 'gold' });
+        });
+        break;
+      }
+      case 'hourglass': {
+        // Halves (rounding down) the turns left on every other power.
+        for (const p of H.powers) if (p !== pw && p.cd > 0) p.cd = Math.floor(p.cd / 2);
+        fx.push({ cell: H.pos, text: 'Hurry!', cls: 'info', anim: 'swirl' });
+        break;
+      }
+      case 'whetstone': {
+        H.sword.v += amt;
+        fx.push({ cell: H.pos, text: 'Sharpened +' + amt, cls: 'info', anim: 'gold' });
+        break;
       }
       case 'burst': {
         const v = S.grid[target].v;
