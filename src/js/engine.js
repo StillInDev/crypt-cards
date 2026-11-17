@@ -138,7 +138,8 @@
   // cdCut: turns of recharge removed per level. {n} in the text is the current amount.
   const POWER_MAX_LV = 4;
   const DART_POISON = 3; // turns of poison a dart leaves in the monster it hits (1 damage a turn)
-  const UPGRADE_COST = [150, 450, 1200, 3000]; // gold to go from level i to i + 1 (steep: runs pay out quickly)
+  // All prices are multiples of 500, from 1000 up.
+  const UPGRADE_COST = [1000, 2500, 5000, 10000]; // gold to go from level i to i + 1
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
     forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
@@ -163,9 +164,9 @@
   function upgradeCost(lv) { lv = lv | 0; return lv >= POWER_MAX_LV ? null : UPGRADE_COST[lv]; }
 
   // Hero upgrades: each level adds HERO_UP_HP max health.
-  const HERO_UPGRADE_COST = [100, 250, 500, 1000];
+  const HERO_UPGRADE_COST = [1000, 2500, 5000, 10000];
   // Gold to unlock a hero or power straight away instead of finding it in its room.
-  const HERO_BUY_COST = 1000, POWER_BUY_COST = 500;
+  const HERO_BUY_COST = 1500, POWER_BUY_COST = 1000;
   const HERO_MAX_LV = HERO_UPGRADE_COST.length;
   const HERO_UP_HP = 2;
   function heroLv(lv) { return Math.max(0, Math.min(HERO_MAX_LV, lv | 0)); }

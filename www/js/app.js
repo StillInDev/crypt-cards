@@ -1756,7 +1756,7 @@
     best = {}; saveBest(); cleared = {}; saveCleared();
     commit(); renderEditor(); setMsg('Deleted. Progress was reset because room numbers shifted.');
   });
-  $('#e-gold').addEventListener('click', function () { purse += 5000; savePurse(); refreshLoadoutScreen(); toast('Added 5000 gold for testing'); }); // testing only
+  $('#e-gold').addEventListener('click', function () { purse += 25000; savePurse(); refreshLoadoutScreen(); toast('Added 25000 gold for testing'); }); // testing only
   $('#e-all').addEventListener('change', function (e) { unlockAll = e.target.checked; store.set('cc_all', unlockAll ? '1' : '0'); });
   $('#e-apply').addEventListener('click', function () {
     try { levels = parseLevels($('#e-json').value); saveLevels(); ed = 0; renderEditor(); setMsg('Loaded ' + levels.length + ' levels.'); }

@@ -5,7 +5,7 @@ function mk(powers,ups){const S=DC.newGame(L,5,{hero:'knight',powers,upgrades:up
 const M=(S,type,v)=>({uid:++S.uid,type,kind:'monster',v});
 
 // costs and caps
-assert.strictEqual(DC.upgradeCost(0),150); assert.strictEqual(DC.upgradeCost(2),1200); assert.strictEqual(DC.upgradeCost(3),3000); assert.strictEqual(DC.upgradeCost(DC.POWER_MAX_LV),null);
+assert.strictEqual(DC.upgradeCost(0),1000); assert.strictEqual(DC.upgradeCost(2),5000); assert.strictEqual(DC.upgradeCost(3),10000); assert.strictEqual(DC.upgradeCost(DC.POWER_MAX_LV),null);
 // no upgrades = old behaviour
 let S=mk(['heal']); S.hero.hp=10; DC.usePower(S,0); assert.strictEqual(S.hero.hp,15);
 // heal level 2 restores 9
@@ -27,8 +27,10 @@ assert.strictEqual(DC.quakeDamage(9,2),14); assert.strictEqual(DC.quakeDamage(0)
 // tips use the upgraded numbers
 assert(/Restore 9 health/.test(DC.powerTip('heal',2,0))); assert(/Right now: 5 damage/.test(DC.powerTip('quake',1,1)));
 // hero upgrades: 4 (Lvl. 1 to Lvl. 5), +2 max health each
-assert.deepStrictEqual([0,1,2,3,4].map(DC.heroUpgradeCost),[100,250,500,1000,null]);
+assert.deepStrictEqual([0,1,2,3,4].map(DC.heroUpgradeCost),[1000,2500,5000,10000,null]);
 const base=DC.newGame(L,5,{hero:'knight'}).hero.max;
 S=DC.newGame(L,5,{hero:'knight',heroLevel:3}); assert.strictEqual(S.hero.max,base+6); assert.strictEqual(S.hero.hp,S.hero.max);
 S=DC.newGame(L,5,{hero:'knight',heroLevel:99}); assert.strictEqual(S.hero.max,base+8); console.log('hero health scales');
 console.log('upgrade tests passed');
+
+assert.strictEqual(DC.POWER_BUY_COST,1000); assert.strictEqual(DC.HERO_BUY_COST,1500); console.log('buy prices');
