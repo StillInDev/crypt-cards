@@ -41,23 +41,38 @@
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
   };
-  // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based;
-  // a room can hold a different one in another area via more[]),
-  // spread out so new things keep turning up the whole way down. Every other room just opens the way on.
+  // Every area has the same 12 rooms and two routes down to the boss:
+  //   easy (left):  Sewers 75 -> Fungus Caves 80 -> Frozen Cavern 90 -> Armory 100. Plain doors, no unlocks.
+  //   hard (right): Barracks 100 -> Mine 115 -> Ember Halls 130 -> Vampire Crypt 140. Tougher cards, and these
+  //                 rooms hold the unlocks, so heroes and powers cost more to earn.
+  //   between them: Catacombs 100 (a door) and Bone Library 110 (an unlock), joining the two routes.
+  // req is the gold that reveals a room's reward. Each hero and power is the reward of one room in one area
+  // (reward/more, area is 1-based): five in the first area, four in each of the others, spread over the rows.
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake',    area: 2 }, more: [{ kind: 'hero', id: 'bard', area: 3 }] },
-    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal', area: 1 } },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe',   area: 1 }, more: [{ kind: 'hero', id: 'barbarian', area: 3 }] },
-    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst',    area: 3 } },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero',  id: 'sorcerer', area: 1 }, more: [{ kind: 'power', id: 'laststand', area: 5 }] },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward',     area: 2 }, more: [{ kind: 'power', id: 'whetstone', area: 1 }, { kind: 'power', id: 'magnet', area: 5 }] },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero',  id: 'icemage',  area: 2 }, more: [{ kind: 'power', id: 'hourglass', area: 4 }] },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport', area: 4 }, more: [{ kind: 'hero', id: 'stormmage', area: 2 }] },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire',     area: 3 }, more: [{ kind: 'hero', id: 'dragonkin', area: 4 }] },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero',  id: 'rogue',    area: 4 } },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder',  area: 5 }, more: [{ kind: 'hero', id: 'count', area: 3 }] },
-    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice',     area: 5 } }
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 50 },
+    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 75 },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 100, hard: true, reward: { kind: 'power', id: 'scythe', area: 1 },
+      more: [{ kind: 'hero', id: 'barbarian', area: 2 }, { kind: 'hero', id: 'rogue', area: 3 }, { kind: 'power', id: 'quake', area: 4 }, { kind: 'power', id: 'laststand', area: 5 }] },
+    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 80 },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 100 },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 115, hard: true, reward: { kind: 'power', id: 'whetstone', area: 1 },
+      more: [{ kind: 'power', id: 'magnet', area: 2 }, { kind: 'power', id: 'ward', area: 3 }, { kind: 'power', id: 'hourglass', area: 4 }, { kind: 'hero', id: 'icemage', area: 5 }] },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 90 },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 110, reward: { kind: 'hero', id: 'sorcerer', area: 1 },
+      more: [{ kind: 'hero', id: 'stormmage', area: 2 }, { kind: 'power', id: 'teleport', area: 3 }, { kind: 'hero', id: 'bard', area: 4 }, { kind: 'power', id: 'thunder', area: 5 }] },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 130, hard: true, reward: { kind: 'power', id: 'fire', area: 1 },
+      more: [{ kind: 'hero', id: 'dragonkin', area: 2 }, { kind: 'power', id: 'burst', area: 3 }] },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 100 },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 140, hard: true, reward: { kind: 'hero', id: 'count', area: 1 },
+      more: [{ kind: 'power', id: 'massheal', area: 4 }, { kind: 'power', id: 'ice', area: 5 }] },
+    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 150 }
   ];
+  // Where each unlock was before the routes above (room index across all areas), so a save that had cleared
+  // those rooms keeps what it unlocked. See keepOldUnlocks.
+  var OLD_UNLOCKS = { 1: 'power:massheal', 2: 'power:scythe', 4: 'hero:sorcerer', 5: 'power:whetstone', 12: 'power:quake',
+    17: 'power:ward', 18: 'hero:icemage', 19: 'hero:stormmage', 24: 'hero:bard', 26: 'hero:barbarian', 27: 'power:burst',
+    32: 'power:fire', 34: 'hero:count', 42: 'power:hourglass', 43: 'power:teleport', 44: 'hero:dragonkin', 45: 'hero:rogue',
+    52: 'power:laststand', 53: 'power:magnet', 58: 'power:thunder', 59: 'power:ice' };
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
   // The dungeon is split into areas, picked with the tabs above the map. An area opens once the last room
   // (the boss room) of the area before it is cleared: the boss drops the special key to the next area.
@@ -157,11 +172,11 @@
     AREAS.forEach(function (A, a) {
       var base = a * ROOMS.length;
       ROOMS.forEach(function (R) {
-        var diff = 1 + R.row * 2;
+        var diff = 1 + R.row * 2 + (R.hard ? 1 : 0); // the hard route's cards are a step tougher
         var L = DC.nextLevel(null, diff);
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
-        var rw = [R.reward].concat(R.more || []).filter(function (x) { return x.area === a + 1; })[0];
+        var rw = (R.reward ? [R.reward] : []).concat(R.more || []).filter(function (x) { return x.area === a + 1; })[0];
         L.reward = rw ? { kind: rw.kind, id: rw.id } : { kind: 'door' };
         var last = AREAS.length * 6 - 1; // 6 rows per area
         L.weights = themedWeights(R.theme, diff, (a * 6 + R.row) / last);
@@ -200,6 +215,7 @@
     if (snapshot && snapshot.levels && snapshot.levels[0] && snapshot.levels[0].reward) {
       try { levels = snapshot.levels.map(sanitize); hasAreas = snapshot.levels.some(function (L) { return L.area != null; }); } catch (e) { /* keep */ }
     }
+    var builtIn = !levels;
     if (!levels) levels = defaultLevels();
     else if (!hasAreas) levels = addAreas(levels);
     // Saved levels from before the newer cards existed get the new cards added, so they still show up.
@@ -220,7 +236,17 @@
     try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
     try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
+    if (builtIn) keepOldUnlocks(); // custom (edited or imported) rooms keep their own rewards
     fixSelection();
+  }
+  // Once per save: the rewards moved to new rooms (the easy and hard routes), so anything a cleared room had
+  // already unlocked under the old layout is kept, as if it had been bought.
+  function keepOldUnlocks() {
+    if (store.get('cc_rw') === '2') return;
+    var changed = false;
+    for (var i in OLD_UNLOCKS) if (cleared[i] && !owned[OLD_UNLOCKS[i]]) { owned[OLD_UNLOCKS[i]] = 1; changed = true; }
+    if (changed) savePurse();
+    store.set('cc_rw', '2');
   }
   function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
