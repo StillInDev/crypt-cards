@@ -1,4 +1,4 @@
-// Lightning Wizard: 8 kills charge a smite, every 4th attack chains lightning to the target's neighbours.
+// Lightning Wizard: 8 kills charge a smite, and any attack has a 1 in 8 chance to chain lightning to the target's neighbours.
 const assert = require('assert');
 const DC = require('../src/js/engine.js');
 // Every real monster now has a trick (skeletons are brittle, bats frail...), so tests use a plain one.
@@ -25,10 +25,10 @@ assert.strictEqual(S.hero.sword.v, sw, 'smite does not wear the sword');
 assert.strictEqual(S.hero.kills, 0, 'smite uses the charge');
 assert(r.fx.some(function (f) { return f.text === 'Smite'; }), 'smite fx');
 
-// Chain lightning on the 4th attack hits the monsters next to the target for 1 + the level shown.
+// A lucky roll chains lightning: the monsters next to the target take 1 + the level shown.
 S = game(2);
 S.hero.sword = { v: 1, type: 'sword', el: null };
-S.hero.hits = 3;
+S.rng = function () { return 0; }; // under 1 in 8: chains
 const tgt = mon(S, 5), left = mon(S, 9), right = mon(S, 3);
 S.grid[1] = tgt; S.grid[0] = left; S.grid[2] = right;
 DC.move(S, 0);
@@ -36,17 +36,23 @@ assert.strictEqual(DC.chainDamage(2), 4, 'Lvl. 3: 1 + 3'); assert.strictEqual(DC
 assert.strictEqual(tgt.v, 4, 'target takes the sword hit only');
 assert.strictEqual(left.v, 5, 'neighbour zapped for 4');
 assert(S.grid.indexOf(right) < 0, 'weaker neighbour killed by the chain');
-assert.strictEqual(S.hero.hits, 0, 'chain count resets');
+assert.strictEqual(DC.STORM_CHANCE, 1 / 8);
 
-// Attacks 1-3 do not chain.
-S = game(); S.hero.sword = { v: 1, type: 'sword', el: null };
+// An unlucky roll does not chain.
+S = game(); S.hero.sword = { v: 1, type: 'sword', el: null }; S.rng = function () { return 0.5; };
 const a = mon(S, 5), b = mon(S, 9); S.grid[1] = a; S.grid[0] = b;
 DC.move(S, 0);
-assert.strictEqual(b.v, 9); assert.strictEqual(S.hero.hits, 1); assert.strictEqual(S.hero.kills, 0);
+assert.strictEqual(b.v, 9); assert.strictEqual(S.hero.kills, 0);
 
 // Bare-handed kills count too.
 S = game(); S.grid[1] = mon(S, 2); DC.move(S, 0);
-assert.strictEqual(S.hero.kills, 1); assert.strictEqual(S.hero.hits, 1);
+assert.strictEqual(S.hero.kills, 1);
 // Other heroes never charge.
 S = game(0, 'knight'); S.grid[1] = mon(S, 2); DC.move(S, 0);
 assert.strictEqual(S.hero.kills, 0);
+
+// Over many attacks, roughly 1 in 8 chain.
+S = game(); let chains = 0, seed = 3; S.rng = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+for (let i = 0; i < 800; i++) { S.hero.sword = { v: 1, type: 'sword', el: null }; S.grid[1] = mon(S, 50); S.grid[0] = mon(S, 50); const r2 = DC.move(S, 0); if (r2.fx.some(function (f) { return f.cell === 0 && f.anim === 'bolt'; })) chains++; reset(S); }
+assert(chains > 60 && chains < 140, 'about 1 in 8 attacks chain (' + chains + ' of 800)');
+console.log('storm tests passed (' + chains + ' chains in 800 attacks)');
