@@ -67,6 +67,8 @@
     { name: 'Ashen Keep' },
     { name: 'The Abyss' }
   ];
+  // Pixel check mark: the equip toggle in the details panel and cleared rooms on the map.
+  var CHECK_SVG = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
   var START_HEROES = ['knight', 'cactus'];
   var START_POWERS = ['heal', 'forge', 'dart'];
   var TYPE_ORDER = Object.keys(TYPES).filter(function (k) { return !TYPES[k].hidden; });
@@ -424,7 +426,9 @@
       b.innerHTML = '<span class="box"></span><span class="sz"></span><span class="sc"></span>';
       b.querySelector('.box').appendChild(img(ok ? (bossRoom ? 'goldskull' : th.icon) : 'bars'));
       b.querySelector('.sz').textContent = L.w + '×' + L.h;
-      b.querySelector('.sc').textContent = done ? '✓ ' + (bs || L.req) : L.req;
+      b.querySelector('.sc').textContent = done ? (bs || L.req) : L.req;
+      // A cleared room keeps its colours and gets a green check mark instead.
+      if (done) { var ck = document.createElement('span'); ck.className = 'ck'; ck.innerHTML = CHECK_SVG; b.appendChild(ck); }
       // Only rooms that hold a hero or power get a reward badge; the rest just open the way on.
       if (L.reward.kind !== 'door') { var rw = img(rewardSprite(L.reward), 'rw'); rw.title = 'Reward: ' + rewardName(L.reward); b.appendChild(rw); }
       // The boss always drops the special key to the next area.
@@ -1231,7 +1235,7 @@
       eb.setAttribute('aria-pressed', o.equip.on);
       eb.setAttribute('aria-label', o.equip.aria || (o.equip.on ? 'Equipped. Tap to unequip' : 'Not equipped. Tap to equip'));
       eb.title = o.equip.label;
-      eb.innerHTML = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
+      eb.innerHTML = CHECK_SVG;
       eb.addEventListener('click', o.equip.fn);
       el.appendChild(eb);
     }
