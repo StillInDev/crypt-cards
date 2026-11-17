@@ -603,8 +603,8 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .node.locked .box { border-color: #4a4660; background: #1e1c2c; }
 .node.locked .box img { opacity: .5; }
 .node.locked .sc { color: #6f6885; }
-.node.done .box { border-color: #63c74d; }
-.node.done .sc { color: #b9f1ad; }
+.node .ck { position: absolute; left: -12px; bottom: -10px; width: 28px; height: 28px; display: grid; place-items: center; background: #14121f; box-shadow: 0 0 0 2px #63c74d; z-index: 3; }
+.node .ck svg { width: 18px; height: 14px; fill: #63c74d; }
 .node.boss .box { width: 70px; }
 .node:not(.locked):not(:disabled):active .box { transform: translateY(3px); }
 .node:focus-visible { outline: 4px solid #fff; outline-offset: 6px; }
@@ -627,7 +627,7 @@ body { background-color: var(--bodybg, var(--ink)); transition: background-color
 .maphead .keys img.km { filter: grayscale(1) brightness(.45); }
 .maphead .keys span { margin-left: 6px; }
 .node .kb { position: absolute; left: -14px; top: -14px; width: 30px; height: 30px; background: #14121f; padding: 3px; box-shadow: 0 0 0 2px #fee761; z-index: 3; }
-.node.done .kb { opacity: .5; box-shadow: 0 0 0 2px #63c74d; }
+.node.done .kb { opacity: .5; }
 .node.locked .kb { filter: brightness(.5); }
 
 /* ---- Power casts: each power gives the hero its own look while it fires ----
