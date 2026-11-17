@@ -727,7 +727,7 @@
       b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = pw.id === 'laststand' && S.hero.stood ? 'USED' : def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
       var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
@@ -758,7 +758,13 @@
   }
   function firePower(i, target) {
     var r = DC.usePower(S, i, target);
-    if (!r) { if (S.hero.powers[i] && S.hero.powers[i].id === 'dart') toast('No monsters to hit'); return; }
+    if (!r) {
+      // Why a ready power did nothing.
+      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', whetstone: 'You are not holding a weapon' };
+      var pid = S.hero.powers[i] && S.hero.powers[i].id;
+      if (why[pid]) toast(why[pid]);
+      return;
+    }
     targeting = null;
     floaters(r.fx);
     render();
@@ -928,6 +934,7 @@
     playFx(r.fx);
     if (r.thorns && r.thorns.length) setTimeout(function () { if (S) playThorns(r.thorns); }, 60);
     if (r.tremor != null) castLook('quake'); // passive Tremor went off as the hero stepped away
+    if (r.stand) { castLook('laststand'); toast('Last Stand saved you!'); }
     if (S.hero.gold > (best[cur] || 0)) { best[cur] = S.hero.gold; saveBest(); }
     if (r.eaten && r.eaten.kind === 'reward') claimReward(cur, r.eaten.rw);
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
@@ -1176,6 +1183,8 @@
     if (!P.passive) s.push(['Recharge', DC.powerCd(id, lv) + ' turns']);
     if (id === 'forge') { var b = DC.powerAmount(id, lv); s.push(['Power', 'Max health' + (b ? ' +' + b : '')]); }
     else if (id === 'quake') s.push(['Power', String(DC.quakeDamage(powerLevel(), lv))]);
+    else if (id === 'magnet') { if (lv) s.push(['Bonus', '+' + DC.powerAmount(id, lv) + ' gold each']); }
+    else if (id === 'laststand') s.push(['Left at', DC.powerAmount(id, lv) + ' health']);
     else if (U.amt) s.push(['Power', String(DC.powerAmount(id, lv))]);
     return s;
   }
