@@ -1,5 +1,7 @@
 # Request: Magnet (power)
 
+**Delivered** 2026-11-17 as `art/sheets/12_Power_Magnet.png`, now in the game. This brief stays for any redraw.
+
 - **Sprite id:** `p_magnet` (deliver `p_magnet.png`)
 - **Kind:** power icon
 - **Read first:** `art/README.md` (format and style rules)

@@ -1,5 +1,7 @@
 # Request: Hourglass (power)
 
+**Delivered** 2026-11-17 as `art/sheets/13_Power_Hourglass.png`, now in the game. This brief stays for any redraw.
+
 - **Sprite id:** `p_hourglass` (deliver `p_hourglass.png`)
 - **Kind:** power icon
 - **Read first:** `art/README.md` (format and style rules)

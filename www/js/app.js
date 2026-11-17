@@ -143,7 +143,7 @@
     var isTrap = function (k) { return TYPES[k].kind === 'harm' || TYPES[k].kind === 'dtrap'; };
     var M = 0, Tr = 0, P = 0;
     for (k in w) { if (!w[k]) continue; if (TYPES[k].kind === 'monster') M += w[k]; else if (isTrap(k)) Tr += w[k]; else P += w[k]; }
-    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least spike traps
+    if (!Tr) { w.trap = 1; Tr = 1; } // every room has at least arrow traps
     var unit = P / (1 - mS - tS);
     for (k in w) {
       if (!w[k]) continue;
@@ -226,7 +226,7 @@
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }
   function heroHp(id) { return DC.HERO_BASE_HP + DC.HEROES[id].hp + DC.heroHpBonus(heroUpLv(id)); }
   function savePurse() { store.set('cc_purse', String(purse)); store.set('cc_ups', JSON.stringify(ups)); store.set('cc_hups', JSON.stringify(hups)); store.set('cc_owned', JSON.stringify(owned)); }
-  // A run's gold goes into the purse once, when the run ends or you walk away from it.
+  // A run's gold goes into the purse once, when the run ends (the hero falls).
   function bankRun() {
     if (!S || S.banked) return 0;
     S.banked = true;
@@ -234,6 +234,22 @@
     if (g > 0) { purse += g; savePurse(); }
     return g;
   }
+  // Walking away from a run that is still going forfeits it: its gold is not banked and its score is not
+  // kept. Rewards already claimed in the run stay unlocked.
+  function forfeitRun() { if (S) S.banked = true; }
+  // A run still in progress with something to lose.
+  function runAtStake() { return !!(S && !S.over && !S.banked && current === 'play' && (S.hero.gold | 0) > 0); }
+  // Asks before leaving a run in progress; then runs go() if the player still wants to leave.
+  var leaveGo = null;
+  function guardLeave(go) {
+    if (!runAtStake()) { go(); return; }
+    leaveGo = go;
+    $('#l-note').textContent = 'You will lose the ' + S.hero.gold + ' gold from this run, and it will not count toward your best. ' +
+      'A run only keeps its gold when it ends.';
+    $('#leave').classList.add('on');
+    $('#l-stay').focus();
+  }
+  function closeLeave() { $('#leave').classList.remove('on'); leaveGo = null; }
   function buyUpgrade(id) {
     var lv = upLv(id), cost = DC.upgradeCost(lv);
     if (cost == null || purse < cost || !powerOpen(id)) return false;
@@ -325,7 +341,7 @@
   var views = { home: $('#v-home'), menu: $('#v-menu'), play: $('#v-play'), edit: $('#v-edit'), hero: $('#v-hero') };
   var current = 'home';
   function show(name, page) {
-    if (current === 'play' && name !== 'play') bankRun();
+    if (current === 'play' && name !== 'play') forfeitRun(); // a finished run is already banked
     current = name;
     loHide();
     for (var k in views) views[k].classList.toggle('on', k === name);
@@ -341,8 +357,10 @@
   window.__cryptBack = function () {
     var ov = $('#over');
     if (ov && ov.classList.contains('on')) { ov.classList.remove('on'); return true; }
+    if ($('#leave').classList.contains('on')) { closeLeave(); return true; } // back again: stay in the run
     if (current === 'home') return false;
-    show(current === 'play' || current === 'edit' ? 'menu' : 'home');
+    if (current === 'play') { guardLeave(function () { show('menu'); }); return true; }
+    show(current === 'edit' ? 'menu' : 'home');
     return true;
   };
 
@@ -466,7 +484,7 @@
         var d = document.createElement('div');
         d.className = 'it';
         d.innerHTML = '<div><b></b> <span class="m"></span></div>';
-        d.insertBefore(img(k), d.firstChild);
+        d.insertBefore(img(typeIcon(k)), d.firstChild);
         d.querySelector('b').textContent = TYPES[k].name + '.';
         d.querySelector('.m').textContent = TYPES[k].tip;
         lg.appendChild(d);
@@ -488,6 +506,8 @@
   // The sprite in the middle of a card. Fire and ice arrow traps share one block; their arrowheads
   // (one per side they fire at) are drawn around it, see .heads.
   function cardArt(c) { return c.kind === 'reward' ? rewardSprite(c.rw) : c.kind === 'dtrap' ? 'trapblock' : c.type; }
+  // A card type's icon in lists (the card guide, the room editor). The plain arrow trap has no sprite of its own.
+  function typeIcon(k) { return k === 'trap' ? 'trapblock' : k; }
   function cardEl(c) {
     var card = document.createElement('div');
     card.className = 'card k-' + c.kind;
@@ -499,7 +519,7 @@
       card.insertBefore(img(cardArt(c), 'art'), card.firstChild);
       if (c.kind === 'reward') card.appendChild(img('bars', 'bars'));
       if (c.kind === 'dtrap') {
-        var hs = document.createElement('span'); hs.className = 'heads ' + TYPES[c.type].el;
+        var hs = document.createElement('span'); hs.className = 'heads ' + (TYPES[c.type].el || 'plain');
         ['n', 'e', 's', 'w'].forEach(function (d) { var i = document.createElement('i'); i.className = 'hd ' + d; i.appendChild(img('traphead')); hs.appendChild(i); });
         card.appendChild(hs);
       }
@@ -519,7 +539,7 @@
   }
 
   function startLevel(i) {
-    bankRun();
+    forfeitRun(); // the previous run, if it never ended
     cur = i;
     menuArea = areaOf(i); store.set('cc_area', String(menuArea));
     fixSelection();
@@ -959,7 +979,6 @@
     if (r.thorns && r.thorns.length) setTimeout(function () { if (S) playThorns(r.thorns); }, 60);
     if (r.tremor != null) castLook('quake'); // passive Tremor went off as the hero stepped away
     if (r.stand) { castLook('laststand'); toast('Last Stand saved you!'); }
-    if (S.hero.gold > (best[cur] || 0)) { best[cur] = S.hero.gold; saveBest(); }
     if (r.eaten && r.eaten.kind === 'reward') claimReward(cur, r.eaten.rw);
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
     render();
@@ -995,6 +1014,7 @@
   function showOver() {
     var L = levels[cur], g = S.hero.gold;
     var prevBest = (best[cur] || 0);
+    if (g > prevBest) { best[cur] = g; saveBest(); } // only a finished run sets a best
     $('#o-score').textContent = g;
     var kidsOf = childrenOf(cur), open = [], note = '';
     $('#o-sub').textContent = 'gold on ' + L.name;
@@ -1069,8 +1089,9 @@
       }
       case 'dtrap': {
         var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
-        t = (el === 'fire' ? 'Fire' : 'Ice') + ' trap with ' + n4 + (n4 === 1 ? ' head' : ' heads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its heads point at: you, and monsters. ' +
-          (el === 'fire' ? 'Fire' : 'Ice') + ' monsters are immune; ' + opp + ' monsters take ' + (n * 2) + '. Other monsters take ' + n + '. Stepping on it costs ' + n + '.';
+        t = (el ? (el === 'fire' ? 'Fire' : 'Ice') : 'Arrow') + ' trap with ' + n4 + (n4 === 1 ? ' arrowhead' : ' arrowheads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its arrowheads point at: you, and monsters. ' +
+          (el ? (el === 'fire' ? 'Fire' : 'Ice') + ' monsters are immune; ' + opp + ' monsters take ' + (n * 2) + '. Other monsters take ' + n + '. ' : 'Every monster takes ' + n + '. ') +
+          'Stepping on it costs ' + n + '.';
         if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }
@@ -1162,14 +1183,17 @@
   board.addEventListener('pointercancel', function () { clearTimeout(holdTimer); down = null; hideInfoSoon(); });
   document.addEventListener('keydown', function (e) {
     if (current !== 'play') return;
+    if ($('#leave').classList.contains('on')) { if (e.key === 'Escape') closeLeave(); return; } // the leave prompt is open
     if (e.key >= '1' && e.key <= '3') { slotClick(Number(e.key) - 1); return; }
     var m = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3 };
     if (e.key in m && !e.metaKey && !e.ctrlKey) { e.preventDefault(); doMove(m[e.key]); }
   });
   window.addEventListener('resize', layoutBoard);
 
-  $('#b-back').addEventListener('click', function () { show('menu'); });
-  $('#b-restart').addEventListener('click', function () { startLevel(cur); });
+  $('#b-back').addEventListener('click', function () { guardLeave(function () { show('menu'); }); });
+  $('#b-restart').addEventListener('click', function () { guardLeave(function () { startLevel(cur); }); });
+  $('#l-stay').addEventListener('click', closeLeave);
+  $('#l-go').addEventListener('click', function () { var go = leaveGo; closeLeave(); if (go) go(); });
   $('#o-again').addEventListener('click', function () { startLevel(cur); });
   $('#o-next').addEventListener('click', function () { if (nextPick != null) startLevel(nextPick); });
   $('#o-menu').addEventListener('click', function () { $('#over').classList.remove('on'); show('menu'); });
@@ -1706,7 +1730,7 @@
     TYPE_ORDER.forEach(function (k) {
       var lab = document.createElement('label');
       lab.setAttribute('for', 'w-' + k);
-      var em = img(k);
+      var em = img(typeIcon(k));
       var nm = document.createElement('span'); nm.style.cssText = 'font-size:.78rem'; nm.textContent = TYPES[k].name + (total ? ' ' + Math.round(100 * (L.weights[k] || 0) / total) + '%' : '');
       var inp = document.createElement('input');
       inp.id = 'w-' + k; inp.type = 'number'; inp.min = 0; inp.max = 999; inp.inputMode = 'numeric';
@@ -1771,7 +1795,6 @@
   });
 
   // Closing the app mid-run still banks that run's gold.
-  window.addEventListener('pagehide', function () { if (current === 'play') bankRun(); });
 
   // ---- Boot -----------------------------------------------------------------
   function start(data) {

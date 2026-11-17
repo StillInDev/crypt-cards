@@ -90,7 +90,11 @@
     "p_burst",
     "p_forge",
     "p_quake",
-    "p_shield"
+    "p_shield",
+    "p_magnet",
+    "p_hourglass",
+    "p_whetstone",
+    "p_laststand"
   ],
   "interface": [
     "web",

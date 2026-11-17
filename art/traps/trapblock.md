@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-The body of every **Fire trap** and **Ice trap** card on the board, in the middle of the card. An arrowhead (`traphead`) is fixed to each side the trap fires at, and the heads turn clockwise each turn. The element shows as a coloured outline on the heads (orange for fire, cyan for ice), so the block itself is the same for both.
+The body of every **Arrow trap**, **Fire trap** and **Ice trap** card on the board, in the middle of the card, and the Arrow trap's icon in the card guide and room editor. An arrowhead (`traphead`) is fixed to each side the trap fires at, and the heads turn clockwise each turn. The element shows as a coloured outline on the heads (grey for the plain arrow trap, orange for fire, cyan for ice), so the block itself is the same for all three.
 
 ## What it must look like
 
