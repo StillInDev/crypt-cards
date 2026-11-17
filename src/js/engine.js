@@ -100,40 +100,40 @@
   // ---- Heroes ---------------------------------------------------------------
   // hp: change to the level's hero health. rech: power recharge multiplier.
   const HEROES = {
-    knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 3, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Sturdy. Swords you pick up are 1 stronger.' },
-    sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Frail, but powers start ready and recharge 30% faster.' },
+    knight:   { name: 'Knight',   sprite: 'knight',   hp: 2,  slots: 3, unlock: 0,  pass: { swordBonus: 1 }, desc: 'Swords you pick up are 1 stronger.' },
+    sorcerer: { name: 'Sorcerer', sprite: 'sorcerer', hp: -2, slots: 3, unlock: 30, pass: { rech: 0.7 }, startReady: true, desc: 'Powers start ready and recharge 30% faster.' },
     // Shown as the Yeti; the id stays 'icemage' so saved picks and the Frozen Cavern reward keep working.
     icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 3, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
-    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: 'Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.' },
-    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: '8 kills charge a smite: the next attack kills outright. Every 4th attack chains lightning to the monsters next to the target, for 1 + his level in damage.' },
-    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Soothing tunes: heals 2 + his upgrades every turn, and every coin, gem, potion and weapon on the board grows by 1 each turn. All healing can take him over his max health, by up to 3 + his upgrades.' },
-    dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Scaly feet: stomps monsters with 1 health, taking no damage and not using his weapon.' },
-    count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Lifesteal: heals 1 for every 3 damage his weapons deal.' },
-    barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'Rage: at a quarter health or less, weapon hits have a 1 in 3 chance to crit for double damage, without wearing the weapon down any faster.' },
-    cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 3, unlock: 0,  pass: { thorns: 1 }, desc: 'Prickly: at half health or less, every monster next to you takes 1 damage each turn.' },
+    rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: '+1 gold from every coin and gem. Traps can\'t hurt you.' },
+    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: 'Every 8 kills, the next attack kills outright. Every 4th attack chains lightning to the monsters beside the target.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn and can heal past max health. Coins, gems, potions and weapons on the board grow by 1 each turn.' },
+    dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Stomps 1-health monsters for free, without using his weapon.' },
+    count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Heals 1 for every 3 weapon damage he deals.' },
+    barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'At a quarter health or less, weapon hits have a 1 in 3 chance to deal double damage.' },
+    cactus:   { name: 'Cactus',   sprite: 'cactus',   hp: 1,  slots: 3, unlock: 0,  pass: { thorns: 1 }, desc: 'At half health or less, monsters next to you take 1 damage each turn.' },
   };
 
   // ---- Powers ---------------------------------------------------------------
   // cd: turns to recharge. target: what a tap must hit (null = acts at once).
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  tip: 'Restore 5 health.' },
-    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Flies at a random monster. It takes 4 damage and is poisoned: it loses 1 health a turn for 3 turns.' },
-    fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Tap any card to burn it away. A new card takes its place.' },
-    scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Cut down every monster, trap and poison in the 8 cards around you.' },
-    massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2, and make every potion on the board 2 stronger.' },
-    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Every monster on the board takes 3 damage.' },
+    forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, tip: 'Conjure a sword as strong as your max health.' },
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, tip: 'Hits a random monster for 4 and poisons it for 3 turns.' },
+    fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, tip: 'Burn away any card. A new one takes its place.' },
+    scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, tip: 'Clears every monster, trap and poison around you.' },
+    massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, tip: 'Heal 2 and make every potion on the board 2 stronger.' },
+    thunder:  { name: 'Thunder',      sprite: 'p_thunder',  cd: 16, target: null,      unlock: 60, tip: 'Hit every monster on the board for 3.' },
     ice:      { name: 'Frost',        sprite: 'p_ice',      cd: 18, target: null,      unlock: 70, tip: 'Monsters deal no damage for your next 3 moves.' },
-    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Tap any card. You jump there without using it, and it vanishes.' },
-    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. Every time you step, a monster that slides into the square you left is hit. Damage is 3, plus 1 for every 25 points of your best score (up to 12).' },
-    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Tap a potion. It explodes and hits neighbouring monsters for its number.' },
-    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'For your next 4 turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.' },
+    teleport: { name: 'Teleport orb', sprite: 'p_teleport', cd: 12, target: 'card',    unlock: 80, tip: 'Jump to any card without using it. It vanishes.' },
+    quake:    { name: 'Tremor',       sprite: 'p_quake',    cd: 0,  target: null,      unlock: 45, passive: true, tip: 'Always on. A monster that slides into the square you just left takes damage.' },
+    burst:    { name: 'Potion burst', sprite: 'p_burst',    cd: 10, target: 'potion',  unlock: 90, tip: 'Explode a potion: monsters next to it take its number in damage.' },
+    ward:     { name: 'Shield',       sprite: 'p_shield',   cd: 12, target: null,      unlock: 50, tip: 'Fire and ice can\'t hurt you for your next 4 turns.' },
     // Placeholder sprites until their own icons are drawn (art/powers/p_magnet.md and the rest).
-    magnet:   { name: 'Magnet',       sprite: 'coin',       cd: 16, target: null,      unlock: 100, tip: 'Every coin and gem on the board flies into your purse.' },
-    hourglass: { name: 'Hourglass',   sprite: 'p_teleport', cd: 20, target: null,      unlock: 110, tip: 'Halves the time left on your other powers.' },
-    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 10, target: null,      unlock: 120, tip: 'Sharpen the weapon you hold: it gains 2 power.' },
-    laststand: { name: 'Last Stand',  sprite: 'goldskull',  cd: 0,  target: null,      unlock: 130, passive: true, tip: 'Always on. Once per room, a hit that would kill you leaves you at 1 health instead.' }
+    magnet:   { name: 'Magnet',       sprite: 'coin',       cd: 16, target: null,      unlock: 100, tip: 'Pull every coin and gem on the board into your purse.' },
+    hourglass: { name: 'Hourglass',   sprite: 'p_teleport', cd: 20, target: null,      unlock: 110, tip: 'Halve the time left on your other powers.' },
+    whetstone: { name: 'Whetstone',   sprite: 'sword',      cd: 10, target: null,      unlock: 120, tip: 'Your weapon gains 2 power.' },
+    laststand: { name: 'Last Stand',  sprite: 'goldskull',  cd: 0,  target: null,      unlock: 130, passive: true, tip: 'Always on. Once per room, a killing hit leaves you at 1 health instead.' }
   };
 
   // ---- Power upgrades (bought with banked gold between runs) ----------------
@@ -145,20 +145,20 @@
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
     forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
-    dart:     { amt: [4, 2],  text: 'Flies at a random monster. It takes {n} damage and is poisoned: it loses 1 health a turn for 3 turns.', what: '+2 damage' },
+    dart:     { amt: [4, 2],  text: 'Hits a random monster for {n} and poisons it for 3 turns.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
-    massheal: { amt: [2, 1],  text: 'Heal {n}, and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
-    thunder:  { amt: [3, 1],  text: 'Every monster on the board takes {n} damage.', what: '+1 damage' },
+    massheal: { amt: [2, 1],  text: 'Heal {n} and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
+    thunder:  { amt: [3, 1],  text: 'Hit every monster on the board for {n}.', what: '+1 damage' },
     ice:      { amt: [3, 1],  text: 'Monsters deal no damage for your next {n} moves.', what: '+1 frozen move' },
     teleport: { cdCut: 2, what: '2 turns faster recharge' },
     quake:    { amt: [0, 1],  what: '+1 tremor damage' },
     burst:    { cdCut: 2, what: '2 turns faster recharge' },
-    ward:     { amt: [4, 1],  text: 'For your next {n} turns, fire and ice can\'t hurt you: elemental traps, trap heads and fire or ice monsters deal no damage.', what: '+1 shielded turn' },
+    ward:     { amt: [4, 1],  text: 'Fire and ice can\'t hurt you for your next {n} turns.', what: '+1 shielded turn' },
     magnet:   { amt: [0, 1],  what: '+1 gold from each coin and gem' },
     hourglass: { cdCut: 2,    what: '2 turns faster recharge' },
-    whetstone: { amt: [2, 1], text: 'Sharpen the weapon you hold: it gains {n} power.', what: '+1 power' },
-    laststand: { amt: [1, 1], text: 'Always on. Once per room, a hit that would kill you leaves you at {n} health instead.', what: '+1 health left after it saves you' }
+    whetstone: { amt: [2, 1], text: 'Your weapon gains {n} power.', what: '+1 power' },
+    laststand: { amt: [1, 1], text: 'Always on. Once per room, a killing hit leaves you at {n} health instead.', what: '+1 health left after it saves you' }
   };
   function clampLv(lv) { return Math.max(0, Math.min(POWER_MAX_LV, lv | 0)); }
   function powerAmount(id, lv) { const u = UPGRADES[id]; if (u && u.bonus) return u.bonus[clampLv(lv)]; return u && u.amt ? u.amt[0] + u.amt[1] * clampLv(lv) : 0; }

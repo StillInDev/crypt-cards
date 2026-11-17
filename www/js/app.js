@@ -40,20 +40,21 @@
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
   };
-  // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based),
+  // Not every room gives a reward: each hero and power sits in its themed room in ONE area (reward.area, 1-based;
+  // a room can hold a different one in another area via more[]),
   // spread out so new things keep turning up the whole way down. Every other room just opens the way on.
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake',    area: 2 } },
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 34, reward: { kind: 'power', id: 'quake',    area: 2 }, more: [{ kind: 'hero', id: 'bard', area: 3 }] },
     { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'massheal', area: 1 } },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe',   area: 1 } },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 43, reward: { kind: 'power', id: 'scythe',   area: 1 }, more: [{ kind: 'hero', id: 'barbarian', area: 3 }] },
     { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 53, reward: { kind: 'power', id: 'burst',    area: 3 } },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero',  id: 'sorcerer', area: 1 } },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward',     area: 2 } },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero',  id: 'icemage',  area: 2 } },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport', area: 4 } },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire',     area: 3 } },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 53, reward: { kind: 'hero',  id: 'sorcerer', area: 1 }, more: [{ kind: 'power', id: 'laststand', area: 5 }] },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 53, reward: { kind: 'power', id: 'ward',     area: 2 }, more: [{ kind: 'power', id: 'whetstone', area: 1 }, { kind: 'power', id: 'magnet', area: 5 }] },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 67, reward: { kind: 'hero',  id: 'icemage',  area: 2 }, more: [{ kind: 'power', id: 'hourglass', area: 4 }] },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 67, reward: { kind: 'power', id: 'teleport', area: 4 }, more: [{ kind: 'hero', id: 'stormmage', area: 2 }] },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 67, reward: { kind: 'power', id: 'fire',     area: 3 }, more: [{ kind: 'hero', id: 'dragonkin', area: 4 }] },
     { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 82, reward: { kind: 'hero',  id: 'rogue',    area: 4 } },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder',  area: 5 } },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 82, reward: { kind: 'power', id: 'thunder',  area: 5 }, more: [{ kind: 'hero', id: 'count', area: 3 }] },
     { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 100, reward: { kind: 'power', id: 'ice',     area: 5 } }
   ];
   var THEME_ORDER = ROOMS.map(function (r) { return r.theme; });
@@ -159,7 +160,8 @@
         var L = DC.nextLevel(null, diff);
         L.name = R.name; L.theme = R.theme; L.req = R.req; L.area = a + 1;
         L.from = R.from.map(function (p) { return p === 0 ? 0 : p + base; });
-        L.reward = R.reward.area === a + 1 ? { kind: R.reward.kind, id: R.reward.id } : { kind: 'door' };
+        var rw = [R.reward].concat(R.more || []).filter(function (x) { return x.area === a + 1; })[0];
+        L.reward = rw ? { kind: rw.kind, id: rw.id } : { kind: 'door' };
         var last = AREAS.length * 6 - 1; // 6 rows per area
         L.weights = themedWeights(R.theme, diff, (a * 6 + R.row) / last);
         L.shieldP = R.theme === 'throne' ? 0.45 : R.row >= 4 ? 0.2 : R.row >= 3 ? 0.1 : 0;
@@ -1180,7 +1182,7 @@
   // Panel order: how to unlock (if locked), name, the ability, then the extra details.
   function heroInfo(id) {
     var H = DC.HEROES[id], open = heroOpen(id), lv = heroUpLv(id), cost = DC.heroUpgradeCost(lv);
-    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id) + ' to unlock', title: H.name, tag: '',
+    var o = { sprite: H.sprite, lock: open ? '' : lockText('hero', id), title: H.name, tag: '',
       level: lv, max: DC.HERO_MAX_LV, ability: H.desc, stats: [['Health', String(heroHp(id))], ['Powers', String(H.slots)]].concat(H.pass.storm ? [['Chain', DC.chainDamage(lv) + ' damage']] : H.pass.song ? [['Heals', DC.songHeal(lv) + ' a turn'], ['Overheal', '+' + DC.overheal(lv)]] : []) };
     if (open) {
       var on = id === heroSel;
@@ -1207,8 +1209,8 @@
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
-    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id) + ' to unlock', title: P.name, tag: '',
-      level: lv, ability: powerTip(id), desc: P.passive ? 'Always on: no need to tap it.' : '', stats: powerStats(id, lv) };
+    var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id), title: P.name, tag: '',
+      level: lv, ability: powerTip(id).replace(/ Right now:.*$/, ''), stats: powerStats(id, lv) }; // the stats already show the number
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
       o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
@@ -1224,7 +1226,7 @@
   // A locked hero or power can be bought with gold instead of clearing its room.
   function unlockOffer(kind, id, name, info) {
     var cost = kind === 'hero' ? DC.HERO_BUY_COST : DC.POWER_BUY_COST;
-    return { text: rewardRoom(kind, id) < 0 ? '' : 'Or unlock it now with gold.', label: 'Unlock', cost: cost, ok: purse >= cost,
+    return { text: '', label: 'Unlock', cost: cost, ok: purse >= cost,
       short: purse >= cost ? '' : 'You have ' + purse + ' gold. Finished runs add their gold to your purse.',
       buy: function () { if (buyUnlock(kind, id)) { refreshLoadoutScreen(); loInfo(info(id)); toast(name + ' unlocked!'); } } };
   }
@@ -1243,8 +1245,8 @@
     function line(tag, cls, text) { if (!text) return; var e = document.createElement(tag); e.className = cls; e.textContent = text; d.appendChild(e); }
     line('span', 'li-lock', o.lock);
     line('b', 'li-name', o.title);
-    line('span', 'li-tag', o.tag);
     line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
+    line('span', 'li-tag', o.tag);
     if (o.stats && o.stats.length) {
       var st = document.createElement('dl'); st.className = 'li-stats';
       o.stats.forEach(function (kv) {
