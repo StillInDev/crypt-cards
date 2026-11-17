@@ -1,13 +1,15 @@
 // Bard, Dragonborn, Vampire and Barbarian passives.
 const assert = require('assert');
 const DC = require('../src/js/engine.js');
+// Every real monster now has a trick (skeletons are brittle, bats frail...), so tests use a plain one.
+DC.TYPES.dummy = { kind: 'monster', name: 'Dummy', lo: 1, hi: 1, bf: 0, tip: '' };
 function game(hero, lv) {
   const S = DC.newGame({ id: 1, w: 4, h: 3, heroHP: 10, ramp: 12, cap: 4, weights: { coin: 1 } }, 7, { hero: hero, heroLevel: lv || 0, powers: [] });
   S.grid = S.grid.map(function () { return { uid: ++S.uid, type: 'coin', kind: 'gold', v: 1 }; });
   S.hero.pos = 5; S.grid[5] = null;
   return S;
 }
-const mon = (S, v) => ({ uid: ++S.uid, type: 'skeleton', kind: 'monster', v: v });
+const mon = (S, v) => ({ uid: ++S.uid, type: 'dummy', kind: 'monster', v: v });
 const pot = (S, v) => ({ uid: ++S.uid, type: 'potion', kind: 'heal', v: v });
 
 // Bard: heals 1 every 3 turns, and healing can go over max by 3 + upgrades.

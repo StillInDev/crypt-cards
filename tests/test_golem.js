@@ -65,19 +65,6 @@ S = setup(1, [0]); S.hero.sword = { v: 9, type: 'sword', el: null }; DC.move(S, 
 assert.strictEqual(S.hero.pos, 0, 'hero took its place');
 console.log('golem can be killed ok');
 
-// Arrow: row 3 4 5 with a fire arrow at 3 pointing right (h = 1), golem at 4, coin at 5.
-// The golem cuts the line: it stays put, and the stretch after it (cell 5) slides on its own.
-S = setup(8, [4]);
-S.grid[3] = { uid: 50, type: 'firearrow', kind: 'arrow', v: 1, h: 1 };
-S.grid[4].v = 9;
-const coin5 = S.grid[5];
-assert(DC.fireArrow(S, 3), 'fired');
-assert.strictEqual(S.grid[4].type, 'golem', 'golem did not slide');
-assert.strictEqual(S.grid[4].v, 8, 'golem was hit by the arrow');
-assert.notStrictEqual(S.grid[5], coin5, 'the card after the golem was pushed off and replaced');
-assert(S.grid[3] && S.grid[5], 'both stretches refilled');
-console.log('arrow stops at a golem ok');
-
 // Fuzz: golems never change square while alive.
 for (let seed = 1; seed < 200; seed++) {
   const L2 = { w: 5, h: 5, heroHP: 30, unlock: 10, weights: Object.assign({}, DC.BASE_WEIGHTS, { golem: 20 }) };

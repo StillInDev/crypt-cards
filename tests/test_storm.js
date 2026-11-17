@@ -1,6 +1,8 @@
 // Lightning Wizard: 8 kills charge a smite, every 4th attack chains lightning to the target's neighbours.
 const assert = require('assert');
 const DC = require('../src/js/engine.js');
+// Every real monster now has a trick (skeletons are brittle, bats frail...), so tests use a plain one.
+DC.TYPES.dummy = { kind: 'monster', name: 'Dummy', lo: 1, hi: 1, bf: 0, tip: '' };
 // 4x3 board of coins (even width: no middle-square refill). Hero at 5; 1 is above it, 0 and 2 beside 1.
 function game(lv, hero) {
   const S = DC.newGame({ id: 1, w: 4, h: 3, heroHP: 60, ramp: 12, cap: 4, weights: { coin: 1 } }, 7, { hero: hero || 'stormmage', heroLevel: lv || 0, powers: [] });
@@ -8,7 +10,7 @@ function game(lv, hero) {
   S.hero.pos = 5; S.grid[5] = null;
   return S;
 }
-function mon(S, v) { return { uid: ++S.uid, type: 'skeleton', kind: 'monster', v: v }; }
+function mon(S, v) { return { uid: ++S.uid, type: 'dummy', kind: 'monster', v: v }; }
 function reset(S) { S.grid[S.hero.pos] = { uid: ++S.uid, type: 'coin', kind: 'gold', v: 1 }; S.hero.pos = 5; S.grid[5] = null; }
 
 let S = game();
