@@ -43,7 +43,7 @@ S=blankGame({powers:['burst']}); S.grid[0]=C('potion',4); S.grid[1]=C('ogre',9);
 S=blankGame({hero:'knight'}); assert(S.hero.max===12); S.grid[1]=C('sword',3); DC.move(S,0); assert(S.hero.sword.v===4); ok('knight');
 S=blankGame({hero:'icemage'}); S.grid[1]=C('rat',3); DC.move(S,0); assert(S.hero.hp===S.hero.max-2); ok('yeti cut');
 assert.strictEqual(DC.HEROES.icemage.name,'Yeti'); assert.strictEqual(DC.HEROES.icemage.sprite,'yeti');
-S=blankGame({hero:'rogue'}); S.grid[1]=C('coin',2); DC.move(S,0); assert(S.hero.gold===3); ok('rogue');
+S=blankGame({hero:'rogue'}); S.grid[1]=C('coin',2); DC.move(S,0); assert(S.hero.gold===2); ok('rogue gets no gold bonus');
 S=blankGame({hero:'sorcerer',powers:['heal','fire','ice','scythe']}); assert(S.hero.max===8&&S.hero.powers.length===3&&S.hero.powers.every(p=>p.cd===0)); ok('sorcerer slots/ready');
 // new cards
 S=blankGame({hero:'knight'}); S.grid[1]=C('goldskull',3); DC.move(S,0); assert(S.hero.gold===3&&S.hero.hp===S.hero.max-3); ok('golden skeleton');
