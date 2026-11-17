@@ -542,6 +542,12 @@
     var bub = document.createElement('span'); bub.className = 'bub'; bub.setAttribute('aria-hidden', 'true'); hc.appendChild(bub);
     hc.appendChild(img('sword', 'held'));
     var wv = document.createElement('span'); wv.className = 'wv'; hc.appendChild(wv);
+    // Lightning Wizard: the smite charge bar along the bottom of the card, one notch per kill.
+    if (DC.HEROES[heroSel].pass.storm) {
+      var chg = document.createElement('span'); chg.className = 'chg'; chg.setAttribute('aria-hidden', 'true');
+      for (var ci = 0; ci < DC.STORM_KILLS; ci++) chg.appendChild(document.createElement('i'));
+      hc.appendChild(chg);
+    }
     heroEl = slotFor(hc);
     heroEl.classList.add('hero');
     board.appendChild(heroEl);
@@ -648,6 +654,12 @@
     var wvEl = heroEl.querySelector('.wv');
     wvEl.style.display = H.sword && !H.sword.orb ? '' : 'none';
     if (H.sword) wvEl.textContent = H.sword.c != null ? H.sword.v + '×' + H.sword.c : H.sword.v;
+    var chgEl = heroEl.querySelector('.chg');
+    if (chgEl) {
+      var kills = Math.min(DC.STORM_KILLS, H.kills | 0);
+      Array.prototype.forEach.call(chgEl.children, function (n, k) { n.classList.toggle('on', k < kills); });
+      chgEl.classList.toggle('full', kills >= DC.STORM_KILLS);
+    }
     heroEl.classList.toggle('thorns', !!H.pass.thorns && H.hp * 2 <= H.max);
     heroEl.classList.toggle('glow', !!(S.glow && S.glow.cell === H.pos));
     if (H.hp < lastHp) {
@@ -1095,8 +1107,7 @@
     if (H.ward > 0) t += ' Shielded from fire and ice for ' + H.ward + ' more turns.';
     if (H.pass.storm) {
       t += (H.kills | 0) >= DC.STORM_KILLS ? ' Smite is charged: your next attack kills outright.' : ' Smite charge: ' + (H.kills | 0) + ' of ' + DC.STORM_KILLS + ' kills.';
-      var left = DC.STORM_CHAIN - (H.hits | 0);
-      t += ' Chain lightning (' + DC.chainDamage(H.lv) + ' damage) ' + (left === 1 ? 'on your next attack.' : 'in ' + left + ' attacks.');
+      t += ' Chain lightning: ' + DC.chainDamage(H.lv) + ' damage.';
     }
     if (H.sword && H.sword.orb) t += ' Holding a Teleport orb: tap any card to swap places with it.';
     else if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.star ? ' throws' : ' arrows') : '') + '.';
