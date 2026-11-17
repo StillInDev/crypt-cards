@@ -109,7 +109,7 @@
     icemage:  { name: 'Yeti',     sprite: 'yeti',     hp: 0,  slots: 3, unlock: 60, pass: { cut: 1 }, desc: 'Thick fur: monsters hit you for 1 less.' },
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
     rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { gold: 1, trapproof: 1 }, desc: '+1 gold from every coin and gem. Traps can\'t hurt you.' },
-    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: 'Every 8 kills, the next attack kills outright. Every 4th attack chains lightning to the monsters beside the target.' },
+    stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: 'Every 8 kills, the next attack kills outright. Attacks have a 1 in 8 chance to chain lightning to the monsters beside the target.' },
     bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn and can heal past max health. Coins, gems, potions and weapons on the board grow by 1 each turn.' },
     dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Stomps 1-health monsters for free, without using his weapon.' },
     count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Heals 1 for every 3 weapon damage he deals.' },
@@ -226,7 +226,7 @@
 
   const RAT_TURNS = 3;
   // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
-  const STORM_KILLS = 8, STORM_CHAIN = 4;
+  const STORM_KILLS = 8, STORM_CHANCE = 1 / 8; // kills to charge the smite; odds an attack chains lightning
   // Bard: heals 2 + upgrades every turn, and every turn the helpful cards on the board (not chests,
   // whose value is hidden) grow by 1. His healing can overfill max health by 3 + upgrades.
   function songHeal(lv) { return 2 + (lv | 0); }
@@ -854,13 +854,11 @@
     }
     H.turn++;
 
-    // Lightning Wizard: kills charge the smite, and every 4th attack chains lightning to the
-    // monsters next to the target.
+    // Lightning Wizard: kills charge the smite, and any attack has a 1 in 8 chance to chain lightning to the
+    // monsters next to the target. (A preview has no rng, so it never guesses a chain.)
     if (H.pass.storm && struck) {
       if (struck === 2) H.kills = Math.min(STORM_KILLS, (H.kills | 0) + 1);
-      H.hits = (H.hits | 0) + 1;
-      if (H.hits >= STORM_CHAIN) {
-        H.hits = 0;
+      if (S.rng && S.rng() < STORM_CHANCE) {
         const zap = chainDamage(H.lv);
         for (const ap of neighbours4(S, tpos)) {
           const m = S.grid[ap];
@@ -1396,7 +1394,7 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHAIN: STORM_CHAIN, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
