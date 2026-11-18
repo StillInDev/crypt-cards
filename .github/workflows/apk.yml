@@ -32,7 +32,10 @@ jobs:
           VERSION_CODE: ${{ github.run_number }}
         run: npm run sync
       - name: Build the debug apk
-        run: cd android && ./gradlew assembleDebug
+        # Sign with the committed test key so each new apk installs as an update over the last one.
+        run: |
+          mkdir -p ~/.android && cp android-test-key/debug.keystore ~/.android/debug.keystore
+          cd android && ./gradlew assembleDebug
       - name: Name the apk
         run: |
           SHORT=$(git rev-parse --short HEAD)
