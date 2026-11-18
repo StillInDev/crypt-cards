@@ -838,10 +838,10 @@
       var ready = pw.cd === 0;
       b.className = 'pw' + (ready ? ' ready' : '') + (def.passive ? ' passive' : '') + (targeting === i ? ' aim' : '');
       b.disabled = S.over;
-      b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : ready ? ', ready' : ', recharging, ' + pw.cd + ' turns'));
+      b.setAttribute('aria-label', def.name + (def.passive ? ', always on' : (def.auto ? ', fires by itself' : '') + (ready ? ', ready' : ', recharging, ' + pw.cd + ' turns')));
       b.appendChild(img(def.sprite));
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.name;
-      var st = document.createElement('span'); st.className = 'st'; st.textContent = pw.id === 'laststand' && S.hero.stood ? 'USED' : def.passive ? 'ALWAYS ON' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
+      var st = document.createElement('span'); st.className = 'st'; st.textContent = pw.id === 'laststand' && S.hero.stood ? 'USED' : def.passive ? 'ALWAYS ON' : def.auto && ready ? 'AUTO' : pw.id === 'forge' && S.hero.forge ? 'WAITING' : ready ? 'READY' : pw.cd + ' turns';
       var bar2 = document.createElement('i'); bar2.style.width = def.passive ? '100%' : (100 * (1 - pw.cd / pw.max)) + '%';
       b.appendChild(nm); b.appendChild(st); b.appendChild(bar2);
       var held = false, timer = null;
@@ -865,14 +865,16 @@
     var pw = S.hero.powers[i];
     if (!pw) return;
     if (DC.POWERS[pw.id].passive) { toast(DC.POWERS[pw.id].name + ' is always on'); return; }
+    if (DC.POWERS[pw.id].auto) { toast(DC.POWERS[pw.id].name + ' fires by itself when it is ready'); return; }
     if (pw.cd > 0) { toast(DC.POWERS[pw.id].name + ' needs ' + pw.cd + ' more turns'); return; }
     if (pw.id === 'forge' && S.hero.forge) { toast('Your forged sword arrives when your hands are empty'); return; }
     if (DC.POWERS[pw.id].target) { targeting = targeting === i ? null : i; render(); return; }
     firePower(i);
   }
-  function firePower(i, target) {
+  function firePower(i, target, quiet) {
     var r = DC.usePower(S, i, target);
     if (!r) {
+      if (quiet) return null; // an automatic power with nothing to hit just waits
       // Why a ready power did nothing.
       var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', teleport: 'You already have an orb' };
       var pid = S.hero.powers[i] && S.hero.powers[i].id;
@@ -880,14 +882,41 @@
       return;
     }
     targeting = null;
+    castLook(r.id);
+    // The dart flies first and the board updates when it lands. Otherwise a monster it kills is already gone and
+    // the card that slid into its square (a coin, say) would look like what the dart hit.
+    if (r.id === 'dart' && r.target != null) {
+      var run = S;
+      busy = true;
+      shoot('dart', S.hero.pos, r.target);
+      setTimeout(function () {
+        busy = false;
+        if (S !== run) return;
+        floaters(r.fx); render(); playFx(r.fx);
+        if (S.over) setTimeout(showOver, 650);
+      }, 210);
+      return r;
+    }
     floaters(r.fx);
     render();
     playFx(r.fx);
-    castLook(r.id);
-    if (r.id === 'dart' && r.target != null) shoot('dart', S.hero.pos, r.target);
     if (r.id === 'scythe') flash(heroEl, 'spin', 420);
     if (r.id === 'ice') flash(board, 'frostfx', 700);
     if (r.id === 'forge') flash(heroEl.querySelector('.held'), 'swing', 320);
+    if (S.over) setTimeout(showOver, 650);
+    return r;
+  }
+  // Automatic powers (the Poison dart) fire by themselves once they are ready, a moment after your move so the
+  // move's own effects play first. With nothing to hit, they wait and try again after the next move.
+  function autoPowers() {
+    if (!S || S.over || current !== 'play') return;
+    var run = S;
+    setTimeout(function () {
+      if (S !== run || S.over || current !== 'play') return;
+      S.hero.powers.forEach(function (pw, i) {
+        if (DC.POWERS[pw.id].auto && pw.cd === 0 && !S.over) firePower(i, null, true);
+      });
+    }, 260);
   }
   // Every power dresses the hero in its own look for a moment: glow colour, body motion, particles.
   var castTimer = null;
@@ -1063,6 +1092,7 @@
     else if (S.rewardGiven && !rewardShown) { rewardShown = true; toast('A locked reward appeared! Step on it.', 3200); }
     render();
     if (S.over) setTimeout(showOver, 650);
+    else autoPowers();
   }
 
   var toastTimer = null;
