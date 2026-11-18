@@ -218,9 +218,9 @@
     let v;
     if (T.kind === 'monster') {
       // Monster health: n is the middle of its range plus the room's growth, scaled up in deeper areas
-      // (the boss keeps its own fixed range). It arrives somewhere in n - n/4 .. n + n/4.
+      // (the boss keeps its own fixed range). It arrives somewhere in n - n/4 .. n + n/4, rounded down.
       const n = ((T.lo + T.hi) / 2 + bump) * (T.boss ? 1 : areaScale(L));
-      v = Math.max(1, Math.round(n + (S.rng() * 2 - 1) * n / 4));
+      v = Math.max(1, Math.floor(n + (S.rng() * 2 - 1) * n / 4)); // always rounded down
     } else v = T.lo + Math.floor(S.rng() * (T.hi + bump - T.lo + 1));
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
