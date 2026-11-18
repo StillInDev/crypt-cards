@@ -48,6 +48,11 @@
   //   between them: Catacombs 100 (a door) and Bone Library 110 (an unlock), joining the two routes.
   // req is the gold that reveals a room's reward. Each hero and power is the reward of one room in one area
   // (reward/more, area is 1-based): five in the first area, four in each of the others, spread over the rows.
+  //
+  // Map rules (checked by DC.mapDeadEnds, shown in the room editor):
+  //   - A room does not have to lead on to the boss: side rooms and dead ends are fine.
+  //   - But a room that cannot lead to its area's boss must hold a reward (a hero or a power). A dead end with
+  //     nothing in it is a wasted trip.
   var ROOMS = [
     { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 50 },
     { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 75 },
@@ -62,7 +67,7 @@
       more: [{ kind: 'hero', id: 'stormmage', area: 2 }, { kind: 'power', id: 'teleport', area: 3 }, { kind: 'hero', id: 'bard', area: 4 }, { kind: 'power', id: 'thunder', area: 5 }] },
     { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 130, hard: true, reward: { kind: 'power', id: 'fire', area: 1 },
       more: [{ kind: 'hero', id: 'dragonkin', area: 2 }, { kind: 'power', id: 'burst', area: 3 }] },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 100 },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7],       req: 100 },
     { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 140, hard: true, reward: { kind: 'hero', id: 'count', area: 1 },
       more: [{ kind: 'power', id: 'massheal', area: 4 }, { kind: 'power', id: 'ice', area: 5 }] },
     { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 150 }
@@ -384,6 +389,8 @@
     var ov = $('#over');
     if (ov && ov.classList.contains('on')) { ov.classList.remove('on'); return true; }
     if ($('#leave').classList.contains('on')) { closeLeave(); return true; } // back again: stay in the run
+    if ($('#skip').classList.contains('on')) { closeSkip(); return true; } // back on the skip pop-up: keep playing
+    if ($('#settings').classList.contains('on')) { closeSettings(); return true; }
     if (current === 'home') return false;
     if (current === 'play') { guardLeave(function () { show('menu'); }); return true; }
     show(current === 'edit' ? 'menu' : 'home');
@@ -426,7 +433,8 @@
     var area = menuArea, rooms = areaRooms(area), inArea = {};
     rooms.forEach(function (i) { inArea[i + 1] = true; });
     var aOpen = areaOpen(area), boss = bossOf(area), next = area + 1 < AREAS.length ? area + 1 : null;
-    var COLW = 106, ROWH = 142, NS = 70, TOP = 190;
+    // ENT: the Entrance sign's centre; FIRST: the first row's centre, close under it; then a row every ROWH.
+    var COLW = 106, ROWH = 142, NS = 70, ENT = 124, FIRST = ENT + 84;
     // Rooms reached from another area hang off this area's entrance.
     function src(p) { return inArea[p] ? p : 0; }
     var depth = [0], rows = [[]];
@@ -438,10 +446,14 @@
     });
     var maxD = rows.length - 1, maxN = 1, off = [0];
     rows.forEach(function (r) { if (!r) return; maxN = Math.max(maxN, r.length); r.forEach(function (k, ix) { off[k] = ix - (r.length - 1) / 2; }); });
-    var W = maxN * COLW + 40, H = TOP + (maxD + 1) * ROWH;
+    // Fit the box's width so the map never scrolls sideways: columns close up on narrow screens
+    // (never so tight that a room and its corner badges touch the next one).
+    var room = ($('.mapwrap') && $('.mapwrap').clientWidth) || 340;
+    COLW = maxN > 1 ? Math.max(86, Math.min(COLW, Math.floor((room - NS - 40) / (maxN - 1)))) : COLW;
+    var W = Math.max(room, (maxN - 1) * COLW + NS + 40), H = FIRST + (maxD - 1) * ROWH + 100;
     map.style.width = W + 'px'; map.style.height = H + 'px';
     function cx(k) { return Math.round(W / 2 + off[k] * COLW); }
-    function cy(k) { return TOP + depth[k] * ROWH - 30; }
+    function cy(k) { return FIRST + (depth[k] - 1) * ROWH; }
     // Header
     var hd = document.createElement('div');
     hd.className = 'maphead';
@@ -462,13 +474,25 @@
       kr.appendChild(kt);
     }
     map.appendChild(hd);
+    // Fit the whole area on one screen. The Entrance goes just below the header (which can wrap on a narrow
+    // screen); then room size (NS) and row spacing (ROWH) come from the height left in the view, between 38 px and
+    // full size. A room's gold target sits under it, so a row needs about NS + 26 px. Very short screens scroll.
+    ENT = hd.offsetTop + hd.offsetHeight + 16;
+    var view = $('#v-menu'), wrapEl = $('.mapwrap'), LBL = 26;
+    var avail = view.clientHeight - (wrapEl.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop) - 24;
+    var fixed = ENT + 11 + 18 + 28; // half the Entrance sign, the gap under it, the last room's label
+    NS = maxD > 0 ? Math.max(38, Math.min(70, Math.floor((avail - fixed - LBL * (maxD - 1)) / maxD))) : 70;
+    ROWH = maxD > 1 ? Math.max(NS + LBL, Math.min(142, Math.floor((avail - fixed - NS) / (maxD - 1)))) : ROWH;
+    FIRST = ENT + 11 + 18 + NS / 2;
+    H = Math.ceil(FIRST + (maxD - 1) * ROWH + NS / 2 + 28); map.style.height = H + 'px';
+    map.style.setProperty('--ns', NS + 'px');
     var svg = '<svg class="paths" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
     rooms.forEach(function (i) {
       var L = levels[i], k = i + 1;
       L.from.forEach(function (p0) {
         var p = src(p0);
         var lit = aOpen && (p0 === 0 || cleared[p0 - 1] || unlockAll);
-        var x1 = cx(p), y1 = p === 0 ? TOP - 66 : cy(p), x2 = cx(k), y2 = cy(k);
+        var x1 = cx(p), y1 = p === 0 ? ENT : cy(p), x2 = cx(k), y2 = cy(k);
         svg += '<line class="' + (lit ? 'lit' : 'dark') + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
       });
     });
@@ -476,7 +500,7 @@
     map.insertAdjacentHTML('beforeend', svg);
     var ent = document.createElement('div');
     ent.className = 'entrance';
-    ent.style.left = cx(0) + 'px'; ent.style.top = (TOP - 66) + 'px';
+    ent.style.left = cx(0) + 'px'; ent.style.top = ENT + 'px';
     ent.textContent = 'Entrance';
     map.appendChild(ent);
     rooms.forEach(function (i, n) {
@@ -877,7 +901,7 @@
   }
 
   function floaters(fx) {
-    return; // the pop-up numbers (+3G, damage taken) are switched off
+    if (!settings.nums) return; // the pop-up numbers (+3G, damage taken) are a setting, off by default
     var L = S.level;
     fx.forEach(function (f) {
       var x = f.cell % L.w, y = (f.cell / L.w) | 0;
@@ -1040,12 +1064,49 @@
     if (rw && rw.kind === 'hero' && DC.HEROES[rw.id]) msgs.push('Hero unlocked: ' + DC.HEROES[rw.id].name);
     if (rw && rw.kind === 'power' && DC.POWERS[rw.id]) msgs.push('Power unlocked: ' + DC.POWERS[rw.id].name);
     AREAS.forEach(function (A, x) { if (!areaWas[x] && areaOpen(x)) msgs.push('You found the key to ' + A.name); });
-    var rooms = [];
-    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j) && areaOf(j) === a) rooms.push(L.name); });
-    if (rooms.length) msgs.push('New room' + (rooms.length > 1 ? 's' : '') + ': ' + rooms.join(', '));
+    // Rooms this claim just opened: the next rooms in this area, and the first room of a newly opened area.
+    var newRooms = [];
+    levels.forEach(function (L, j) { if (!wasOpen[j] && isUnlocked(j)) newRooms.push(j); });
+    flash(heroEl, 'strike', 400);
+    if (newRooms.length && !S.over) { offerSkip(newRooms, msgs); return; }
     if (!msgs.length) msgs.push('Room cleared');
     toast(msgs.join('. '), 4200);
-    flash(heroEl, 'strike', 400);
+  }
+  // After a claim opens new rooms: skip to the map (to pick where next), or keep playing this run. Skipping ends
+  // the run properly (unlike walking away): its gold is banked and its score counts toward this room's best.
+  function offerSkip(rooms, msgs) {
+    var g = S.hero.gold;
+    $('#s-title').textContent = rooms.length > 1 ? 'New rooms unlocked!' : 'New room unlocked!';
+    $('#s-note').textContent = (msgs.length ? msgs.join('. ') + '. ' : '') +
+      'Skip to the map now and you keep this run\'s ' + g + ' gold, and it counts toward your best here.';
+    $('#skip').classList.add('on');
+    $('#s-map').focus();
+  }
+  function closeSkip() { $('#skip').classList.remove('on'); }
+
+  // ---- Settings ---------------------------------------------------------------
+  var settings = { nums: false, calm: false };
+  try { var ss = JSON.parse(store.get('cc_set') || '{}') || {}; settings.nums = !!ss.nums; settings.calm = !!ss.calm; } catch (e) { /* defaults */ }
+  function applySettings() { document.body.classList.toggle('calm', settings.calm); }
+  function saveSettings() { store.set('cc_set', JSON.stringify(settings)); applySettings(); }
+  function openSettings() {
+    $('#set-nums').checked = settings.nums;
+    $('#set-calm').checked = settings.calm;
+    // The rules live on the map screen ("How it plays"); show the same list here.
+    var src = $('#v-menu details ul'), dst = $('#set-howto');
+    if (src && !dst.children.length) dst.innerHTML = src.innerHTML;
+    $('#settings').classList.add('on');
+    $('#set-close').focus();
+  }
+  function closeSettings() { $('#settings').classList.remove('on'); }
+  applySettings();
+  function skipToMap() {
+    var g = S.hero.gold | 0;
+    closeSkip();
+    if (g > (best[cur] || 0)) { best[cur] = g; saveBest(); }
+    bankRun();
+    menuArea = areaOf(cur); store.set('cc_area', String(menuArea)); // show the area the new rooms are in
+    show('menu');
   }
 
   var nextPick = null;
@@ -1066,7 +1127,7 @@
         var first = areaRooms(na).filter(isUnlocked)[0];
         if (first != null && open.indexOf(first) < 0) open.push(first);
         note += (note ? ' ' : '') + 'You found the key to ' + AREAS[na].name + '.';
-      } else if (!kidsOf.length) note = 'The end of the dungeon.';
+      } else if (!kidsOf.length) note = isBoss(cur) ? 'The end of the dungeon.' : 'A dead end: its reward was the prize. Head back to the map for the way on.';
     } else if (S.rewardGiven) {
       note = 'The locked reward appeared, but you fell before reaching it.';
     } else {
@@ -1221,6 +1282,8 @@
   document.addEventListener('keydown', function (e) {
     if (current !== 'play') return;
     if ($('#leave').classList.contains('on')) { if (e.key === 'Escape') closeLeave(); return; } // the leave prompt is open
+    if ($('#skip').classList.contains('on')) { if (e.key === 'Escape') closeSkip(); return; } // the skip pop-up is open
+    if ($('#settings').classList.contains('on')) { if (e.key === 'Escape') closeSettings(); return; } // settings are open
     if (e.key >= '1' && e.key <= '3') { slotClick(Number(e.key) - 1); return; }
     var m = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3 };
     if (e.key in m && !e.metaKey && !e.ctrlKey) { e.preventDefault(); doMove(m[e.key]); }
@@ -1230,6 +1293,13 @@
   $('#b-back').addEventListener('click', function () { guardLeave(function () { show('menu'); }); });
   $('#b-restart').addEventListener('click', function () { guardLeave(function () { startLevel(cur); }); });
   $('#l-stay').addEventListener('click', closeLeave);
+  $('#s-stay').addEventListener('click', closeSkip);
+  // Settings (gear on the play screen's top bar): damage numbers, reduce motion, and the rules.
+  $('#b-set').addEventListener('click', openSettings);
+  $('#set-close').addEventListener('click', closeSettings);
+  $('#set-nums').addEventListener('change', function (e) { settings.nums = e.target.checked; saveSettings(); });
+  $('#set-calm').addEventListener('change', function (e) { settings.calm = e.target.checked; saveSettings(); });
+  $('#s-map').addEventListener('click', skipToMap);
   $('#l-go').addEventListener('click', function () { var go = leaveGo; closeLeave(); if (go) go(); });
   $('#o-again').addEventListener('click', function () { startLevel(cur); });
   $('#o-next').addEventListener('click', function () { if (nextPick != null) startLevel(nextPick); });
@@ -1683,6 +1753,9 @@
     if (e.key === 'ArrowRight') { e.preventDefault(); hpGo(1); }
   });
   window.addEventListener('resize', function () { if (current === 'hero' && !hpAnim) hpPlace(0, false); });
+  // The map is fitted to the screen, so redraw it when the screen changes size (rotation, split screen).
+  var mapResize = null;
+  window.addEventListener('resize', function () { clearTimeout(mapResize); mapResize = setTimeout(function () { if (current === 'menu') renderMenu(); }, 120); });
 
   // ---- Editor ---------------------------------------------------------------
   var ed = 0;
@@ -1698,7 +1771,12 @@
     ['cap', 'Most difficulty steps', 'number', 0, 30]
   ];
 
-  function setMsg(t, err) { var m = $('#e-msg'); m.textContent = t || ''; m.classList.toggle('err', !!err); }
+  function setMsg(t, err) {
+    // Any message also carries the map-rule warning while the rooms break it.
+    var rule = mapRuleNote();
+    if (rule && String(t || '').indexOf('Map rule:') !== 0) { t = (t ? t + ' ' : '') + rule; err = true; }
+    var m = $('#e-msg'); m.textContent = t || ''; m.classList.toggle('err', !!err);
+  }
   function syncJson() {
     $('#e-json').value = '[\n' + levels.map(function (l) { return ' ' + JSON.stringify(l); }).join(',\n') + '\n]';
   }
@@ -1708,8 +1786,19 @@
     syncJson();
   }
 
+  // The map rule: a room that cannot lead on to its area's boss must hold a hero or power.
+  function mapRuleNote() {
+    var bad = DC.mapDeadEnds(levels);
+    if (!bad.length) return '';
+    return 'Map rule: ' + bad.map(function (i) { return (i + 1) + ' ' + levels[i].name; }).join(', ') +
+      (bad.length === 1 ? ' leads nowhere and has' : ' lead nowhere and have') + ' no reward. Give ' +
+      (bad.length === 1 ? 'it' : 'each') + ' a hero or power, or link it on toward the boss.';
+  }
   function renderEditor() {
     if (ed >= levels.length) ed = levels.length - 1;
+    var rule = mapRuleNote();
+    if (rule) setMsg(rule, true);
+    else if ($('#e-msg').textContent.indexOf('Map rule:') === 0) setMsg(''); // fixed: clear the old warning
     var tabs = $('#e-tabs');
     tabs.innerHTML = '';
     levels.forEach(function (L, i) {
