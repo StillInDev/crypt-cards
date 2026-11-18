@@ -124,7 +124,8 @@
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  desc: 'Restores health equal to its power.', tip: 'Restore 5 health.' },
     forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, desc: 'Conjures a sword with its power. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.', tip: 'Conjure a sword as strong as your max health.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, desc: 'Flies at a random monster and hits it for its power. The monster is also poisoned: it loses 1 health a turn for 3 turns.', tip: 'Hits a random monster for 4 and poisons it for 3 turns.' },
+    // auto: fires by itself as soon as it is ready (the game triggers it after your move), never by tapping.
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, auto: true, desc: 'Fires by itself whenever it is ready: it flies at a random monster and hits it for its power. The monster is also poisoned: it loses 1 health a turn for 3 turns.', tip: 'Fires by itself when ready: hits a random monster for 4 and poisons it for 3 turns.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, desc: 'Tap any card to burn it away. A new card takes its place.', tip: 'Burn away any card. A new one takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, desc: 'Cuts down every monster, trap and poison in the 8 cards around you.', tip: 'Clears every monster, trap and poison around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, desc: 'Heals you by its power, and makes every potion on the board that much stronger.', tip: 'Heal 2 and make every potion on the board 2 stronger.' },
@@ -150,7 +151,7 @@
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
     forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
-    dart:     { amt: [4, 2],  text: 'Hits a random monster for {n} and poisons it for 3 turns.', what: '+2 damage' },
+    dart:     { amt: [4, 2],  text: 'Fires by itself when ready: hits a random monster for {n} and poisons it for 3 turns.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
     massheal: { amt: [2, 1],  text: 'Heal {n} and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
