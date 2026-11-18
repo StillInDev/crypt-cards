@@ -1226,6 +1226,31 @@
     else fx.push({ cell: res.slid != null ? res.slid : pos, text: '−' + res.dealt, cls: 'info', hit: m.uid });
   }
 
+  // ---- Map rules --------------------------------------------------------------
+  // Rooms (levels) link with from: [1-based room numbers it opens from, 0 = the entrance], grouped by area
+  // (1-based); an area's boss is its last room. A room need not lead on to the boss, but if it cannot, it must
+  // hold a hero or power reward. Returns the indices of rooms that break that rule.
+  function mapDeadEnds(levels) {
+    const bossOf = {};
+    levels.forEach(function (L, i) { bossOf[L.area || 1] = i; });
+    const leads = new Set(), todo = Object.keys(bossOf).map(function (a) { return bossOf[a]; });
+    todo.forEach(function (b) { leads.add(b); });
+    while (todo.length) {
+      const j = todo.pop();
+      for (const p of levels[j].from || []) {
+        const i = p - 1;
+        if (i < 0 || leads.has(i) || !levels[i] || (levels[i].area || 1) !== (levels[j].area || 1)) continue;
+        leads.add(i); todo.push(i);
+      }
+    }
+    const out = [];
+    levels.forEach(function (L, i) {
+      const rw = L.reward && L.reward.kind;
+      if (!leads.has(i) && rw !== 'hero' && rw !== 'power') out.push(i);
+    });
+    return out;
+  }
+
   // lv: the player's power level (best score / 25); up: Tremor's upgrade level, added on top of the cap.
   function quakeDamage(lv, up) { return Math.min(12, 3 + (lv | 0)) + powerAmount('quake', up); }
 
@@ -1417,7 +1442,7 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    HERO_MAX_LV: HERO_MAX_LV, mapDeadEnds: mapDeadEnds, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, AREA_SCALE: AREA_SCALE, areaScale: areaScale, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
