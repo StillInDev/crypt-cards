@@ -25,21 +25,21 @@
     fungus:   { bg: '#231a30', card: '#4a3560', acc: '#e07bd8', icon: 'shroom',    sub: 'Spores everywhere',
                 w: { shroom: 8, spider: 6, hive: 3, slime: 3, beetle: 3, poison: 10, potion: 18, webspider: 3 } },
     catacombs:{ bg: '#1a1a1b', card: '#45433f', acc: '#e0dac0', icon: 'skeleton',  sub: 'The restless dead',
-                w: { skeleton: 8, zombie: 6, ghost: 5, mummy: 3, wraith: 2, goldskull: 4, trap: 5, icetrap: 2 } },
+                w: { skeleton: 8, zombie: 6, ghost: 5, mummy: 3, wraith: 2, goldskull: 4, trap: 7 } },
     mine:     { bg: '#261e14', card: '#4e4230', acc: '#fee761', icon: 'gem',       sub: 'Gems and gunpowder',
-                w: { scorpion: 6, beetle: 6, goldskull: 5, golem: 3, imp: 3, gem: 14, bomb: 7, trap: 6, firetrap: 3 } },
+                w: { scorpion: 6, beetle: 6, goldskull: 5, golem: 3, imp: 3, gem: 14, bomb: 7, trap: 9 } },
     frozen:   { bg: '#0f2230', card: '#2e5469', acc: '#2ce8f5', icon: 'icespider', sub: 'Everything is frozen',
-                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, icetrap: 6, icewand: 6, icesword: 4, firesword: 3 } },
+                w: { frostwolf: 6, frostwisp: 6, icespider: 5, golem: 6, trap: 6, icewand: 6, icesword: 4, firesword: 3 } },
     library:  { bg: '#1d1730', card: '#403669', acc: '#a58bff', icon: 'lich',      sub: 'Forbidden knowledge',
-                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, elecbow: 4, firewand: 4, icewand: 4 } },
+                w: { cultist: 6, lich: 3, banshee: 5, wraith: 4, ghost: 3, sword: 10, scythe: 3, elecbow: 4, firewand: 6, icewand: 6 } },
     ember:    { bg: '#2a1410', card: '#5d2e25', acc: '#ff6a1f', icon: 'imp',       sub: 'Fire and brimstone',
-                w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, firetrap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
+                w: { imp: 6, salamander: 6, magmaslime: 6, phoenix: 2, trap: 6, firewand: 4, firesword: 4, icesword: 3, bomb: 4 } },
     armory:   { bg: '#1a2029', card: '#4a5569', acc: '#c0cbdc', icon: 'gargoyle',  sub: 'Every weapon you can think of',
                 w: { gargoyle: 6, goblin: 4, skeleton: 5, sword: 14, firesword: 4, icesword: 4, scythe: 5, windblade: 3, painblade: 3, ninjastar: 4, elecbow: 3 } },
     vampire:  { bg: '#270f1d', card: '#5b2641', acc: '#ff5560', icon: 'vampire',   sub: 'They hunt in the dark',
                 w: { vampire: 6, bat: 8, wolf: 4, mummy: 4, banshee: 3, potion: 8, poison: 6, trap: 4 } },
     throne:   { bg: '#1e1236', card: '#56366f', acc: '#fee761', icon: 'minotaur',  sub: 'The last stand',
-                w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 6, firetrap: 3, icetrap: 3 } }
+                w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 12 } }
   };
   // Every area has the same 12 rooms and two routes down to the boss:
   //   easy (left):  Sewers 75 -> Fungus Caves 80 -> Frozen Cavern 90 -> Armory 100. Plain doors, no unlocks.
@@ -110,7 +110,7 @@
   }
   function cleanReward(r) {
     if (r && r.kind === 'hero' && DC.HEROES[r.id]) return { kind: 'hero', id: r.id };
-    if (r && r.kind === 'power' && DC.POWERS[r.id]) return { kind: 'power', id: r.id };
+    if (r && r.kind === 'power' && DC.POWERS[r.id] && !DC.POWERS[r.id].disabled) return { kind: 'power', id: r.id }; // a disabled power's room just opens the way on
     return { kind: 'door' };
   }
   function sanitize(L, i) {
@@ -145,7 +145,7 @@
   var MONSTER_SHARE = [0.40, 0.55], TRAP_SHARE = [0.10, 0.16];
   function themedWeights(themeKey, diffId, depth) {
     var base = DC.nextLevel(null, diffId).weights, w = {};
-    var CLEAR = ['bomb', 'firetrap', 'icetrap', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
+    var CLEAR = ['bomb', 'firesword', 'icesword', 'firewand', 'icewand', 'elecbow', 'ninjastar', 'windblade', 'painblade', 'scythe', 'trap', 'poison', 'goldskull'];
     for (var k in TYPES) {
       var T = TYPES[k];
       w[k] = (T.kind === 'monster' || CLEAR.indexOf(k) >= 0) ? 0 : (base[k] || 0);
@@ -319,7 +319,7 @@
   function fixSelection() {
     if (!DC.HEROES[heroSel] || !heroOpen(heroSel)) heroSel = 'knight';
     var slots = DC.HEROES[heroSel].slots;
-    powSel = (Array.isArray(powSel) ? powSel : []).filter(function (p, i, a) { return DC.POWERS[p] && powerOpen(p) && a.indexOf(p) === i; }).slice(0, slots);
+    powSel = (Array.isArray(powSel) ? powSel : []).filter(function (p, i, a) { return DC.POWERS[p] && !DC.POWERS[p].disabled && powerOpen(p) && a.indexOf(p) === i; }).slice(0, slots);
     if (!powSel.length && powerOpen('heal')) powSel = ['heal'];
   }
   function saveSelection() { store.set('cc_hero', heroSel); store.set('cc_pows', JSON.stringify(powSel)); }
@@ -650,7 +650,7 @@
       if (c.kind === 'monster') dm.querySelector('b').textContent = c.v;
     } else {
       var t = c.kind === 'chest' ? '?' : String(c.v);
-      if (c.t != null && T.bow) t += '×' + c.t;
+      if (c.t > 1 && T.bow) t += '×' + c.t;
       val.textContent = t;
     }
     el.classList.toggle('webbed', hidden);
@@ -702,7 +702,7 @@
     if (H.sword) heldEl.src = SPR[H.sword.type || 'sword'] || '';
     var wvEl = heroEl.querySelector('.wv');
     wvEl.style.display = H.sword && !H.sword.orb ? '' : 'none';
-    if (H.sword) wvEl.textContent = H.sword.c != null ? H.sword.v + '×' + H.sword.c : H.sword.v;
+    if (H.sword) wvEl.textContent = H.sword.c > 1 ? H.sword.v + '×' + H.sword.c : H.sword.v;
     var chgEl = heroEl.querySelector('.chg');
     if (chgEl) {
       var kills = Math.min(DC.STORM_KILLS, H.kills | 0);
@@ -770,7 +770,7 @@
       b.title = 'Sell for ' + H[w].v + ' gold (uses a turn)';
       b.setAttribute('aria-label', 'Sell ' + w + ' for ' + H[w].v + ' gold');
       b.appendChild(img(H[w].type || w));
-      if (H[w].c != null) { var q = document.createElement('small'); q.textContent = '×' + H[w].c; b.appendChild(q); }
+      if (H[w].c > 1) { var q = document.createElement('small'); q.textContent = '×' + H[w].c; b.appendChild(q); }
       var ar = document.createElement('span'); ar.className = 'ar'; ar.textContent = '→'; b.appendChild(ar);
       b.appendChild(img('coin'));
       var g = document.createElement('b'); g.textContent = H[w].v; b.appendChild(g);
@@ -782,13 +782,6 @@
     if (H.poison > 0) { stEl.appendChild(img('poison')); stEl.appendChild(document.createTextNode(H.poison)); }
     if (H.frost > 0) { stEl.appendChild(img('p_ice')); stEl.appendChild(document.createTextNode(H.frost)); }
     if (H.ward > 0) { stEl.appendChild(img('p_shield')); stEl.appendChild(document.createTextNode(H.ward)); }
-    if (H.pass.storm) {
-      // Lightning Wizard: kills toward the smite, or Smite once charged.
-      var sm = (H.kills | 0) >= DC.STORM_KILLS;
-      stEl.appendChild(img('p_thunder'));
-      // A trailing ⚡ means the next attack also chains lightning.
-      stEl.appendChild(document.createTextNode((sm ? 'Smite' : (H.kills | 0) + '/' + DC.STORM_KILLS) + ((H.hits | 0) === DC.STORM_CHAIN - 1 ? '⚡' : '')));
-    }
     $('#h-best').textContent = Math.max(best[cur] || 0, H.gold);
   }
 
@@ -841,7 +834,7 @@
     var r = DC.usePower(S, i, target);
     if (!r) {
       // Why a ready power did nothing.
-      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', whetstone: 'You are not holding a weapon', teleport: 'You already have an orb' };
+      var why = { dart: 'No monsters to hit', magnet: 'No coins or gems on the board', hourglass: 'Your other powers are all ready', teleport: 'You already have an orb' };
       var pid = S.hero.powers[i] && S.hero.powers[i].id;
       if (why[pid]) toast(why[pid]);
       return;
@@ -902,6 +895,7 @@
       if (!f.anim) return;
       var key = f.anim + ':' + f.cell;
       if (done[key]) return; done[key] = 1;
+      if (f.anim === 'spike') { playSpike(f.cell, f.dir); return; }
       burst('fx-' + f.anim, f.cell);
       if (f.anim === 'boom') flash(board, 'shake', 300);
       if (f.anim === 'blast') { var c = S.grid[f.cell]; if (c) flash(els.get(c.uid), 'strike', 380); }
@@ -912,6 +906,14 @@
     var L = S.level;
     return { x: ((cell % L.w) + 0.5) / L.w * 100, y: (((cell / L.w) | 0) + 0.5) / L.h * 100 };
   }
+  // Tremor: a stone spike bursts up from the bottom of the square the hero left. Moving left or right it is the
+  // side spike (moving left it points right, as drawn; moving right it is mirrored); moving up or down it is
+  // the upright spike. Frames are in src/img/fx/tremor_side.png and tremor_up.png.
+  function playSpike(cell, dir) {
+    var side = dir === 1 || dir === 3;
+    burst('fx-spike ' + (side ? 'side' : 'up') + (dir === 1 ? ' flip' : ''), cell, function (el) { el.appendChild(document.createElement('i')); });
+  }
+  ['side', 'up'].forEach(function (n) { new Image().src = 'img/fx/tremor_' + n + '.png'; }); // no blank first frame
   function burst(cls, cell, extra) {
     var c = cellCentre(cell), el = document.createElement('div');
     el.className = 'fx ' + cls;
@@ -1126,10 +1128,9 @@
         break;
       }
       case 'dtrap': {
-        var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]), el = T.el, opp = el === 'fire' ? 'ice' : 'fire';
-        t = (el ? (el === 'fire' ? 'Fire' : 'Ice') : 'Arrow') + ' trap with ' + n4 + (n4 === 1 ? ' arrowhead' : ' arrowheads') + ', ' + n + ' damage each. Every turn it turns clockwise, then hits whatever its arrowheads point at: you, and monsters. ' +
-          (el ? (el === 'fire' ? 'Fire' : 'Ice') + ' monsters are immune; ' + opp + ' monsters take ' + (n * 2) + '. Other monsters take ' + n + '. ' : 'Every monster takes ' + n + '. ') +
-          'Stepping on it costs ' + n + '.';
+        var n4 = (c.h[0] + c.h[1] + c.h[2] + c.h[3]);
+        var sides = ['top', 'right', 'bottom', 'left'].filter(function (x, d) { return c.h[d]; });
+        t = 'Arrow trap with ' + n4 + (n4 === 1 ? ' arrowhead' : ' arrowheads') + ' (' + sides.join(', ') + '). Step onto it from a side with an arrowhead and it hurts you for ' + n + '; from any other side it is safe. The arrowheads turn clockwise every turn. It never hurts the cards around it.';
         if (S.hero.pass.trapproof) t += ' As the Ninja, it cannot hurt you.';
         break;
       }
@@ -1139,8 +1140,8 @@
             ' Pick it up and it stops growing: it fights like a normal sword, wearing down by the damage it deals.';
           break;
         }
-        if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', ' + c.t + ' throws. Tap a monster in your row or column to hit it. No chain.'; break; }
-        if (T.bow) { t = 'Electric bow, power ' + n + ', ' + c.t + ' arrows. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
+        if (T.bow && T.star) { t = 'Ninja star, power ' + n + ', one throw. Tap a monster in your row or column to hit it. No chain.'; break; }
+        if (T.bow) { t = 'Electric bow, power ' + n + ', one arrow. Tap any monster to shoot it. The shock jumps to every monster touching it, 1 weaker each jump. Frozen monsters are not hit.'; break; }
         if (T.sweep) { t = 'Power ' + n + '. Step toward a monster to sweep: the target and the two squares beside it (across your swing) all take that much. The scythe loses power equal to the most damage it deals to one monster, and breaks at 0. If the target dies you take its place.'; break; }
         if (T.wand) { t = (T.el === 'ice' ? 'Ice' : 'Fire') + ' wand, power ' + n + '. Step toward a monster to hit it like a sword, but it pierces: power left over carries on down that row or column into the monsters behind it. It wears down by the health it cuts through. ' + (T.el === 'ice' ? 'Survivors freeze. Ice monsters are immune, fire monsters take double. Can kill a Phoenix.' : 'Fire monsters are immune, ice monsters take double.'); break; }
         t = (T.el ? (T.el === 'ice' ? 'An ice weapon: no effect on ice monsters, double against fire ones, and a monster it hits but does not kill freezes solid. It can kill a Phoenix. ' : 'A fire weapon: no effect on fire monsters, double against ice ones. ') : '') + 'Power ' + n + '. Step toward a monster to hit it; the sword loses power equal to the damage it deals, and breaks at 0. If the monster dies you take its place.'; break;
@@ -1160,7 +1161,7 @@
       t += ' Chain lightning: ' + DC.chainDamage(H.lv) + ' damage.';
     }
     if (H.sword && H.sword.orb) t += ' Holding a Teleport orb: tap any card to swap places with it.';
-    else if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.c != null ? ', ' + H.sword.c + (H.sword.star ? ' throws' : ' arrows') : '') + '.';
+    else if (H.sword) t += ' ' + TYPES[H.sword.type || 'sword'].name + ', power ' + H.sword.v + (H.sword.bow ? (H.sword.star ? ', one throw' : ', one arrow') : '') + '.';
     return { sprite: D.sprite, title: D.name + ' (you)', text: t };
   }
   function inspect(x, y) {
@@ -1266,20 +1267,38 @@
     return o;
   }
   // The numbers shown at the top of a power's details: its recharge and, where it has one, its power.
+  // Each stat is [label, value, how it is worked out]; the last part shows on hover or tap.
+  // A passive power shows a single "Always on" line where the recharge would be.
   function powerStats(id, lv) {
     var P = DC.POWERS[id], U = DC.UPGRADES[id] || {}, s = [];
-    if (!P.passive) s.push(['Recharge', DC.powerCd(id, lv) + ' turns']);
-    if (id === 'forge') { var b = DC.powerAmount(id, lv); s.push(['Power', 'Max health' + (b ? ' +' + b : '')]); }
-    else if (id === 'quake') s.push(['Power', String(DC.quakeDamage(powerLevel(), lv))]);
-    else if (id === 'magnet') { if (lv) s.push(['Bonus', '+' + DC.powerAmount(id, lv) + ' gold each']); }
-    else if (id === 'laststand') s.push(['Left at', DC.powerAmount(id, lv) + ' health']);
-    else if (U.amt) s.push(['Power', String(DC.powerAmount(id, lv))]);
+    var ups = lv + (lv === 1 ? ' upgrade' : ' upgrades');
+    if (P.passive) s.push(['Always on']);
+    else {
+      var cd = DC.powerCd(id, lv);
+      s.push(['Recharge', cd + ' turns', U.cdCut ? P.cd + ' base − ' + U.cdCut + ' × ' + ups + ' = ' + cd + ' turns' : cd + ' turns at every level']);
+    }
+    if (id === 'forge') {
+      var b = DC.powerAmount(id, lv), mh = heroHp(heroSel);
+      s.push(['Power', 'Max health' + (b ? ' +' + b : ''), DC.HEROES[heroSel].name + '\'s max health ' + mh + ' + upgrade bonus ' + b + ' = ' + (mh + b)]);
+    } else if (id === 'quake') {
+      var plv = powerLevel(), base = Math.min(12, 3 + plv), qa = DC.powerAmount(id, lv), q = DC.quakeDamage(plv, lv);
+      s.push(['Power', String(q), '3 + ' + plv + ' (1 per 25 of your best score' + (base === 12 ? ', capped at 12' : '') + ') + ' + qa + ' from ' + ups + ' = ' + q]);
+    } else if (id === 'magnet') {
+      var mg = DC.powerAmount(id, lv);
+      if (lv) s.push(['Bonus', '+' + mg + ' gold each', '0 base + ' + U.amt[1] + ' × ' + ups + ' = +' + mg + ' gold from each coin and gem']);
+    } else if (id === 'laststand') {
+      var ls = DC.powerAmount(id, lv);
+      s.push(['Left at', ls + ' health', U.amt[0] + ' base + ' + U.amt[1] + ' × ' + ups + ' = ' + ls + ' health']);
+    } else if (U.amt) {
+      var n = DC.powerAmount(id, lv);
+      s.push(['Power', String(n), U.amt[0] + ' base + ' + U.amt[1] + ' × ' + ups + ' = ' + n]);
+    }
     return s;
   }
   function powerInfo(id) {
     var P = DC.POWERS[id], open = powerOpen(id), lv = upLv(id), cost = DC.upgradeCost(lv), U = DC.UPGRADES[id];
     var o = { sprite: P.sprite, lock: open ? '' : lockText('power', id), title: P.name, tag: '',
-      level: lv, ability: powerTip(id).replace(/ Right now:.*$/, ''), stats: powerStats(id, lv) }; // the stats already show the number
+      level: lv, ability: P.desc || powerTip(id).replace(/ Right now:.*$/, ''), stats: powerStats(id, lv) }; // the stats already show the number
     if (open) {
       var on = powSel.indexOf(id) >= 0, slots = DC.HEROES[heroSel].slots;
       o.equip = { label: on ? 'Unequip' : 'Equip', on: on,
@@ -1320,7 +1339,17 @@
       var st = document.createElement('dl'); st.className = 'li-stats';
       o.stats.forEach(function (kv) {
         var dt = document.createElement('dt'); dt.textContent = kv[0];
-        var dd = document.createElement('dd'); dd.textContent = kv[1];
+        if (kv.length === 1) { dt.className = 'solo'; st.appendChild(dt); return; } // e.g. "Always on"
+        var dd = document.createElement('dd');
+        if (kv[2]) {
+          // Hover (or tap, on touch) the value to see how it is worked out.
+          var cb = document.createElement('button');
+          cb.type = 'button'; cb.className = 'li-calc'; cb.textContent = kv[1];
+          cb.setAttribute('aria-label', kv[0] + ' ' + kv[1] + '. ' + kv[2]);
+          var eq = document.createElement('span'); eq.className = 'li-eq'; eq.textContent = kv[2];
+          cb.addEventListener('click', function () { dd.classList.toggle('open'); });
+          dd.appendChild(cb); dd.appendChild(eq);
+        } else dd.textContent = kv[1];
         st.appendChild(dt); st.appendChild(dd);
       });
       d.appendChild(st);
@@ -1369,6 +1398,7 @@
     // and replaying its pop-in.
     v.addEventListener('click', function (e) {
       if (e.target.closest('.lo-info button')) return;
+      if (e.target.closest('#hp-pager .tile')) return; // a tile tap opens, swaps or (double tap) closes the details itself
       var gen = loGen;
       setTimeout(function () { if (loGen === gen && gen === loGenAtDown) loHide(); }, 0);
     }, true);
@@ -1529,7 +1559,7 @@
     // Page 2: powers.
     var pl = $('#hp-powers');
     pl.innerHTML = '';
-    Object.keys(DC.POWERS).sort(byOpen(powerOpen)).forEach(function (id) {
+    Object.keys(DC.POWERS).filter(function (id) { return !DC.POWERS[id].disabled; }).sort(byOpen(powerOpen)).forEach(function (id) {
       var P = DC.POWERS[id], open = powerOpen(id);
       var t = tile('power', id, P.sprite, P.name, open, powSel.indexOf(id) >= 0);
       if (open) upgradeMarks(t, upLv(id), DC.upgradeCost(upLv(id)), DC.POWER_MAX_LV);
@@ -1544,24 +1574,30 @@
 
   // A second tap on the same tile within this many ms is a double tap. Done by hand rather than with
   // the dblclick event, which phones do not fire reliably for a double tap.
-  var DOUBLE_TAP_MS = 350, lastTap = { key: '', at: 0 };
+  // A single tap opens the details, but only once the double-tap window has passed, so a double tap
+  // never flashes the details open: it just equips or unequips.
+  var DOUBLE_TAP_MS = 350, lastTap = { key: '', at: 0 }, tapTimer = null;
   function hpTap(t) {
     var kind = t.dataset.kind, id = t.dataset.id;
     var open = kind === 'hero' ? heroOpen(id) : powerOpen(id);
+    var info = function () { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); };
+    if (!open) { clearTimeout(tapTimer); lastTap = { key: '', at: 0 }; info(); return; } // locked: nothing to equip
     var key = kind + ':' + id, now = Date.now(), dbl = lastTap.key === key && now - lastTap.at < DOUBLE_TAP_MS;
-    lastTap = dbl ? { key: '', at: 0 } : { key: key, at: now };
-    if (!open) { loInfo(kind === 'hero' ? heroInfo(id) : powerInfo(id)); return; }
-    // Double tap equips: a hero always, a power only into an empty slot (it never pushes one out).
-    if (dbl) {
-      if (kind === 'hero') { if (id !== heroSel) pickHero(id); loInfo(heroInfo(id)); return; }
-      if (powSel.indexOf(id) < 0 && powSel.length < DC.HEROES[heroSel].slots) togglePower(id);
-      loInfo(powerInfo(id));
+    clearTimeout(tapTimer);
+    if (!dbl) {
+      lastTap = { key: key, at: now };
+      tapTimer = setTimeout(function () { lastTap = { key: '', at: 0 }; info(); }, DOUBLE_TAP_MS);
       return;
     }
-    // Heroes and powers both open their details on tap; the check mark there chooses or equips.
-    if (kind === 'hero') { loInfo(heroInfo(id)); return; }
-    // Powers are not equipped on tap: the details open, with an Equip button.
-    loInfo(powerInfo(id));
+    lastTap = { key: '', at: 0 };
+    loHide();
+    // Double tap toggles: a hero is chosen (you always have one, so it cannot be un-chosen);
+    // a power is unequipped if equipped, or equipped into an empty slot (it never pushes one out).
+    if (kind === 'hero') { if (id !== heroSel) pickHero(id); return; }
+    var P = DC.POWERS[id];
+    if (powSel.indexOf(id) >= 0) { togglePower(id); toast(P.name + ' unequipped'); }
+    else if (powSel.length < DC.HEROES[heroSel].slots) { togglePower(id); toast(P.name + ' equipped'); }
+    else toast('All power slots are full. Double-tap an equipped power to free one.');
   }
   function pickHero(id) {
     heroSel = id; fixSelection(); saveSelection(); refreshLoadoutScreen();
@@ -1751,7 +1787,7 @@
     function opt(v, t, on) { var o = document.createElement('option'); o.value = v; o.textContent = t; if (on) o.selected = true; rs.appendChild(o); }
     opt('door:', 'Just open the next rooms', L.reward.kind === 'door');
     Object.keys(DC.HEROES).forEach(function (k) { opt('hero:' + k, 'Hero: ' + DC.HEROES[k].name, L.reward.kind === 'hero' && L.reward.id === k); });
-    Object.keys(DC.POWERS).forEach(function (k) { opt('power:' + k, 'Power: ' + DC.POWERS[k].name, L.reward.kind === 'power' && L.reward.id === k); });
+    Object.keys(DC.POWERS).filter(function (k) { return !DC.POWERS[k].disabled; }).forEach(function (k) { opt('power:' + k, 'Power: ' + DC.POWERS[k].name, L.reward.kind === 'power' && L.reward.id === k); });
     rs.addEventListener('change', function () { var p = rs.value.split(':'); L.reward = { kind: p[0], id: p[1] || null }; commit(); renderEditor(); });
     rl.appendChild(rs); fields.appendChild(rl);
     f.appendChild(fields);
@@ -1814,7 +1850,7 @@
     best = {}; saveBest(); cleared = {}; saveCleared();
     commit(); renderEditor(); setMsg('Deleted. Progress was reset because room numbers shifted.');
   });
-  $('#e-gold').addEventListener('click', function () { purse += 5000; savePurse(); refreshLoadoutScreen(); toast('Added 5000 gold for testing'); }); // testing only
+  $('#e-gold').addEventListener('click', function () { purse += 25000; savePurse(); refreshLoadoutScreen(); toast('Added 25000 gold for testing'); }); // testing only
   $('#e-all').addEventListener('change', function (e) { unlockAll = e.target.checked; store.set('cc_all', unlockAll ? '1' : '0'); });
   $('#e-apply').addEventListener('click', function () {
     try { levels = parseLevels($('#e-json').value); saveLevels(); ed = 0; renderEditor(); setMsg('Loaded ' + levels.length + ' levels.'); }

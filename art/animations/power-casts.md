@@ -37,7 +37,7 @@ card). Those are in `art/animations/hit-effects.md`, not here.
 | Poison dart | `p_dart` | Throws a dart at a random monster | A puff of green poison at the hero's hand and a few green drips falling (green bubble, three green drips) |
 | Fire touch | `p_fire` | Burns away any card the player taps | Flames rising up behind the hero; embers floating up in front (orange flame shape behind, four ember squares) |
 | Scythe | `p_scythe` | Cuts every monster in the 8 cards around the hero | A red crescent sweeping a full circle around the hero; red shards flying outward (red arc spinning, 8 red squares flying out) |
-| Thunder | `p_thunder` | Every monster on the board takes 3 damage | A white-yellow flash; a lightning bolt strikes down onto the hero from above the card (white flash, yellow bar from the top) |
+| Thunder | `p_thunder` | Lightning strikes 3 random monsters for 3 damage each | A white-yellow flash; a lightning bolt strikes down onto the hero from above the card (white flash, yellow bar from the top) |
 | Frost | `p_ice` | Monsters deal no damage for 3 moves | Frost creeping in from the card edges; ice crystals forming around the hero, who shivers (cyan inner glow, white crystal squares) |
 | Teleport orb | `p_teleport` | The hero jumps to a tapped card | A purple swirling portal behind the hero; white and pink sparkles spiralling inward (purple dashed ring spinning, 8 dots spinning) |
 | Potion burst | `p_burst` | A tapped potion explodes, hurting neighbours | Pink bubbles popping out from the hero (pink circle, two bubbles rising) |

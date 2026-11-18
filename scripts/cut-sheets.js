@@ -19,7 +19,7 @@ const SHEETS = {
   '03_Beasts.png': { cols: 5, ids: ['bat', 'beetle', 'frostwolf', 'goblin', 'golem', 'harpy', 'hive', 'icespider', 'imp', 'magmaslime'] },
   '04_Monsters.png': { cols: 5, ids: ['minotaur', 'ogre', 'phoenix', 'rat', 'salamander', 'scorpion', 'shroom', 'snake', 'spider', 'troll'] },
   '05_Dungeon_Hazards.png': { cols: 3, ids: ['gargoyle', 'goldskull', 'wolf', 'webspider', 'bomb', 'bars', 'tomb', 'trap', 'web'] },
-  '06_Elemental_Weapons.png': { cols: 5, ids: ['elecbow', 'firearrow', 'firesword', 'firetrap', 'firewand', 'icearrow', 'icesword', 'icetrap', 'icewand', 'painblade'] },
+  '06_Elemental_Weapons.png': { cols: 5, ids: ['elecbow', null, 'firesword', null, 'firewand', null, 'icesword', null, 'icewand', 'painblade'] }, // nulls: removed sprites (old arrows, fire and ice traps)
   '07_Tools_and_Items.png': { cols: 3, ids: ['ninjastar', 'poison', 'potion', 'scythe', 'sword', 'windblade', 'p_dart', 'p_forge', 'p_shield'] },
   '08_Power_Effects.png': { cols: 3, ids: ['p_burst', 'p_fire', 'p_heal', 'p_ice', 'p_massheal', 'p_quake', 'p_scythe', 'p_teleport', 'p_thunder'] },
   '09_New_Heroes.png': { cols: 5, ids: ['stormmage', 'bard', 'dragonkin', 'count', 'barbarian'] },
@@ -32,9 +32,8 @@ const SHEETS = {
   '14_Power_Whetstone.png': { cols: 1, ids: ['p_whetstone'] },
   '15_Power_Last_Stand.png': { cols: 1, ids: ['p_laststand'] }
 };
-// The game rotates arrow sprites itself and expects them pointing straight up. The sheet draws them
-// pointing up-right, so they are turned 45 degrees anticlockwise.
-const ROTATE = { firearrow: -45, icearrow: -45 };
+// Sprites to turn while cutting (degrees anticlockwise), for art drawn at an angle on its sheet.
+const ROTATE = {};
 
 const root = path.join(__dirname, '..');
 const sheetDir = path.join(root, 'art/sheets'), outDir = path.join(root, 'src/img/sprites');
@@ -174,6 +173,7 @@ for (const [file, spec] of Object.entries(SHEETS)) {
   const img = decodePNG(fs.readFileSync(path.join(sheetDir, file)));
   const rows = rowBands(img, Math.ceil(spec.ids.length / spec.cols)), cw = img.w / spec.cols;
   spec.ids.forEach((id, i) => {
+    if (id == null) return; // a cell whose sprite was removed from the game
     const [y0, y1] = rows[Math.floor(i / spec.cols)], x0 = Math.round((i % spec.cols) * cw), x1 = Math.round((i % spec.cols + 1) * cw);
     let im = toFloat(img, x0, y0, x1 - x0, y1 - y0);
     if (ROTATE[id]) im = rotate(im, ROTATE[id]);
@@ -194,7 +194,7 @@ console.log('Cut', ids.length, 'sprites into src/img/sprites/<group>/ and wrote 
 // Optional contact sheet on a card-coloured background, in the order above, to review the cut.
 const si = process.argv.indexOf('--sheet');
 if (si > 0) {
-  const order = [].concat(...Object.values(SHEETS).map(s => s.ids)), cols = 10, cell = SIZE + 8, rows = Math.ceil(order.length / cols);
+  const order = [].concat(...Object.values(SHEETS).map(s => s.ids)).filter(Boolean), cols = 10, cell = SIZE + 8, rows = Math.ceil(order.length / cols);
   const sheet = { w: cols * cell, h: rows * cell, px: Buffer.alloc(cols * cell * rows * cell * 4) };
   for (let i = 0; i < sheet.w * sheet.h; i++) sheet.px.set([69, 67, 63, 255], i * 4);
   order.forEach((id, n) => {

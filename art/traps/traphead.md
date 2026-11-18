@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-On **Arrow trap**, **Fire trap** and **Ice trap** cards, one arrowhead on each side of the block that the trap fires at (one to four of them). The game rotates this one sprite to face up, right, down or left, and turns the heads clockwise each turn. It outlines them in the trap's element: grey for the plain arrow trap, orange for fire, cyan for ice.
+On **Arrow trap** cards, one arrowhead on each dangerous side of the block (one to four of them): stepping onto the trap from that side hurts. The game rotates this one sprite to face up, right, down or left, and turns the heads clockwise each turn.
 
 ## What it must look like
 

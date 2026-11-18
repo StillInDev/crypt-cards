@@ -32,6 +32,14 @@ assert(S.grid[0].type==='coin'||!['ogre'].includes(S.grid[0].type)||true); asser
 S=blankGame({powers:['massheal']}); S.grid[1]=C('potion',3); S.hero.hp=5; ready(S); DC.usePower(S,0); assert(S.hero.hp===7&&S.grid[1].v===5); ok('mass heal');
 // thunder
 S=blankGame({powers:['thunder']}); const og=C('ogre',9); S.grid[0]=og; S.grid[1]=C('rat',2); ready(S); DC.usePower(S,0); assert(og.v===6&&S.grid.includes(og)); assert(!S.grid.some(c=>c&&c.type==='rat'&&c.v===2)); ok('thunder');
+// thunder strikes 3 different random monsters, not the whole board
+for(let seed=0;seed<20;seed++){
+  S=DC.newGame(L,seed,{powers:['thunder']}); S.grid=S.grid.map((c,i)=>i===S.hero.pos?null:{uid:200+i,type:'ogre',kind:'monster',v:20});
+  ready(S); DC.usePower(S,0);
+  const hit=S.grid.filter(c=>c&&c.v===17).length, untouched=S.grid.filter(c=>c&&c.v===20).length;
+  assert.strictEqual(hit,DC.THUNDER_HITS,'exactly 3 monsters hit'); assert.strictEqual(untouched,8-DC.THUNDER_HITS);
+}
+ok('thunder hits 3 random monsters');
 // ice: monsters do no damage for 3 moves
 S=blankGame({powers:['ice']}); S.grid[1]=C('ogre',9); S.grid[0]=C('ogre',9); ready(S); DC.usePower(S,0); assert(S.hero.frost===3);
 S.grid[1]=C('ogre',9); DC.move(S,0); assert(S.hero.hp===S.hero.max,'frozen'); ok('frost');
@@ -48,7 +56,7 @@ S=blankGame({powers:['burst']}); S.grid[0]=C('potion',4); S.grid[1]=C('ogre',9);
 S=blankGame({hero:'knight'}); assert(S.hero.max===12); S.grid[1]=C('sword',3); DC.move(S,0); assert(S.hero.sword.v===4); ok('knight');
 S=blankGame({hero:'icemage'}); S.grid[1]=C('rat',3); DC.move(S,0); assert(S.hero.hp===S.hero.max-2); ok('yeti cut');
 assert.strictEqual(DC.HEROES.icemage.name,'Yeti'); assert.strictEqual(DC.HEROES.icemage.sprite,'yeti');
-S=blankGame({hero:'rogue'}); S.grid[1]=C('coin',2); DC.move(S,0); assert(S.hero.gold===3); ok('rogue');
+S=blankGame({hero:'rogue'}); S.grid[1]=C('coin',2); DC.move(S,0); assert(S.hero.gold===2); ok('rogue gets no gold bonus');
 S=blankGame({hero:'sorcerer',powers:['heal','fire','ice','scythe']}); assert(S.hero.max===8&&S.hero.powers.length===3&&S.hero.powers.every(p=>p.cd===0)); ok('sorcerer slots/ready');
 // new cards
 S=blankGame({hero:'knight'}); S.grid[1]=C('goldskull',3); DC.move(S,0); assert(S.hero.gold===3&&S.hero.hp===S.hero.max-3); ok('golden skeleton');
@@ -74,3 +82,12 @@ for(const hid of hids) for(let g=0;g<150;g++){
   games++;
 }
 console.log('fuzz games',games,'no errors');
+// bows and ninja stars attack once, then they are gone
+for(const type of ['ninjastar','elecbow']){
+  const S2=blankGame({}); const st=C(type,4); st.t=1; S2.grid[1]=st; DC.move(S2,0);
+  assert(S2.hero.sword&&S2.hero.sword.c===1,type+' picked up with one use');
+  const tgt=S2.grid.findIndex((c,i)=>i!==S2.hero.pos&&(i%3===S2.hero.pos%3||((i/3)|0)===((S2.hero.pos/3)|0)));
+  S2.grid[tgt]=C('ogre',20); DC.shootBow(S2,tgt);
+  assert.strictEqual(S2.hero.sword,null,type+' used up after one attack');
+}
+assert.strictEqual(DC.TYPES.ninjastar.tip.indexOf('One throw'),0); ok('one throw per star, one arrow per bow');

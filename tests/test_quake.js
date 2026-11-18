@@ -13,6 +13,7 @@ S=mk(3); let og=ogre(S); S.grid[7]=og;
 let r=DC.move(S,0); // hero 4 -> 1; the column slides up, so the ogre at 7 lands in 4
 assert.strictEqual(S.hero.pos,1); assert.strictEqual(S.grid[4],og); assert.strictEqual(og.v,20-6,'hit for 3+3');
 assert.strictEqual(r.tremor,4,'reports the square it hit');
+const sp=r.fx.find(f=>f.anim==='spike'); assert(sp&&sp.cell===4&&sp.dir===0,'spike effect on the hit square, with the move direction');
 // ...and again on the next step, with no tapping in between.
 let og2=ogre(S); S.grid[2]=og2; S.grid[0]={uid:++S.uid,type:'coin',kind:'gold',v:1};
 DC.move(S,3); // hero 1 -> 0; the row slides left, so the ogre at 2 lands in 1

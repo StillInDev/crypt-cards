@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-The icon of the **Shield** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Unlocked by clearing the Mine. In play: For your next 4 turns, fire and ice can't hurt you: elemental traps, trap heads and fire or ice monsters deal no damage. It is shown small, so one bold shape beats detail.
+The icon of the **Shield** power. It sits on a small button in the top bar during play, and on the locked reward card of the room that unlocks it. Unlocked by clearing the Mine. In play: For your next 4 turns, fire and ice monsters can't hurt you. It is shown small, so one bold shape beats detail.
 
 ## What it must look like
 

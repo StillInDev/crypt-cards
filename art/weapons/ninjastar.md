@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-A **Ninja star** card. It appears in: Barracks, Armory. In play: Five throws. Tap a monster in your row or column to hit it for the star's power. No chain, and nothing outside your row or column can be hit. Once picked up, it is also drawn small next to the hero.
+A **Ninja star** card. It appears in: Barracks, Armory. In play: One throw. Tap a monster in your row or column to hit it for the star's power. No chain, and nothing outside your row or column can be hit. Once picked up, it is also drawn small next to the hero.
 
 ## What it must look like
 
