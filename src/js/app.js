@@ -1606,7 +1606,8 @@
     av.setAttribute('aria-label', D.name + ', your hero. Press and hold for details.');
     $('#' + pre + '-name').textContent = D.name;
     av.appendChild(hpBadge(heroHp(heroSel)));
-    $('#' + pre + '-stat').textContent = powSel.length + ' of ' + slots + ' powers';
+    var stat = $('#' + pre + '-stat'); // only the Hero & powers screen shows "n of m powers"; the home screen has none
+    if (stat) stat.textContent = powSel.length + ' of ' + slots + ' powers';
   }
 
   function renderHome() {
