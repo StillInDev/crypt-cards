@@ -29,12 +29,10 @@
 <section class="view" id="v-menu" aria-label="Dungeon map">
   <div class="wrap">
     <div class="top">
-      <div>
-        <h2>Choose a room</h2>
-        <p class="sub">Reach a room's target score, then step on the locked reward to clear it and open the rooms below. Beat the boss at the bottom of an area for the key to the next one.</p>
-      </div>
+      <h2>Adventure</h2>
       <button class="btn" id="b-home" type="button">Home</button>
     </div>
+    <p class="sub oneline">Reach a room's gold target then grab its reward.</p>
     <div class="areatabs" id="areatabs" role="tablist" aria-label="Areas"></div>
     <div class="mapwrap" role="group" aria-label="Dungeon map"><div class="map" id="map"></div></div>
     <details>
@@ -46,7 +44,7 @@
         <li>Weapons come in fire and ice. A fire weapon cannot hurt fire monsters and hits ice monsters for double, and the other way round. An ice weapon freezes a monster it hits but does not kill: a frozen monster cannot be hit, so you swap places with it instead. Ninja stars hit only your row or column. With a bow in hand, tap any monster to shoot it; the shock jumps to monsters touching it. The scythe sweeps the target and the two squares beside it. Wands hit like a sword, but pierce: power left over after a monster carries on down the row or column into the monsters behind it. They follow the same fire and ice rules. Every monster also has a trick of its own; press and hold a card to read it. The Phoenix can only be worn down to 1 health. Step on it with no weapon, or hit it with an ice weapon, to kill it.</li>
         <li>Press and hold any card, your hero, or a power to see what it does.</li>
         <li>The chip above each neighbouring card shows what stepping there would do. A red skull means it would kill you.</li>
-        <li>Coins and gems are your score. Reach the room's target and a locked reward card (a symbol behind iron bars) drops onto the board. Step on it to unlock a hero, a power or the next rooms. A room opens once any room leading to it is cleared, and every path ends at the throne room.</li>
+        <li>Coins and gems are your score. Reach the room's target and a locked reward card (a symbol behind iron bars) drops onto the board. Step on it to unlock a hero, a power or the next rooms. A room opens once any room leading to it is cleared. Beat the boss at the bottom of an area for the key to the next one. Some side rooms are dead ends, but they always hold a hero or a power.</li>
       </ul>
     </details>
     <details>
@@ -59,9 +57,10 @@
 
 <section class="play" id="v-play" aria-label="Game">
   <div class="bar">
-    <button class="btn quiet" id="b-back" type="button">Levels</button>
+    <button class="btn" id="b-back" type="button">Levels</button>
     <div class="ttl" id="p-title"></div>
-    <button class="btn quiet" id="b-restart" type="button">Restart</button>
+    <button class="btn gear" id="b-set" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h1v1h-1zM5 0h1v1h-1zM2 1h1v1h-1zM3 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM1 2h1v1h-1zM2 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM3 8h1v1h-1zM5 8h1v1h-1z"/></svg></button>
+    <button class="btn" id="b-restart" type="button">Restart</button>
   </div>
   <div class="hud">
     <div class="stat"><div class="k">Health</div><div class="v"><span id="h-hp">0</span><span class="status" id="h-status"></span></div><div class="hpbar"><i id="h-bar"></i></div></div>
@@ -158,6 +157,25 @@
       <button class="btn go" id="l-stay" type="button">Keep playing</button>
       <button class="btn quiet" id="l-go" type="button">Leave and lose it</button>
     </div>
+  </div>
+</div>
+<div class="over" id="skip" role="dialog" aria-modal="true" aria-labelledby="s-title" aria-describedby="s-note">
+  <div class="sheet">
+    <h2 id="s-title">New room unlocked!</h2>
+    <div class="note" id="s-note"></div>
+    <div class="row">
+      <button class="btn go" id="s-map" type="button">Skip to map</button>
+      <button class="btn quiet" id="s-stay" type="button">Keep playing</button>
+    </div>
+  </div>
+</div>
+<div class="over" id="settings" role="dialog" aria-modal="true" aria-labelledby="set-title">
+  <div class="sheet setsheet">
+    <h2 id="set-title">Settings</h2>
+    <label class="opt"><input type="checkbox" id="set-nums"><span><b>Damage numbers</b><small>Show gold, healing and damage as numbers over the cards, so you can see every hit in a turn.</small></span></label>
+    <label class="opt"><input type="checkbox" id="set-calm"><span><b>Reduce motion</b><small>Turn off bobbing, shaking and effect animations.</small></span></label>
+    <details class="howto"><summary>How to play</summary><ul id="set-howto"></ul></details>
+    <button class="btn go" id="set-close" type="button">Done</button>
   </div>
 </div>
 <div class="info" id="info" role="status" aria-live="polite"></div>
