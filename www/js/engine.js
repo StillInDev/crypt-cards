@@ -211,7 +211,11 @@
     const cap = L.cap == null ? 6 : L.cap;
     const ramp = L.ramp == null ? 12 : Math.max(1, L.ramp);
     const bump = Math.floor(Math.min(cap, S.hero.turn / ramp) * T.bf);
-    const v = T.lo + Math.floor(S.rng() * (T.hi + bump - T.lo + 1));
+    // Weapons start a run weak so early monsters (1 to 4 health) still take a few hits: the top of
+    // their range is 3 lower (and the bottom 1 lower) for the first ramp step, easing back by 1 a step.
+    const early = T.kind === 'weapon' ? Math.max(0, WEAPON_EARLY - Math.floor(S.hero.turn / ramp)) : 0;
+    const lo = early ? Math.max(1, T.lo - 1) : T.lo, hi = Math.max(lo, T.hi - early);
+    const v = lo + Math.floor(S.rng() * (hi + bump - lo + 1));
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
@@ -228,6 +232,7 @@
     return c;
   }
 
+  const WEAPON_EARLY = 3; // how much weaker weapons start a run (see makeCard)
   const RAT_TURNS = 3;
   const THUNDER_HITS = 3; // monsters the Thunder power strikes
   // Lightning Wizard: kills that charge a smite, and attacks between chain lightning bolts.
@@ -1405,7 +1410,7 @@
 
   const api = {
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
-    newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
+    newGame: newGame, makeCard: makeCard, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
     HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
     nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
