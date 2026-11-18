@@ -59,10 +59,6 @@
   ],
   "traps": [
     "trap",
-    "firetrap",
-    "icetrap",
-    "firearrow",
-    "icearrow",
     "trapblock",
     "traphead"
   ],

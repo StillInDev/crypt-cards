@@ -9,7 +9,7 @@
 
 ## Where it appears
 
-The icon of the **Whetstone** power, on its button in the power bar during play and on the Hero & powers screen. It is bought with gold. In play: the weapon you are holding gains 2 power (more with upgrades). It is shown small, so one bold shape beats detail.
+The icon of the **Whetstone** power, on its button in the power bar during play and on the Hero & powers screen. It is bought with gold. In play: always on. Every weapon you pick up or forge is permanently 2 stronger (more with upgrades). It is shown small, so one bold shape beats detail.
 
 Today it borrows the sword sprite, which makes it look like a weapon pickup.
 

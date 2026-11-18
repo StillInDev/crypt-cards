@@ -7,7 +7,7 @@
 
 ## Where it appears
 
-A playable hero, shown in game as **Ninja**. It stands on the board as the hero card and is shown large on the home screen. Unlocked by clearing the Armory. In play: Quick fingers: +1 gold from every coin and gem. Silent feet: traps cannot hurt you.
+A playable hero, shown in game as **Ninja**. It stands on the board as the hero card and is shown large on the home screen. Unlocked by clearing the Armory. In play: Silent feet: traps cannot hurt you.
 
 ## What it must look like
 
