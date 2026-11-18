@@ -91,6 +91,7 @@
   ];
   // Pixel check mark: the equip toggle in the details panel and cleared rooms on the map.
   var CHECK_SVG = '<svg viewBox="0 0 9 7" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v2H8v1H7v1H6v1H5v1H4v1H3V6H2V5H1V4H0V2h2v1h1v1h1V3h1V2h1V1h1z"/></svg>';
+  var STARTING_GOLD = 3000; // in a new player's purse, to buy or upgrade a few heroes and powers straight away
   var START_HEROES = ['knight', 'cactus'];
   var START_POWERS = ['heal', 'forge', 'dart'];
   var TYPE_ORDER = Object.keys(TYPES).filter(function (k) { return !TYPES[k].hidden; });
@@ -208,7 +209,8 @@
     return d.map(sanitize);
   }
 
-  var levels, best = {}, cleared = {}, unlockAll = false, heroSel = 'knight', powSel = ['heal'];
+  // A new save starts as the Knight with the three starting powers (Healing, Forge, Poison dart) equipped.
+  var levels, best = {}, cleared = {}, unlockAll = false, heroSel = 'knight', powSel = START_POWERS.slice();
   // purse: gold banked from finished runs, spent on upgrades. ups: { powerId: level }, hups: { heroId: level }.
   // owned: heroes and powers bought with gold, { 'hero:id': 1, 'power:id': 1 }.
   var purse = 0, ups = {}, hups = {}, owned = {};
@@ -236,8 +238,9 @@
     if (snapshot && snapshot.cleared) cleared = snapshot.cleared;
     unlockAll = snapshot && snapshot.unlockAll != null ? !!snapshot.unlockAll : store.get('cc_all') === '1';
     heroSel = (snapshot && snapshot.hero) || store.get('cc_hero') || 'knight';
-    try { powSel = (snapshot && snapshot.pows) || JSON.parse(store.get('cc_pows') || '["heal"]'); } catch (e) { powSel = ['heal']; }
-    purse = snapshot && snapshot.purse != null ? snapshot.purse : clampInt(store.get('cc_purse'), 0, 1e9, 0);
+    try { powSel = (snapshot && snapshot.pows) || JSON.parse(store.get('cc_pows') || JSON.stringify(START_POWERS)); } catch (e) { powSel = START_POWERS.slice(); }
+    // A new player starts with STARTING_GOLD in the purse; an existing save keeps what it has.
+    purse = snapshot && snapshot.purse != null ? snapshot.purse : clampInt(store.get('cc_purse'), 0, 1e9, STARTING_GOLD);
     try { ups = (snapshot && snapshot.ups) || JSON.parse(store.get('cc_ups') || '{}') || {}; } catch (e) { ups = {}; }
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
     try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
@@ -1903,7 +1906,6 @@
     best = {}; saveBest(); cleared = {}; saveCleared();
     commit(); renderEditor(); setMsg('Deleted. Progress was reset because room numbers shifted.');
   });
-  $('#e-gold').addEventListener('click', function () { purse += 5000; savePurse(); refreshLoadoutScreen(); toast('Added 5000 gold for testing'); }); // testing only
   $('#e-all').addEventListener('change', function (e) { unlockAll = e.target.checked; store.set('cc_all', unlockAll ? '1' : '0'); });
   $('#e-apply').addEventListener('click', function () {
     try { levels = parseLevels($('#e-json').value); saveLevels(); ed = 0; renderEditor(); setMsg('Loaded ' + levels.length + ' levels.'); }
