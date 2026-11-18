@@ -42,30 +42,30 @@
                 w: { troll: 6, minotaur: 4, lich: 3, gargoyle: 4, vampire: 3, hive: 2, goldskull: 3, trap: 12 } }
   };
   // Every area has the same 12 rooms and two routes down to the boss:
-  //   easy (left):  Sewers 75 -> Fungus Caves 80 -> Frozen Cavern 90 -> Armory 100. Plain doors, no unlocks.
-  //   hard (right): Barracks 100 -> Mine 115 -> Ember Halls 130 -> Vampire Crypt 140. Tougher cards, and these
+  //   easy (left):  Sewers 150 -> Fungus Caves 160 -> Frozen Cavern 180 -> Armory 200. Plain doors, no unlocks.
+  //   hard (right): Barracks 200 -> Mine 230 -> Ember Halls 260 -> Vampire Crypt 280. Tougher cards, and these
   //                 rooms hold the unlocks, so heroes and powers cost more to earn.
-  //   between them: Catacombs 100 (a door) and Bone Library 110 (an unlock), joining the two routes.
+  //   between them: Catacombs 200 (a door) and Bone Library 220 (an unlock), joining the two routes.
   // req is the gold that reveals a room's reward. Each hero and power is the reward of one room in one area
   // (reward/more, area is 1-based): five in the first area, four in each of the others, spread over the rows.
   var ROOMS = [
-    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 50 },
-    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 75 },
-    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 100, hard: true, reward: { kind: 'power', id: 'scythe', area: 1 },
+    { name: 'Cellar',         theme: 'cellar',    row: 0, from: [0],       req: 100 },
+    { name: 'Sewers',         theme: 'sewers',    row: 1, from: [1],       req: 150 },
+    { name: 'Barracks',       theme: 'barracks',  row: 1, from: [1],       req: 200, hard: true, reward: { kind: 'power', id: 'scythe', area: 1 },
       more: [{ kind: 'hero', id: 'barbarian', area: 2 }, { kind: 'hero', id: 'rogue', area: 3 }, { kind: 'power', id: 'quake', area: 4 }, { kind: 'power', id: 'laststand', area: 5 }] },
-    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 80 },
-    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 100 },
-    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 115, hard: true, reward: { kind: 'power', id: 'whetstone', area: 1 },
+    { name: 'Fungus Caves',   theme: 'fungus',    row: 2, from: [2],       req: 160 },
+    { name: 'Catacombs',      theme: 'catacombs', row: 2, from: [2, 3],    req: 200 },
+    { name: 'Mine',           theme: 'mine',      row: 2, from: [3],       req: 230, hard: true, reward: { kind: 'power', id: 'whetstone', area: 1 },
       more: [{ kind: 'power', id: 'magnet', area: 2 }, { kind: 'power', id: 'ward', area: 3 }, { kind: 'power', id: 'hourglass', area: 4 }, { kind: 'hero', id: 'icemage', area: 5 }] },
-    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 90 },
-    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 110, reward: { kind: 'hero', id: 'sorcerer', area: 1 },
+    { name: 'Frozen Cavern',  theme: 'frozen',    row: 3, from: [4],       req: 180 },
+    { name: 'Bone Library',   theme: 'library',   row: 3, from: [4, 5, 6], req: 220, reward: { kind: 'hero', id: 'sorcerer', area: 1 },
       more: [{ kind: 'hero', id: 'stormmage', area: 2 }, { kind: 'power', id: 'teleport', area: 3 }, { kind: 'hero', id: 'bard', area: 4 }, { kind: 'power', id: 'thunder', area: 5 }] },
-    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 130, hard: true, reward: { kind: 'power', id: 'fire', area: 1 },
+    { name: 'Ember Halls',    theme: 'ember',     row: 3, from: [6],       req: 260, hard: true, reward: { kind: 'power', id: 'fire', area: 1 },
       more: [{ kind: 'hero', id: 'dragonkin', area: 2 }, { kind: 'power', id: 'burst', area: 3 }] },
-    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 100 },
-    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 140, hard: true, reward: { kind: 'hero', id: 'count', area: 1 },
+    { name: 'Armory',         theme: 'armory',    row: 4, from: [7, 8],    req: 200 },
+    { name: 'Vampire Crypt',  theme: 'vampire',   row: 4, from: [8, 9],    req: 280, hard: true, reward: { kind: 'hero', id: 'count', area: 1 },
       more: [{ kind: 'power', id: 'massheal', area: 4 }, { kind: 'power', id: 'ice', area: 5 }] },
-    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 150 }
+    { name: 'Throne Room',    theme: 'throne',    row: 5, from: [10, 11],  req: 300 }
   ];
   // Where each unlock was before the routes above (room index across all areas), so a save that had cleared
   // those rooms keeps what it unlocked. See keepOldUnlocks.
@@ -237,6 +237,7 @@
     try { hups = (snapshot && snapshot.hups) || JSON.parse(store.get('cc_hups') || '{}') || {}; } catch (e) { hups = {}; }
     try { owned = (snapshot && snapshot.owned) || JSON.parse(store.get('cc_owned') || '{}') || {}; } catch (e) { owned = {}; }
     if (builtIn) keepOldUnlocks(); // custom (edited or imported) rooms keep their own rewards
+    else doubleOldTargets();
     fixSelection();
   }
   // Once per save: the rewards moved to new rooms (the easy and hard routes), so anything a cleared room had
@@ -247,6 +248,18 @@
     for (var i in OLD_UNLOCKS) if (cleared[i] && !owned[OLD_UNLOCKS[i]]) { owned[OLD_UNLOCKS[i]] = 1; changed = true; }
     if (changed) savePurse();
     store.set('cc_rw', '2');
+  }
+  // Once per save: room targets were doubled. Saved rooms still on the old default target get the new one;
+  // a target the player changed in the editor is left alone.
+  function doubleOldTargets() {
+    if (store.get('cc_req') === '2') return;
+    var changed = false;
+    levels.forEach(function (L, i) {
+      var R = ROOMS[i % ROOMS.length];
+      if (R && L.theme === R.theme && L.req * 2 === R.req) { L.req = R.req; changed = true; }
+    });
+    if (changed) saveLevels();
+    store.set('cc_req', '2');
   }
   function upLv(id) { return Math.max(0, Math.min(DC.POWER_MAX_LV, ups[id] | 0)); }
   function heroUpLv(id) { return Math.max(0, Math.min(DC.HERO_MAX_LV, hups[id] | 0)); }

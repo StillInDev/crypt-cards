@@ -2,7 +2,8 @@
   'use strict';
 
   // ---- Card catalogue -------------------------------------------------------
-  // lo/hi: value range when a card is created. bf: how strongly the level's
+  // lo/hi: value range when a card is created (a monster's health is centred on the middle of it, +/- a quarter;
+  // see makeCard). bf: how strongly the level's
   // difficulty ramp raises the card's value.
   const TYPES = {
     coin:      { kind: 'gold',    name: 'Coin',            lo: 1, hi: 3, bf: 0.5, tip: 'Step on it to add its value to your gold.' },
@@ -205,13 +206,22 @@
   }
 
   // ---- Card creation --------------------------------------------------------
+  // Each area (layer) of the dungeon after the first makes monsters this much stronger: area 5 is x1.4.
+  const AREA_SCALE = 0.1;
+  function areaScale(L) { return 1 + AREA_SCALE * Math.max(0, ((L && L.area) | 0) - 1); }
   function makeCard(S, type) {
     const T = TYPES[type];
     const L = S.level;
     const cap = L.cap == null ? 6 : L.cap;
     const ramp = L.ramp == null ? 12 : Math.max(1, L.ramp);
     const bump = Math.floor(Math.min(cap, S.hero.turn / ramp) * T.bf);
-    const v = T.lo + Math.floor(S.rng() * (T.hi + bump - T.lo + 1));
+    let v;
+    if (T.kind === 'monster') {
+      // Monster health: n is the middle of its range plus the room's growth, scaled up in deeper areas
+      // (the boss keeps its own fixed range). It arrives somewhere in n - n/4 .. n + n/4.
+      const n = ((T.lo + T.hi) / 2 + bump) * (T.boss ? 1 : areaScale(L));
+      v = Math.max(1, Math.round(n + (S.rng() * 2 - 1) * n / 4));
+    } else v = T.lo + Math.floor(S.rng() * (T.hi + bump - T.lo + 1));
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
@@ -1408,7 +1418,7 @@
     newGame: newGame, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
     HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
-    nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
+    nextLevel: nextLevel, AREA_SCALE: AREA_SCALE, areaScale: areaScale, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DC = api;
