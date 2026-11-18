@@ -1157,23 +1157,20 @@
     show('menu');
   }
 
-  var nextPick = null;
+  // The end-of-run screen: Try again, or Map (to pick the next room yourself).
   function showOver() {
     var L = levels[cur], g = S.hero.gold;
     var prevBest = (best[cur] || 0);
     if (g > prevBest) { best[cur] = g; saveBest(); } // only a finished run sets a best
     $('#o-score').textContent = g;
-    var kidsOf = childrenOf(cur), open = [], note = '';
+    var kidsOf = childrenOf(cur), note = '';
     $('#o-sub').textContent = 'gold on ' + L.name;
     if (cleared[cur]) {
       kidsOf.forEach(function (j) {
-        if (isUnlocked(j)) open.push(j);
         note += (note ? ' ' : '') + levels[j].name + (isUnlocked(j) ? ' is open.' : ' is still sealed.');
       });
       var na = areaOf(cur) + 1;
       if (isBoss(cur) && na < AREAS.length && areaRooms(na).length) {
-        var first = areaRooms(na).filter(isUnlocked)[0];
-        if (first != null && open.indexOf(first) < 0) open.push(first);
         note += (note ? ' ' : '') + 'You found the key to ' + AREAS[na].name + '.';
       } else if (!kidsOf.length) note = isBoss(cur) ? 'The end of the dungeon.' : 'A dead end: its reward was the prize. Head back to the map for the way on.';
     } else if (S.rewardGiven) {
@@ -1184,8 +1181,6 @@
     if (g > 0 && g >= prevBest) note = 'Personal best. ' + note;
     if (bankRun() > 0) note += ' ' + g + ' gold added to your purse (' + purse + ' total) for power upgrades.';
     $('#o-note').textContent = note;
-    nextPick = open.length ? open[open.length - 1] : null;
-    $('#o-next').style.display = nextPick != null ? '' : 'none';
     $('#over').classList.add('on');
     $('#o-again').focus();
   }
@@ -1349,8 +1344,11 @@
   $('#s-map').addEventListener('click', skipToMap);
   $('#l-go').addEventListener('click', function () { var go = leaveGo; closeLeave(); if (go) go(); });
   $('#o-again').addEventListener('click', function () { startLevel(cur); });
-  $('#o-next').addEventListener('click', function () { if (nextPick != null) startLevel(nextPick); });
-  $('#o-menu').addEventListener('click', function () { $('#over').classList.remove('on'); show('menu'); });
+  $('#o-menu').addEventListener('click', function () {
+    $('#over').classList.remove('on');
+    menuArea = areaOf(cur); store.set('cc_area', String(menuArea)); // open the map on the room you just played
+    show('menu');
+  });
   $('#b-edit').addEventListener('click', function () { show('edit'); });
   $('#b-home').addEventListener('click', function () { show('home'); });
   $('#b-play').addEventListener('click', function () { show('menu'); });
