@@ -27,11 +27,12 @@ assert.strictEqual(S.hero.poison, 0, 'potion cures at full health too');
   assert.strictEqual(S.hero.poison, 0, id + ' cures'); assert(cured(r), id + ' shows Cured');
 });
 
-// Bard: the song heals every turn, so it cures on the next step; at his health cap it does not heal or cure.
+// Bard: the song heals at the end of every unhurt turn (poison ticks don't count as hurt), so it cures.
 S = game('bard'); S.hero.hp = 5; S.hero.poison = 9;
 DC.move(S, 0); assert.strictEqual(S.hero.poison, 0, 'song cures');
+// At his cap the poison still ticks first, then the end-of-turn song heals it back and cures.
 S = game('bard'); S.hero.hp = DC.healCap(S.hero); S.hero.poison = 9;
-DC.move(S, 0); assert.strictEqual(S.hero.poison, 8, 'no healing at the cap, so the poison ticks');
+DC.move(S, 0); assert.strictEqual(S.hero.poison, 0, 'tick, then the song cures'); assert.strictEqual(S.hero.hp, DC.healCap(S.hero));
 
 // Vampire: lifesteal cures when it heals.
 S = game('count'); S.hero.hp = 3; S.hero.poison = 5; S.hero.sword = { v: 20, type: 'sword', el: null };

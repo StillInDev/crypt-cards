@@ -110,7 +110,7 @@
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
     rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { trapproof: 1 }, desc: 'Traps can\'t hurt you.' },
     stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: 'Every 8 kills, the next attack kills outright. Attacks have a 1 in 8 chance to chain lightning to the monsters beside the target.' },
-    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn and can heal past max health. Coins, gems, potions and weapons next to him grow by 1 each turn.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn he is not hurt (a hit stops it until he has gone a turn unhurt) and can heal past max health. Coins, gems, potions and weapons next to him grow by 1 each turn.' },
     dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Stomps 1-health monsters for free, without using his weapon.' },
     count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Heals 1 for every 3 weapon damage he deals.' },
     barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'At a quarter health or less, weapon hits have a 1 in 3 chance to deal double damage.' },
@@ -253,6 +253,7 @@
   // Bard: heals 2 + upgrades every turn, and every turn the helpful cards on the board (not chests,
   // whose value is hidden) grow by 1. His healing can overfill max health by 3 + upgrades.
   function songHeal(lv) { return 2 + (lv | 0); }
+  const SONG_REST = 1; // unhurt turns the Bard must wait after a hit before his song heals again
   const SONG_GROWS = { gold: 1, heal: 1, weapon: 1 };
   function overheal(lv) { return 3 + (lv | 0); }
   function healCap(H) { return H.max + (H.pass.song ? overheal(H.lv) : 0); }
@@ -364,7 +365,7 @@
       hero: {
         id: S.hero.id, pos: S.hero.pos, hp: S.hero.hp, max: S.hero.max, gold: S.hero.gold, turn: S.hero.turn,
         frost: S.hero.frost, ward: S.hero.ward, poison: S.hero.poison, pass: S.hero.pass, forge: S.hero.forge, orb: S.hero.orb,
-        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song, stood: S.hero.stood,
+        lv: S.hero.lv, kills: S.hero.kills, hits: S.hero.hits, drain: S.hero.drain, song: S.hero.song, calm: S.hero.calm, stood: S.hero.stood,
         sword: S.hero.sword && { v: S.hero.sword.v, type: S.hero.sword.type, el: S.hero.sword.el, wand: S.hero.sword.wand, bow: S.hero.sword.bow, c: S.hero.sword.c, sweep: S.hero.sword.sweep, star: S.hero.sword.star, orb: S.hero.sword.orb },
         powers: S.hero.powers.map(function (p) { return { id: p.id, max: p.max, cd: p.cd, lv: p.lv }; })
       }
@@ -671,6 +672,7 @@
     const L = S.level, w = L.w, h = L.h, H = S.hero;
     const hx = H.pos % w, hy = (H.pos / w) | 0;
     const hurt0 = S.hurts | 0, extraSpawn = [], blades0 = bladeSnap(S);
+    let poisonTicks = 0; // poison's own -1s: they don't break the Bard's song (it is what cures them)
     let tpos, card = null, T = null;
     if (sell) {
       if (sell === 'bow') {
@@ -908,10 +910,9 @@
       H.drain %= H.pass.drain;
       if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
     }
-    // Bard: heals every turn, and the helpful cards (coins, gems, potions, weapons) right next to him grow by 1.
+    // Bard: the helpful cards (coins, gems, potions, weapons) right next to him grow by 1.
+    // (His healing waits for the end of the turn, below, once it is known whether he was hurt.)
     if (H.pass.song && H.hp > 0) {
-      const g = healBy(H, songHeal(H.lv));
-      if (g) { fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
       neighbours4(S, H.pos).forEach(function (p) {
         const c = S.grid[p];
         if (!c || !SONG_GROWS[c.kind]) return;
@@ -924,7 +925,7 @@
     // Poison: 1 damage a turn while it lasts, but it never takes the hero below 1 health.
     if (H.poison > 0) {
       H.poison--;
-      if (H.hp > 1) { H.hp--; S.hurts = (S.hurts | 0) + 1; fx.push({ cell: H.pos, text: '−1', cls: 'hurt', anim: 'poison' }); }
+      if (H.hp > 1) { H.hp--; S.hurts = (S.hurts | 0) + 1; poisonTicks++; fx.push({ cell: H.pos, text: '−1', cls: 'hurt', anim: 'poison' }); }
     }
 
     // Every bomb burns one turn of fuse. At zero it explodes: the hero and the monsters
@@ -1147,6 +1148,15 @@
 
     // Vampires smell blood: each one grows for every time you were hurt this turn.
     const hits = (S.hurts | 0) - hurt0;
+    // Bard's song: a turn he is hurt (poison ticks aside), it breaks off. After SONG_REST whole turns unhurt it starts again,
+    // healing every turn until he is hurt again. calm counts his unhurt turns (missing = rested).
+    if (H.pass.song) {
+      H.calm = hits - poisonTicks > 0 ? 0 : H.calm == null ? SONG_REST + 1 : H.calm + 1;
+      if (H.hp > 0 && H.calm > SONG_REST) {
+        const g = healBy(H, songHeal(H.lv));
+        if (g) { fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
+      }
+    }
     if (hits > 0) S.grid.forEach(function (c, p) {
       const th = c && c.kind === 'monster' && TYPES[c.type].thirst;
       if (th) { c.v += hits * th; fx.push({ cell: p, text: '+' + hits * th, cls: 'hurt', anim: 'spark' }); }
