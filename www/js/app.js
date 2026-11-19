@@ -1449,6 +1449,23 @@
     line('b', 'li-name', o.title);
     line('span', 'li-lv', o.level != null ? 'Lvl. ' + (o.level + 1) : '');
     line('span', 'li-tag', o.tag);
+    // Unlock / Upgrade sits at the top, beside the icon, with what it gets you and what it costs.
+    if (o.up) {
+      if (o.up.buy) {
+        var row = document.createElement('div'); row.className = 'li-btns';
+        var bb = document.createElement('button');
+        bb.type = 'button'; bb.className = 'btn li-buy'; bb.disabled = !o.up.ok;
+        bb.appendChild(document.createTextNode(o.up.label + ' '));
+        bb.appendChild(img('coin'));
+        bb.appendChild(document.createTextNode(o.up.cost));
+        bb.setAttribute('aria-label', o.up.label + ' for ' + o.up.cost + ' gold');
+        bb.addEventListener('click', o.up.buy);
+        row.appendChild(bb);
+        d.appendChild(row);
+      }
+      line('p', 'li-up', o.up.text);
+      line('p', 'li-short', o.up.short);
+    }
     if (o.stats && o.stats.length) {
       var st = document.createElement('dl'); st.className = 'li-stats';
       o.stats.forEach(function (kv) {
@@ -1470,7 +1487,6 @@
     }
     line('p', 'li-ability', o.ability);
     line('p', 'li-desc', o.desc);
-    var row = document.createElement('div'); row.className = 'li-btns';
     if (o.equip) {
       // Equip toggle in the top-right corner: a check mark, green when equipped, grey when not.
       var eb = document.createElement('button');
@@ -1482,22 +1498,7 @@
       eb.addEventListener('click', o.equip.fn);
       el.appendChild(eb);
     }
-    if (o.up) {
-      line('p', 'li-up', o.up.text);
-      if (o.up.buy) {
-        var bb = document.createElement('button');
-        bb.type = 'button'; bb.className = 'btn li-buy'; bb.disabled = !o.up.ok;
-        bb.appendChild(document.createTextNode(o.up.label + ' '));
-        bb.appendChild(img('coin'));
-        bb.appendChild(document.createTextNode(o.up.cost));
-        bb.setAttribute('aria-label', o.up.label + ' for ' + o.up.cost + ' gold');
-        bb.addEventListener('click', o.up.buy);
-        row.appendChild(bb);
-      }
-    }
-    if (row.children.length) d.appendChild(row);
     if (o.equip) line('p', 'li-short', o.equip.note);
-    if (o.up) line('p', 'li-short', o.up.short);
     el.appendChild(d);
     el.classList.add('on');
     loGen++;
