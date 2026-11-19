@@ -1,5 +1,5 @@
 # Builds an installable .apk to sideload on your own phone (no keystore or secrets needed).
-# Builds only when asked: a pushed commit whose message contains [apk], or by hand from the Actions tab
+# Builds only when asked: a pushed commit whose message starts with [apk], or by hand from the Actions tab
 # ("Build test APK" -> Run workflow; that button needs this file on the default branch). Other pushes skip it.
 # The apk is attached to the "apk-latest" GitHub Release: open that release on your phone and tap the .apk.
 # This is a debug-signed test build. Play Store builds still come from android.yml (.aab).
@@ -13,7 +13,7 @@ permissions:
   contents: write
 jobs:
   apk:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, '[apk]')
     runs-on: ubuntu-latest
     concurrency:
       group: apk-latest

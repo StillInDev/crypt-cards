@@ -14,7 +14,7 @@ scripts/        patch-android.js  (portrait lock, version numbers, target-API ch
 ```
 
 ## Just want it on your phone? (test APK)
-**Build test APK** in GitHub Actions builds only when asked: push a commit with `[apk]` in its message (or Actions -> Build test APK -> Run workflow). When it finishes, open the repo's **Releases -> Crypt Cards test APK** on your phone (signed in to GitHub), tap `crypt-cards-test.apk`, and allow installs from your browser when Android asks. It is debug-signed, so before installing a Play Store copy later, uninstall the test one.
+**Build test APK** in GitHub Actions builds only when asked: push a commit whose message starts with `[apk]` (or Actions -> Build test APK -> Run workflow). When it finishes, open the repo's **Releases -> Crypt Cards test APK** on your phone (signed in to GitHub), tap `crypt-cards-test.apk`, and allow installs from your browser when Android asks. It is debug-signed, so before installing a Play Store copy later, uninstall the test one.
 
 ## Before anything: change the app id
 `capacitor.config.json` -> `appId` is currently `com.yourname.cryptcards`. Make it your own reverse-domain id, for example `com.janedoe.cryptcards`. **It can never change after the app is on Play.** Do this before the first build.
