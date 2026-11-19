@@ -110,7 +110,7 @@
     // Shown as the Ninja; the id stays 'rogue' so saved picks and the Armory reward keep working.
     rogue:    { name: 'Ninja',    sprite: 'rogue',    hp: -1, slots: 3, unlock: 90, pass: { trapproof: 1 }, desc: 'Traps can\'t hurt you.' },
     stormmage: { name: 'Lightning Wizard', sprite: 'stormmage', hp: 0, slots: 3, unlock: 0, pass: { storm: 1 }, desc: 'Every 8 kills, the next attack kills outright. Attacks have a 1 in 8 chance to chain lightning to the monsters beside the target.' },
-    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn and can heal past max health. Coins, gems, potions and weapons on the board grow by 1 each turn.' },
+    bard:     { name: 'Bard',     sprite: 'bard',     hp: 0,  slots: 3, unlock: 0,  pass: { song: 1 }, desc: 'Heals every turn and can heal past max health. Coins, gems, potions and weapons next to him grow by 1 each turn.' },
     dragonkin: { name: 'Dragonborn', sprite: 'dragonkin', hp: 1, slots: 3, unlock: 0, pass: { stomp: 1 }, desc: 'Stomps 1-health monsters for free, without using his weapon.' },
     count:    { name: 'Vampire',  sprite: 'count',    hp: -1, slots: 3, unlock: 0,  pass: { drain: 3 }, desc: 'Heals 1 for every 3 weapon damage he deals.' },
     barbarian: { name: 'Barbarian', sprite: 'barbarian', hp: 2, slots: 3, unlock: 0, pass: { rage: 1 }, desc: 'At a quarter health or less, weapon hits have a 1 in 3 chance to deal double damage.' },
@@ -908,11 +908,12 @@
       H.drain %= H.pass.drain;
       if (g > 0) { H.hp += g; fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
     }
-    // Bard: heals every turn, and every helpful card on the board (coins, gems, potions, weapons) grows by 1.
+    // Bard: heals every turn, and the helpful cards (coins, gems, potions, weapons) right next to him grow by 1.
     if (H.pass.song && H.hp > 0) {
       const g = healBy(H, songHeal(H.lv));
       if (g) { fx.push({ cell: H.pos, text: '+' + g, cls: 'heal', anim: 'heal' }); cure(H, fx); }
-      S.grid.forEach(function (c, p) {
+      neighbours4(S, H.pos).forEach(function (p) {
+        const c = S.grid[p];
         if (!c || !SONG_GROWS[c.kind]) return;
         c.v += 1; fx.push({ cell: p, text: '+1', cls: c.kind === 'gold' ? 'gold' : c.kind === 'heal' ? 'heal' : 'info' });
       });

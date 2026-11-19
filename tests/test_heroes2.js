@@ -21,13 +21,17 @@ DC.move(S, 2); assert.strictEqual(S.hero.hp, S.hero.max - 1, 'and again the next
 S.grid[S.hero.pos === 1 ? 5 : 1] = pot(S, 20); DC.move(S, S.hero.pos === 1 ? 2 : 0);
 assert.strictEqual(S.hero.hp, S.hero.max + 4, 'potion overheals up to max + 4');
 DC.move(S, S.hero.pos === 1 ? 2 : 0); assert.strictEqual(S.hero.hp, S.hero.max + 4, 'the song stops at the same cap');
-// Bard: every coin, gem, potion and weapon on the board grows by 1 a turn; monsters, traps and chests do not.
+// Bard: only the coins, gems, potions and weapons next to him grow by 1 a turn; monsters, traps,
+// chests and cards further away do not.
 S = game('bard');
 const sw = { uid: ++S.uid, type: 'sword', kind: 'weapon', v: 4 }, p = pot(S, 2), m = mon(S, 3);
 const tr = { uid: ++S.uid, type: 'trap', kind: 'harm', v: 2 }, ch = { uid: ++S.uid, type: 'chest', kind: 'chest', v: 5 };
-S.grid[0] = sw; S.grid[2] = p; S.grid[8] = m; S.grid[10] = tr; S.grid[11] = ch;
-const coin = S.grid[3]; DC.move(S, 1); // step onto a coin the far side of the hero, away from the test cards
-assert.strictEqual(sw.v, 5); assert.strictEqual(p.v, 3); assert.strictEqual(coin.v, 2, 'coins grow');
+S.grid[7] = sw; S.grid[2] = p; S.grid[10] = tr; S.grid[11] = ch; S.grid[8] = m;
+const far = S.grid[0], far2 = S.grid[3];
+DC.move(S, 1); // step right onto the coin at 6: 2, 7 and 10 are now beside him
+assert.strictEqual(S.hero.pos, 6);
+assert.strictEqual(sw.v, 5, 'weapon beside him grows'); assert.strictEqual(p.v, 3, 'potion beside him grows');
+assert.strictEqual(far.v, 1, 'far coin stays'); assert.strictEqual(far2.v, 1, 'far coin stays');
 assert.strictEqual(m.v, 3); assert.strictEqual(tr.v, 2); assert.strictEqual(ch.v, 5);
 // Other heroes' cards stay put.
 S = game('knight'); const c2 = S.grid[3]; DC.move(S, 1); assert.strictEqual(c2.v, 1);
