@@ -2,7 +2,8 @@
   'use strict';
 
   // ---- Card catalogue -------------------------------------------------------
-  // lo/hi: value range when a card is created. bf: how strongly the level's
+  // lo/hi: value range when a card is created (a monster's health is centred on the middle of it, +/- a quarter;
+  // see makeCard). bf: how strongly the level's
   // difficulty ramp raises the card's value.
   const TYPES = {
     coin:      { kind: 'gold',    name: 'Coin',            lo: 1, hi: 3, bf: 0.5, tip: 'Step on it to add its value to your gold.' },
@@ -123,7 +124,8 @@
   const POWERS = {
     heal:     { name: 'Healing',      sprite: 'p_heal',     cd: 14, target: null,      unlock: 0,  desc: 'Restores health equal to its power.', tip: 'Restore 5 health.' },
     forge:    { name: 'Forge',        sprite: 'p_forge',    cd: 12, target: null,      unlock: 10, desc: 'Conjures a sword with its power. If you already hold a weapon, the sword waits and arrives as soon as your hands are empty.', tip: 'Conjure a sword as strong as your max health.' },
-    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, desc: 'Flies at a random monster and hits it for its power. The monster is also poisoned: it loses 1 health a turn for 3 turns.', tip: 'Hits a random monster for 4 and poisons it for 3 turns.' },
+    // auto: fires by itself as soon as it is ready (the game triggers it after your move), never by tapping.
+    dart:     { name: 'Poison dart',  sprite: 'p_dart',     cd: 8,  target: null,      unlock: 20, auto: true, desc: 'Fires by itself whenever it is ready: it flies at a random monster and hits it for its power. The monster is also poisoned: it loses 1 health a turn for 3 turns.', tip: 'Fires by itself when ready: hits a random monster for 4 and poisons it for 3 turns.' },
     fire:     { name: 'Fire touch',   sprite: 'p_fire',     cd: 10, target: 'card',    unlock: 30, desc: 'Tap any card to burn it away. A new card takes its place.', tip: 'Burn away any card. A new one takes its place.' },
     scythe:   { name: 'Scythe',       sprite: 'p_scythe',   cd: 15, target: null,      unlock: 40, desc: 'Cuts down every monster, trap and poison in the 8 cards around you.', tip: 'Clears every monster, trap and poison around you.' },
     massheal: { name: 'Mass healing', sprite: 'p_massheal', cd: 14, target: null,      unlock: 50, desc: 'Heals you by its power, and makes every potion on the board that much stronger.', tip: 'Heal 2 and make every potion on the board 2 stronger.' },
@@ -149,7 +151,7 @@
   const UPGRADES = {
     heal:     { amt: [5, 2],  text: 'Restore {n} health.', what: '+2 healing' },
     forge:    { bonus: [0, 1, 3, 7, 15], text: 'Conjure a sword.', what: ['+1 sword power', '+2 sword power', '+4 sword power', '+8 sword power'] },
-    dart:     { amt: [4, 2],  text: 'Hits a random monster for {n} and poisons it for 3 turns.', what: '+2 damage' },
+    dart:     { amt: [4, 2],  text: 'Fires by itself when ready: hits a random monster for {n} and poisons it for 3 turns.', what: '+2 damage' },
     fire:     { cdCut: 2, what: '2 turns faster recharge' },
     scythe:   { cdCut: 2, what: '2 turns faster recharge' },
     massheal: { amt: [2, 1],  text: 'Heal {n} and make every potion on the board {n} stronger.', what: '+1 healing and potion boost' },
@@ -205,17 +207,28 @@
   }
 
   // ---- Card creation --------------------------------------------------------
+  // Each area (layer) of the dungeon after the first makes monsters this much stronger: area 5 is x1.4.
+  const AREA_SCALE = 0.1;
+  function areaScale(L) { return 1 + AREA_SCALE * Math.max(0, ((L && L.area) | 0) - 1); }
   function makeCard(S, type) {
     const T = TYPES[type];
     const L = S.level;
     const cap = L.cap == null ? 6 : L.cap;
     const ramp = L.ramp == null ? 12 : Math.max(1, L.ramp);
     const bump = Math.floor(Math.min(cap, S.hero.turn / ramp) * T.bf);
-    // Weapons start a run weak so early monsters (1 to 4 health) still take a few hits: the top of
-    // their range is 3 lower (and the bottom 1 lower) for the first ramp step, easing back by 1 a step.
-    const early = T.kind === 'weapon' ? Math.max(0, WEAPON_EARLY - Math.floor(S.hero.turn / ramp)) : 0;
-    const lo = early ? Math.max(1, T.lo - 1) : T.lo, hi = Math.max(lo, T.hi - early);
-    const v = lo + Math.floor(S.rng() * (hi + bump - lo + 1));
+    let v;
+    if (T.kind === 'monster') {
+      // Monster health: n is the middle of its range plus the room's growth, scaled up in deeper areas
+      // (the boss keeps its own fixed range). It arrives somewhere in n - n/4 .. n + n/4, rounded down.
+      const n = ((T.lo + T.hi) / 2 + bump) * (T.boss ? 1 : areaScale(L));
+      v = Math.max(1, Math.floor(n + (S.rng() * 2 - 1) * n / 4)); // always rounded down
+    } else {
+      // Weapons start a run weak so early monsters (1 to 4 health) still take a few hits: the top of
+      // their range is 3 lower (and the bottom 1 lower) for the first ramp step, easing back by 1 a step.
+      const early = T.kind === 'weapon' ? Math.max(0, WEAPON_EARLY - Math.floor(S.hero.turn / ramp)) : 0;
+      const lo = early ? Math.max(1, T.lo - 1) : T.lo, hi = Math.max(lo, T.hi - early);
+      v = lo + Math.floor(S.rng() * (hi + bump - lo + 1));
+    }
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
@@ -1221,6 +1234,31 @@
     else fx.push({ cell: res.slid != null ? res.slid : pos, text: '−' + res.dealt, cls: 'info', hit: m.uid });
   }
 
+  // ---- Map rules --------------------------------------------------------------
+  // Rooms (levels) link with from: [1-based room numbers it opens from, 0 = the entrance], grouped by area
+  // (1-based); an area's boss is its last room. A room need not lead on to the boss, but if it cannot, it must
+  // hold a hero or power reward. Returns the indices of rooms that break that rule.
+  function mapDeadEnds(levels) {
+    const bossOf = {};
+    levels.forEach(function (L, i) { bossOf[L.area || 1] = i; });
+    const leads = new Set(), todo = Object.keys(bossOf).map(function (a) { return bossOf[a]; });
+    todo.forEach(function (b) { leads.add(b); });
+    while (todo.length) {
+      const j = todo.pop();
+      for (const p of levels[j].from || []) {
+        const i = p - 1;
+        if (i < 0 || leads.has(i) || !levels[i] || (levels[i].area || 1) !== (levels[j].area || 1)) continue;
+        leads.add(i); todo.push(i);
+      }
+    }
+    const out = [];
+    levels.forEach(function (L, i) {
+      const rw = L.reward && L.reward.kind;
+      if (!leads.has(i) && rw !== 'hero' && rw !== 'power') out.push(i);
+    });
+    return out;
+  }
+
   // lv: the player's power level (best score / 25); up: Tremor's upgrade level, added on top of the cap.
   function quakeDamage(lv, up) { return Math.min(12, 3 + (lv | 0)) + powerAmount('quake', up); }
 
@@ -1412,8 +1450,8 @@
     TYPES: TYPES, HEROES: HEROES, POWERS: POWERS, DIRS: DIRS, PERIOD: PERIOD,
     newGame: newGame, makeCard: makeCard, move: move, sellItem: sellItem, shootBow: shootBow, throwOrb: throwOrb, orbTarget: orbTarget, quakeDamage: quakeDamage,
     POWER_MAX_LV: POWER_MAX_LV, UPGRADES: UPGRADES, upgradeCost: upgradeCost, upgradeWhat: upgradeWhat, forgePower: forgePower,
-    HERO_MAX_LV: HERO_MAX_LV, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
-    nextLevel: nextLevel, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
+    HERO_MAX_LV: HERO_MAX_LV, mapDeadEnds: mapDeadEnds, STORM_KILLS: STORM_KILLS, THUNDER_HITS: THUNDER_HITS, songHeal: songHeal, overheal: overheal, healCap: healCap, STORM_CHANCE: STORM_CHANCE, chainDamage: chainDamage, HERO_BUY_COST: HERO_BUY_COST, POWER_BUY_COST: POWER_BUY_COST, HERO_UP_HP: HERO_UP_HP, heroHpBonus: heroHpBonus, heroUpgradeCost: heroUpgradeCost, powerAmount: powerAmount, powerCd: powerCd, powerTip: powerTip, preview: preview, usePower: usePower, validTarget: validTarget,
+    nextLevel: nextLevel, AREA_SCALE: AREA_SCALE, areaScale: areaScale, BASE_WEIGHTS: BASE_WEIGHTS, WEAPON_RATE: WEAPON_RATE, HERO_BASE_HP: HERO_BASE_HP, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DC = api;
