@@ -730,11 +730,17 @@
       chip.className = 'chip';
       chip.textContent = '';
     });
+    var lateOut = {};
+    if (lastFx) lastFx.forEach(function (f) { if (f.late) lateOut[f.late] = 1; });
+    lastFx = null;
     els.forEach(function (el, uid) {
       if (!seen.has(uid)) {
         els.delete(uid);
-        el.classList.remove('tgt'); el.classList.add('out');
-        setTimeout(function () { el.remove(); }, 260);
+        el.classList.remove('tgt');
+        // Slain by Tremor: stays on top of the new card until the spike has risen, then fades.
+        var hold = lateOut[uid] ? SPIKE_HOLD : 0;
+        if (hold) el.style.zIndex = 6;
+        setTimeout(function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 260); }, hold);
       }
     });
     place(heroEl, H.pos);
@@ -968,6 +974,7 @@
       var key = f.anim + ':' + f.cell;
       if (done[key]) return; done[key] = 1;
       if (f.anim === 'spike') { playSpike(f.cell, f.dir); return; }
+      if (f.late) { var lc = f.cell, la = f.anim; setTimeout(function () { if (S) burst('fx-' + la, lc); }, SPIKE_HOLD); return; }
       burst('fx-' + f.anim, f.cell);
       if (f.anim === 'boom') flash(board, 'shake', 300);
       if (f.anim === 'blast') { var c = S.grid[f.cell]; if (c) flash(els.get(c.uid), 'strike', 380); }
@@ -981,6 +988,8 @@
   // Tremor: a stone spike bursts up from the bottom of the square the hero left. Moving left or right it is the
   // side spike (moving left it points right, as drawn; moving right it is mirrored); moving up or down it is
   // the upright spike. Frames are in src/img/fx/tremor_side.png and tremor_up.png.
+  var SPIKE_HOLD = 220; // ms a monster Tremor kills stays visible: the spike's .26s grow is nearly done by then
+  var lastFx = null;     // this move's effects, read by render() to hold back Tremor kills
   function playSpike(cell, dir) {
     var side = dir === 1 || dir === 3;
     burst('fx-spike ' + (side ? 'side' : 'up') + (dir === 1 ? ' flip' : ''), cell, function (el) { el.appendChild(document.createElement('i')); });
@@ -1081,7 +1090,7 @@
       return;
     }
     busy = true; setTimeout(function () { busy = false; }, 110);
-    floaters(r.fx);
+    floaters(r.fx); lastFx = r.fx;
     if (r.attack && r.attack.orb) { shoot('dart', fromCell, aim, '#d874c0'); castLook('teleport'); }
     else if (r.attack && r.attack.bow) { shoot('dart', fromCell, aim, r.attack.type === 'ninjastar' ? '#c0cbdc' : '#ffd76a'); flash(heroEl.querySelector('.held'), 'swing', 320); }
     else if (r.attack && r.attack.beam) playBeam(fromCell, dir, r.attack.el);

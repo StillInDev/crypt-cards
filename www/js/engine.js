@@ -1021,7 +1021,8 @@
       if (m && m.kind === 'monster') {
         tremor = mp;
         const res = hurtMonster(m, quakeDamage(S.powerLevel, qp.lv), null, false);
-        if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff' }); }
+        // late: the app keeps the slain monster on screen until the spike has risen, then it puffs away.
+        if (res.killed) { S.grid[mp] = blankCard(S); fx.push({ cell: mp, text: 'Slain', cls: 'info', anim: 'puff', late: m.uid }); }
         else fx.push({ cell: mp, text: '−' + res.dealt, cls: 'info', hit: m.uid });
         fx.push({ cell: mp, text: '', cls: 'info', anim: 'spike', dir: dir }); // a stone spike bursts up, shaped by the way you moved
       }
