@@ -209,6 +209,8 @@
   // ---- Card creation --------------------------------------------------------
   // Each area (layer) of the dungeon after the first makes monsters this much stronger: area 5 is x1.4.
   const AREA_SCALE = 0.1;
+  // Coins and gems are worth this many times their rolled value (room targets in the app were raised to match).
+  const GOLD_MUL = 2;
   function areaScale(L) { return 1 + AREA_SCALE * Math.max(0, ((L && L.area) | 0) - 1); }
   function makeCard(S, type) {
     const T = TYPES[type];
@@ -229,6 +231,7 @@
       const lo = early ? Math.max(1, T.lo - 1) : T.lo, hi = Math.max(lo, T.hi - early);
       v = lo + Math.floor(S.rng() * (hi + bump - lo + 1));
     }
+    if (T.kind === 'gold') v *= GOLD_MUL; // coins and gems
     const c = { uid: ++S.uid, type: type, kind: T.kind, v: v };
     if (T.ability) c.t = 0;
     if (type === 'bomb') c.t = 3 + Math.floor(S.rng() * 3); // turns until it explodes
